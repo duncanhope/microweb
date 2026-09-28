@@ -31,8 +31,10 @@ def make_user(unread=0):
 class Bs5BaseTests(SimpleTestCase):
     """core/templates_bs5/base.html for guests and members."""
 
-    def render(self, user=None, **site):
+    def render(self, user=None, color_mode=None, **site):
         request = RequestFactory().get('/about/terms/')
+        if color_mode:
+            request.color_mode = color_mode
         template = engines['bs5'].from_string(PAGE)
         return template.render({'site': make_site(**site), 'user': user}, request)
 
@@ -77,9 +79,58 @@ class Bs5BaseTests(SimpleTestCase):
 
     def test_site_link_colour_reaches_bootstrap_variables(self):
         html = self.render(link_color='#4898AC')
-        self.assertIn('--bs-link-color-rgb: 72, 152, 172;', html)
-        self.assertIn('--bs-link-hover-color-rgb: 72, 152, 172;', html)
-        self.assertIn('--bs-link-color: rgb(72, 152, 172);', html)
+        light = html.split(':root, [data-bs-theme=light] {')[1].split('}')[0]
+        self.assertIn('--bs-link-color-rgb: 72, 152, 172;', light)
+        self.assertIn('--bs-link-hover-color-rgb: 72, 152, 172;', light)
+        self.assertIn('--bs-link-color: rgb(72, 152, 172);', light)
+
+    def test_dark_link_colour_is_adjusted_to_aa(self):
+        html = self.render(link_color='#21201b')
+        self.assertIn('--bs-link-color-rgb: 33, 32, 27;', html.split('[data-bs-theme=dark]')[0])
+        dark = html.split('[data-bs-theme=dark] {')[1].split('}')[0]
+        # AA on the dark body and on the dark metabar over lfgss's #424143 surround.
+        self.assertIn('--bs-link-color-rgb: 146, 146, 143;', dark)
+        self.assertIn('--bs-link-color: rgb(146, 146, 143);', dark)
+        self.assertIn('--bs-link-hover-color-rgb: 168, 168, 165;', dark)
+
+    def test_surround_is_the_same_in_every_color_mode(self):
+        html = self.render(background_url='https://example.com/bg.jpg')
+        surround = html.split('<style id="site-style">')[1].split(':root, [data-bs-theme=light]')[0]
+        self.assertIn('--mw-site-bg-color: #424143;', surround)
+        self.assertIn("--mw-site-bg-image: url('https://example.com/bg.jpg');", surround)
+        self.assertEqual(html.count('--mw-site-bg-color'), 1)
+
+    def test_color_mode_renders_on_html(self):
+        for mode, theme in (('light', 'light'), ('dark', 'dark'), ('auto', 'light'), (None, 'light')):
+            with self.subTest(mode=mode):
+                html = self.render(color_mode=mode)
+                self.assertIn('<html lang="en" data-bs-theme="%s" data-mw-color-mode="%s">'
+                              % (theme, mode or 'auto'), html)
+                # Auto is switched by the head script before first paint.
+                self.assertIn("matchMedia('(prefers-color-scheme: dark)')", html)
+                self.assertLess(html.index('prefers-color-scheme'), html.index('bs5.min.css'))
+
+    def test_color_mode_without_the_middleware_reads_the_cookie(self):
+        # Error pages can render for requests ContextMiddleware turned away.
+        request = RequestFactory().get('/', HTTP_COOKIE='color_mode=dark')
+        html = engines['bs5'].from_string(PAGE).render({'site': make_site()}, request)
+        self.assertIn('data-bs-theme="dark" data-mw-color-mode="dark"', html)
+
+    def test_color_mode_toggle_shows_the_current_choice(self):
+        for mode, name, glyph in (('light', 'Light', 'bi-sun-fill'), ('dark', 'Dark', 'bi-moon-stars-fill'),
+                                  ('auto', 'Auto', 'bi-circle-half')):
+            with self.subTest(mode=mode):
+                html = self.render(color_mode=mode)
+                toggle = html.split('id="mw-color-mode"')[1].split('</button>')[0]
+                self.assertIn('aria-label="Colour mode (%s)"' % name, toggle)
+                self.assertIn(glyph, toggle)
+                self.assertIn('data-mw-color-mode-value="%s" aria-pressed="true"' % mode, html)
+                self.assertEqual(html.count('aria-pressed="true"'), 1)
+                self.assertEqual(html.count('aria-pressed="false"'), 2)
+
+    def test_color_mode_toggle_for_guests_and_members(self):
+        self.assertIn('id="mw-color-mode"', self.render())
+        self.assertIn('id="mw-color-mode"', self.render(user=make_user()))
 
     def test_unusable_link_colour_keeps_bootstrap_default(self):
         html = self.render(link_color='')

@@ -73,6 +73,13 @@ PAGES = [
     Page('base', LFGSS, '/about/terms/', 'base-guest', 'the base as a guest: header, navbar, footer, drawers'),
     Page('base', LFGSS, '/about/terms/', 'base-member', 'the base signed in: account box, messages badge', signed_in=True),
     Page('base', 'forum.espruino.com', '/about/terms/', 'base-espruino', 'the base under a background image, link #4898AC'),
+    # Site branding under each Color mode (BS5-06).
+    Page('base', 'forum.winslowwheelers.co.uk', '/about/terms/', 'base-wwcc',
+         'wwcc: link #21201b, adjusted to AA in dark; surround #2c7ede'),
+    Page('base', 'lesperitdelbikepacking.microcosm.app', '/about/terms/', 'base-lesperit',
+         'link #51a9ff exact in light, on a black surround; its home is 403 for guests'),
+    Page('base', 'outliers.microcosm.app', '/about/terms/', 'base-outliers',
+         'the base on a dark surround #171919, link #280fc2'),
 ]
 
 # URLs the interaction checks visit beyond PAGES. `shoot --record` fetches

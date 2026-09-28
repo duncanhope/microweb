@@ -1,4 +1,4 @@
-"""Interaction checks for the Bootstrap 5 base (BS5-05).
+"""Interaction checks for the Bootstrap 5 base (BS5-05) and its Color mode toggle (BS5-06).
 
 No family renders on the new base yet, so these render /about/terms/ with a
 stand-in page, core/harness/bs5_pages/legal.html, added to the front of the
@@ -17,6 +17,9 @@ from urllib.parse import parse_qs, urlsplit
 from django.conf import settings
 from django.test import override_settings
 
+from core import colors
+from core.framework import COOKIE_MAX_AGE
+from core.middleware.context import COLOR_MODE_COOKIE
 from core.harness import manifest
 from core.harness.browser_tests import BrowserTestCase
 
@@ -44,17 +47,20 @@ FOCUS_RING_JS = """() => {
 
 
 @override_settings(TEMPLATES=_with_harness_pages(), BS5_TEMPLATE_DIR=HARNESS_PAGES)
-class BaseLayoutTests(BrowserTestCase):
+class Bs5PageTestCase(BrowserTestCase):
+    """Opens the stand-in page on the Bootstrap 5 base. No checks of its own."""
 
-    def open(self, width=1280, signed_in=False):
-        page = self.new_page(width=width, signed_in=signed_in)
+    def open(self, width=1280, signed_in=False, host=manifest.LFGSS, color_scheme='light', color_mode=None):
+        page = self.new_page(width=width, signed_in=signed_in, color_scheme=color_scheme)
+        if color_mode:
+            page.context.add_cookies([{'name': COLOR_MODE_COOKIE, 'value': color_mode, 'url': 'https://%s/' % host}])
         errors = []
         page.on('pageerror', lambda exc: errors.append(str(exc)))
         # Off-site requests the recording lacks are aborted by design; only
         # script errors count.
         page.on('console', lambda msg: errors.append(msg.text)
                 if msg.type == 'error' and not msg.text.startswith('Failed to load resource') else None)
-        page.goto(PAGE, wait_until='load')
+        page.goto(PAGE.replace(manifest.LFGSS, host), wait_until='load')
         page.wait_for_function('() => window.bootstrap && document.querySelector("time#harness-time").title')
         self.addCleanup(lambda: self.assertEqual(errors, [], 'script errors on the page'))
         return page
@@ -64,6 +70,26 @@ class BaseLayoutTests(BrowserTestCase):
             page.keyboard.press('Tab')
             inside = page.evaluate('(s) => document.querySelector(s).contains(document.activeElement)', selector)
             self.assertTrue(inside, 'focus left %s' % selector)
+
+    def open_overlay(self, page, trigger, target):
+        """Click `trigger` and wait until Bootstrap has finished showing `target`."""
+        page.evaluate("""(t) => {
+          const el = document.querySelector(t);
+          delete el.dataset.shown;
+          for (const type of ['shown.bs.offcanvas', 'shown.bs.modal']) {
+            el.addEventListener(type, () => { el.dataset.shown = 'yes'; }, { once: true });
+          }
+        }""", target)
+        page.locator(trigger).click()
+        page.locator(target + '[data-shown]').wait_for()
+
+    def wait_for_lock_email(self, page):
+        email = page.locator('.auth0-lock input[type=email], .auth0-lock input[name=email]').first
+        email.wait_for(state='visible', timeout=15000)
+        return email
+
+
+class BaseLayoutTests(Bs5PageTestCase):
 
     # Layout ------------------------------------------------------------------
 
@@ -97,18 +123,6 @@ class BaseLayoutTests(BrowserTestCase):
 
     # Drawers ------------------------------------------------------------------
 
-    def open_overlay(self, page, trigger, target):
-        """Click `trigger` and wait until Bootstrap has finished showing `target`."""
-        page.evaluate("""(t) => {
-          const el = document.querySelector(t);
-          delete el.dataset.shown;
-          for (const type of ['shown.bs.offcanvas', 'shown.bs.modal']) {
-            el.addEventListener(type, () => { el.dataset.shown = 'yes'; }, { once: true });
-          }
-        }""", target)
-        page.locator(trigger).click()
-        page.locator(target + '[data-shown]').wait_for()
-
     def check_drawer(self, page, button, drawer, name):
         self.open_overlay(page, button, drawer)
         self.snap(page, name)
@@ -141,11 +155,6 @@ class BaseLayoutTests(BrowserTestCase):
         self.snap(page, 'base-member-drawer')
 
     # Sign in ------------------------------------------------------------------
-
-    def wait_for_lock_email(self, page):
-        email = page.locator('.auth0-lock input[type=email], .auth0-lock input[name=email]').first
-        email.wait_for(state='visible', timeout=15000)
-        return email
 
     def test_signin_modal_hands_off_to_lock(self):
         page = self.open(1280)
@@ -280,3 +289,151 @@ class BaseLayoutTests(BrowserTestCase):
             self.assertIn(expected, labels)
         missing = [s['text'] or s['tag'] for s in seen if not s['ring']]
         self.assertEqual(missing, [], 'controls without a visible focus ring')
+
+
+# The page's colour facts: the Color mode, the Site surround behind the
+# panels, the body background and a link in the content.
+COLOR_FACTS_JS = """() => {
+  const root = document.documentElement;
+  const rgb = (el, prop) => getComputedStyle(el)[prop].match(/\\d+/g).slice(0, 3).map(Number);
+  const link = document.querySelector('main .mw-prose a');
+  return {
+    theme: root.dataset.bsTheme, choice: root.dataset.mwColorMode,
+    surround: rgb(document.body, 'backgroundColor'),
+    main: rgb(document.querySelector('main'), 'backgroundColor'),
+    link: rgb(link, 'color'),
+  };
+}"""
+
+
+class ColorModeTests(Bs5PageTestCase):
+    """The Color mode toggle and Site branding in each Color mode (BS5-06)."""
+
+    def facts(self, page):
+        return page.evaluate(COLOR_FACTS_JS)
+
+    def wait_theme(self, page, theme):
+        """The system preference's change event arrives on the next rendering step."""
+        page.wait_for_function('(t) => document.documentElement.dataset.bsTheme === t', arg=theme, timeout=3000)
+
+    def choose(self, page, mode):
+        page.locator('#mw-color-mode').click()
+        page.locator('[data-mw-color-mode-value=%s]' % mode).click()
+
+    def test_choosing_dark_applies_at_once_and_is_remembered(self):
+        page = self.open(1280)
+        light = self.facts(page)
+        self.assertEqual((light['theme'], light['choice']), ('light', 'auto'))
+        page.evaluate('window.harnessNoReload = true')
+        self.choose(page, 'dark')
+        dark = self.facts(page)
+        self.assertEqual((dark['theme'], dark['choice']), ('dark', 'dark'))
+        self.assertTrue(page.evaluate('window.harnessNoReload'), 'the page reloaded')
+        self.assertEqual(dark['surround'], light['surround'], 'the Site surround changed with the Color mode')
+        self.assertEqual(dark['surround'], [0x42, 0x41, 0x43])
+        self.assertEqual(dark['main'], list(colors.DARK_BODY_BG))
+
+        cookie = next(c for c in page.context.cookies() if c['name'] == COLOR_MODE_COOKIE)
+        self.assertEqual((cookie['value'], cookie['path'], cookie['sameSite']), ('dark', '/', 'Lax'))
+        from freezegun.api import real_time  # time.time() is frozen here; the browser's is not
+        self.assertAlmostEqual(cookie['expires'] - real_time(), COOKIE_MAX_AGE, delta=3600)
+        self.snap(page, 'color-mode-dark')
+
+        # The server renders the next page dark: no flash.
+        response = page.reload(wait_until='load')
+        self.assertIn('<html lang="en" data-bs-theme="dark" data-mw-color-mode="dark">', response.text())
+        self.assertEqual(self.facts(page)['theme'], 'dark')
+
+    def test_auto_follows_the_system_live(self):
+        page = self.open(1280, color_scheme='dark')
+        self.assertEqual(self.facts(page)['theme'], 'dark')
+        self.assertIn('aria-pressed="true"', page.locator('[data-mw-color-mode-value=auto]').evaluate('e => e.outerHTML'))
+        page.emulate_media(color_scheme='light')
+        self.wait_theme(page, 'light')
+        page.emulate_media(color_scheme='dark')
+        self.wait_theme(page, 'dark')
+        self.snap(page, 'color-mode-auto-dark')
+
+    def test_choosing_auto_follows_the_system(self):
+        page = self.open(1280, color_mode='light', color_scheme='dark')
+        self.assertEqual(self.facts(page)['theme'], 'light')
+        self.choose(page, 'auto')
+        self.assertEqual(self.facts(page)['theme'], 'dark')
+        page.emulate_media(color_scheme='light')
+        self.wait_theme(page, 'light')
+        self.choose(page, 'light')
+        page.emulate_media(color_scheme='dark')
+        page.evaluate('() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))')
+        self.assertEqual(self.facts(page)['theme'], 'light', 'an explicit Light ignores the system')
+
+    def test_keyboard_only(self):
+        page = self.open(1280)
+        toggle = page.locator('#mw-color-mode')
+        self.assertEqual(toggle.get_attribute('aria-label'), 'Colour mode (Auto)')
+        toggle.focus()
+        page.keyboard.press('Enter')
+        page.locator('.mw-color-mode .dropdown-menu.show').wait_for()
+        seen = []
+        for _ in range(3):
+            page.keyboard.press('ArrowDown')
+            seen.append(page.evaluate('document.activeElement.dataset.mwColorModeValue'))
+        self.assertEqual(seen, ['light', 'dark', 'auto'])
+        page.keyboard.press('ArrowUp')
+        self.snap(page, 'color-mode-menu')
+        page.keyboard.press('Enter')
+        self.assertEqual(self.facts(page)['theme'], 'dark')
+        self.assertTrue(page.evaluate('document.activeElement.id === "mw-color-mode"'), 'focus returns to the toggle')
+        self.assertEqual(toggle.get_attribute('aria-label'), 'Colour mode (Dark)')
+        self.assertEqual(page.locator('[aria-pressed=true]').get_attribute('data-mw-color-mode-value'), 'dark')
+        self.assertEqual(toggle.locator('svg').first.get_attribute('class'), 'bi bi-moon-stars-fill')
+        page.keyboard.press('Enter')
+        page.locator('.mw-color-mode .dropdown-menu.show').wait_for()
+        page.keyboard.press('Escape')
+        page.locator('.mw-color-mode .dropdown-menu.show').wait_for(state='detached')
+        self.assertTrue(page.evaluate('document.activeElement.id === "mw-color-mode"'))
+
+    def test_phone_menu_drawer(self):
+        page = self.open(375)
+        self.open_overlay(page, '#mw-menu-btn', '#mw-menu')
+        self.assertIn('Colour mode', page.locator('#mw-menu').inner_text())
+        self.choose(page, 'dark')
+        self.assertEqual(self.facts(page)['theme'], 'dark')
+        self.assertEqual(page.locator('#mw-color-mode').inner_text().strip(), 'Dark')
+        self.snap(page, 'color-mode-drawer')
+
+    def test_dark_site_link_colour_reaches_aa(self):
+        for host, site_colour, surround in (('forum.winslowwheelers.co.uk', '#21201b', '#2c7ede'),
+                                            (manifest.LFGSS, '#1e72c4', '#424143'),
+                                            ('outliers.microcosm.app', '#280fc2', '#171919')):
+            with self.subTest(host=host):
+                page = self.open(1280, host=host, color_mode='dark')
+                facts = self.facts(page)
+                self.assertEqual(facts['theme'], 'dark')
+                self.assertEqual(tuple(facts['link']), colors.dark_link_colours(site_colour, surround)[0])
+                self.assertGreaterEqual(colors.contrast(facts['link'], facts['main']), colors.AA)
+                metabar = colors.dark_panel(tuple(facts['surround']))
+                self.assertGreaterEqual(colors.contrast(facts['link'], metabar), colors.AA)
+
+    def test_light_site_link_colour_is_exact(self):
+        page = self.open(1280, host='lesperitdelbikepacking.microcosm.app', color_mode='light')
+        self.assertEqual(self.facts(page)['link'], [0x51, 0xa9, 0xff])
+
+    def test_lock_stays_light_in_dark(self):
+        page = self.open(1280, color_mode='dark')
+        self.open_overlay(page, '#harness-modal', '#modal-signin')
+        page.locator('#modal-signin .modal-body .btn').click()
+        email = self.wait_for_lock_email(page)
+        self.assertEqual(page.evaluate('getComputedStyle(document.querySelector(".auth0-lock")).colorScheme'), 'light')
+        self.assertEqual(email.evaluate('e => getComputedStyle(e).colorScheme'), 'light')
+        email.click()
+        page.keyboard.type('harness@example.com')
+        self.assertEqual(email.input_value(), 'harness@example.com')
+        widget = page.locator('.auth0-lock .auth0-lock-content, .auth0-lock form').first
+        background = widget.evaluate("""(e) => {
+          for (; e; e = e.parentElement) {
+            const c = getComputedStyle(e).backgroundColor;
+            if (!c.startsWith('rgba(0, 0, 0, 0')) return c.match(/\\d+/g).slice(0, 3).map(Number);
+          }
+        }""")
+        self.assertGreater(colors.luminance(background), .8, 'Lock draws on a light background')
+        self.snap(page, 'color-mode-lock')

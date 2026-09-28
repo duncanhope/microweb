@@ -176,6 +176,11 @@ body {
   --#{$prefix}offcanvas-width: 20rem;
 }
 
+// The Color mode toggle: a check marks the chosen mode in the menu.
+.mw-color-mode .dropdown-item:not(.active) .mw-color-mode-check {
+  visibility: hidden;
+}
+
 .mw-drawer-heading {
   margin-bottom: .5rem;
   font-size: .875rem;
@@ -222,8 +227,9 @@ time {
   }
 }
 
-// Auth0 Lock draws its own light UI and ignores the Color mode.
-.auth0-lock {
+// Auth0 Lock and Leaflet maps draw their own light UI and ignore the Color mode.
+.auth0-lock,
+.leaflet-container {
   color-scheme: light;
 }
 

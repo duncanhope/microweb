@@ -1,8 +1,11 @@
 // Shared behaviour for every Bootstrap 5 page, loaded by core/templates_bs5/base.html.
 // Ported from js/base.js without jQuery or moment.js: relative times on <time>,
 // short stat numbers, code highlighting, the pagination page jump and tooltips.
-// It also loads prettify.js and metabar.js, only on pages that need them.
+// It also loads prettify.js and metabar.js, only on pages that need them, and
+// color-mode.js, the navbar's Color mode toggle, on every page.
 // Bootstrap is the classic-script bundle, so it is window.bootstrap here.
+
+import './color-mode.js';
 
 const { bootstrap } = window;
 const LOCALE = document.documentElement.lang || 'en';

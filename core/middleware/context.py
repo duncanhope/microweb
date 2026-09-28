@@ -11,6 +11,18 @@ from core.api.resources import WhoAmI
 
 logger = logging.getLogger('core.middleware.context')
 
+# The viewer's Color mode (BS5-06), chosen with the navbar toggle and kept in
+# a per-host cookie. Auto follows the system's prefers-color-scheme.
+COLOR_MODE_COOKIE = 'color_mode'
+COLOR_MODES = ('light', 'dark', 'auto')
+DEFAULT_COLOR_MODE = 'auto'
+
+
+def color_mode(request):
+    """The Color mode the request's cookie asks for; anything else is auto."""
+    mode = request.COOKIES.get(COLOR_MODE_COOKIE)
+    return mode if mode in COLOR_MODES else DEFAULT_COLOR_MODE
+
 class ContextMiddleware:
     """
     Provides request context such as the current site and authentication status.
@@ -28,6 +40,7 @@ class ContextMiddleware:
     def process_request(self, request):
         """
         Checks for access_token cookie and appends it to the request object if present.
+        Sets request.color_mode from the color_mode cookie for the templates.
 
         All request objects have a view_requests attribute which is a list of requests
         that will be executed by core.api.fetch to fetch data for the view.
@@ -38,6 +51,7 @@ class ContextMiddleware:
         if request.path == '/health/ready':
             return None
 
+        request.color_mode = color_mode(request)
         request.access_token = None
         request.whoami_url = ''
         request.view_requests = []

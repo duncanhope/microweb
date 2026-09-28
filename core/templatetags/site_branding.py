@@ -2,35 +2,39 @@
 
     {% load site_branding %}
     --bs-link-color-rgb: {{ site.link_color|rgb_triple }};
+    {% with dark=site.link_color|dark_link:site.background_color %}{{ dark.0 }} {{ dark.1 }}{% endwith %}
     <body class="{{ site.background_position|background_class }}">
 
 Bootstrap 5 colours links with rgba(var(--bs-link-color-rgb), ...), so a
 Site's hex link colour has to arrive as an "r, g, b" triple. It is computed
 here, per request, because the colour comes from the API.
 
-Light mode only: the Site's exact colour, as today. Adjusting it for
-contrast in dark mode is the Color mode toggle's job (BS5-06).
+The light Color mode uses the Site's exact colour, as today. The dark one
+uses the colour adjusted to WCAG AA against the dark body and the dark
+metabar over the Site surround, and a hover shade derived from it (the maths
+is in core/colors.py).
 """
-import re
-
 from django import template
 
-register = template.Library()
+from core import colors
 
-_HEX = re.compile(r'^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$')
+register = template.Library()
 
 
 @register.filter
 def rgb_triple(colour):
     """'#4082c3' or '#48a' -> '64, 130, 195'. Anything that is not a 3 or 6
     digit hex colour gives '', so the template can fall back to the default."""
-    match = _HEX.match((colour or '').strip())
-    if not match:
-        return ''
-    digits = match.group(1)
-    if len(digits) == 3:
-        digits = ''.join(c * 2 for c in digits)
-    return ', '.join(str(int(digits[i:i + 2], 16)) for i in (0, 2, 4))
+    rgb = colors.parse_hex(colour)
+    return colors.triple(rgb) if rgb else ''
+
+
+@register.filter
+def dark_link(colour, surround=None):
+    """(link, hover) triples for the dark Color mode, or ('', ''). `surround` is
+    the Site's background colour, which shows through the metabar panel."""
+    pair = colors.dark_link_colours(colour, surround)
+    return tuple(colors.triple(rgb) for rgb in pair) if pair else ('', '')
 
 
 BACKGROUND_CLASSES = {

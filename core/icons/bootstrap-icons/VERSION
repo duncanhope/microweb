@@ -6,3 +6,6 @@ Only the icons Microweb uses are copied here, unmodified. {% icon %}
 (core/templatetags/icon.py) inlines them, so they are not static files. To add
 one, copy icons/<name>.svg from this same release. The sprite-to-icon mapping
 is in .scratch/bootstrap5/issues/13-icons.md.
+
+Added for the Color mode toggle (BS5-06): sun-fill, moon-stars-fill,
+circle-half, check2.

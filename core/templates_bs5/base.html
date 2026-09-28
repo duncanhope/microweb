@@ -3,12 +3,31 @@
 The Bootstrap 5 base (docs/bootstrap5-plan.md, BS5-05). Same blocks as the
 Bootstrap 3 base: title, description, css, content, sidebar, js.
 Styles: core/static/themes/1/scss/_base.scss. Scripts: core/static/js/bs5/.
-The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
+
+Color mode (BS5-06): data-mw-color-mode is the viewer's choice from the
+color_mode cookie (light, dark or auto; core/context_processors.py);
+data-bs-theme is what Bootstrap renders. An explicit choice is rendered here.
+Auto starts light and the head script below switches it before first paint,
+as Bootstrap's docs do.
 {% endcomment %}
-<html lang="en" data-bs-theme="light">
+<html lang="en" data-bs-theme="{% if color_mode == 'dark' %}dark{% else %}light{% endif %}" data-mw-color-mode="{{ color_mode }}">
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		{# Auto follows the system: set before first paint, and again on every change. js/bs5/color-mode.js wires the toggle and calls mwApplyColorMode after a choice. #}
+		<script>
+		(() => {
+			const root = document.documentElement;
+			const dark = matchMedia('(prefers-color-scheme: dark)');
+			const apply = () => {
+				const mode = root.dataset.mwColorMode;
+				root.dataset.bsTheme = mode === 'auto' ? (dark.matches ? 'dark' : 'light') : mode;
+			};
+			apply();
+			dark.addEventListener('change', apply);
+			window.mwApplyColorMode = apply;
+		})();
+		</script>
 		<title>{% block title %}{% endblock %}</title>
 		<meta name="Description" content="{% block description %}{% endblock %}">
 		<meta name="referrer" content="origin">
@@ -18,18 +37,27 @@ The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
 		<link rel="icon" href="{% if site.favicon_url %}{{ site.favicon_url }}{% else %}{% static 'img/favico.png' %}{% endif %}">
 		<meta name="subdomain" content="https://{{ site.subdomain_key }}.microcosm.app">
 
-		{# Site branding, as variables only. _base.scss applies them. #}
+		{# Site branding, as variables only. _base.scss applies them. The surround is the same in every Color mode; only the link colour changes. #}
 		<style id="site-style">
 		:root {
-			{% with link=site.link_color|rgb_triple %}{% if link %}{# Hover keeps the colour and adds the underline, as today. #}
-			--bs-link-color: rgb({{ link }});
-			--bs-link-hover-color: rgb({{ link }});
-			--bs-link-color-rgb: {{ link }};
-			--bs-link-hover-color-rgb: {{ link }};{% endif %}{% endwith %}
 			{% if site.background_color %}--mw-site-bg-color: {{ site.background_color }};{% endif %}
 			{% if site.background_url %}--mw-site-bg-image: url('{{ site.background_url }}');
 			--mw-site-bg-position: {{ site.background_position|default:'center' }};{% endif %}
 		}
+		{% with link=site.link_color|rgb_triple %}{% if link %}{# Light: the Site's exact colour; hover keeps it and adds the underline, as today. #}
+		:root, [data-bs-theme=light] {
+			--bs-link-color: rgb({{ link }});
+			--bs-link-hover-color: rgb({{ link }});
+			--bs-link-color-rgb: {{ link }};
+			--bs-link-hover-color-rgb: {{ link }};
+		}
+		{% with dark=site.link_color|dark_link:site.background_color %}{# Dark: adjusted to WCAG AA on the dark body and the dark metabar (core/colors.py). #}
+		[data-bs-theme=dark] {
+			--bs-link-color: rgb({{ dark.0 }});
+			--bs-link-hover-color: rgb({{ dark.1 }});
+			--bs-link-color-rgb: {{ dark.0 }};
+			--bs-link-hover-color-rgb: {{ dark.1 }};
+		}{% endwith %}{% endif %}{% endwith %}
 		</style>
 		{% block css %}{% endblock %}
 	</head>
@@ -81,7 +109,7 @@ The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
 							{% endif %}
 						</div>
 
-						<form class="order-md-last ms-md-auto mb-3 mb-md-0 mw-search" role="search" action="{% url 'single-search' %}">
+						<form class="order-md-last mb-3 mb-md-0 mw-search" role="search" action="{% url 'single-search' %}">
 							<div class="input-group">
 								<input type="search" id="navbar-search-input" class="form-control" name="q" placeholder="Search" aria-label="Search"{% if content.query.q and not site_section == 'today' %} value="{{ content.query.q }}"{% endif %}>
 								{% if not content.query or site_section == 'today' %}<input type="hidden" name="defaults" value="true">{% endif %}
@@ -110,6 +138,8 @@ The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
 							</li>
 							{% endif %}
 						</ul>
+
+						{% include "base_color_mode.html" %}
 
 						{% if user %}
 						<div class="d-md-none mt-3">
@@ -193,6 +223,7 @@ The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
 		{# jQuery stays as a safety net until every family is ported (ticket 11); the bs5 modules never use it. #}
 		<script src="{% static '3rd/jquery/1.10.2/jquery.min.js' %}"></script>
 		<script src="{% static '3rd/bootstrap/5.3.8/bootstrap.bundle.min.js' %}"></script>
+		<link rel="modulepreload" href="{% static 'js/bs5/color-mode.js' %}">
 		<script type="module" src="{% static 'js/bs5/base.js' %}"></script>
 
 		{% if site.auth0_domain and site.auth0_client_id %}

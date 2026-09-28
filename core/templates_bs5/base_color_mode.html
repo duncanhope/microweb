@@ -1,0 +1,22 @@
+{% load icon %}{% comment %}
+The Color mode toggle (BS5-06), in the navigation row left of the search and
+in the phone menu drawer: an icon button opening a Light / Dark / Auto menu,
+Bootstrap's docs pattern. color_mode and color_modes come from
+core/context_processors.py; js/bs5/color-mode.js handles a new choice.
+{% endcomment %}
+<p class="mw-drawer-heading d-md-none mt-3">Colour mode</p>
+<ul class="navbar-nav ms-md-auto mw-color-mode">
+	<li class="nav-item dropdown">
+		{% for mode in color_modes %}{% if mode.chosen %}
+		<button type="button" id="mw-color-mode" class="nav-link dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" aria-label="Colour mode ({{ mode.name }})">
+			<span class="mw-color-mode-current">{% icon mode.icon %}</span>
+			<span class="d-md-none mw-color-mode-text">{{ mode.name }}</span>
+		</button>
+		{% endif %}{% endfor %}
+		<ul class="dropdown-menu dropdown-menu-md-end">
+			{% for mode in color_modes %}
+			<li><button type="button" class="dropdown-item d-flex align-items-center gap-2{% if mode.chosen %} active{% endif %}" data-mw-color-mode-value="{{ mode.value }}" aria-pressed="{{ mode.chosen|yesno:'true,false' }}">{% icon mode.icon %} {{ mode.name }} {% icon "check2" class="ms-auto mw-color-mode-check" %}</button></li>
+			{% endfor %}
+		</ul>
+	</li>
+</ul>
