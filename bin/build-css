@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""Compile core/static/themes/1/scss/site.scss to themes/1/css/bs5.min.css.
+
+Run it after editing any .scss file, then commit the sources and the CSS
+together; core/tests/test_css_fresh.py fails until you do.
+
+The first run downloads a pinned standalone Dart Sass (no Node) into the
+gitignored .cache/ folder and checks its SHA-256. Dart Sass stays on 1.x:
+Bootstrap 5.3 uses @import, which Dart Sass 3 removes.
+"""
+import gzip
+import hashlib
+import io
+import platform
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import urllib.request
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+from core.sass_sources import ENTRY_POINT, LOAD_PATH, OUTPUT, header, source_hash  # noqa: E402
+
+SASS_VERSION = '1.105.0'
+SASS_URL = 'https://github.com/sass/dart-sass/releases/download/{v}/dart-sass-{v}-{p}.tar.gz'
+SASS_SHA256 = {
+    'linux-x64': '2620fa32fdc09411469539e3b678a31a4f164ed704aaee9f8f1ab664dbaa153b',
+    'linux-arm64': 'b7e4f1e19a91afd35cedadb8b814ee24627a96af9777632040fd3719c2fa43d7',
+    'macos-x64': 'ee5450c30a61bb2d76bded04101fe0e35fcfe2a183b33ec91300173c5267a0fa',
+    'macos-arm64': '4f372dfd8c843557bff40112e4a2a049cad4c183dbe8552bc8c58ea9c31ed2b8',
+}
+
+# Bootstrap 5.3.8 predates these deprecations. --quiet-deps hides them for
+# files reached through the load path; the list also covers site.scss's own
+# @import of Bootstrap.
+SILENCED_DEPRECATIONS = 'import,global-builtin,color-functions,if-function'
+
+
+def sass_platform():
+    system = {'linux': 'linux', 'darwin': 'macos'}.get(sys.platform)
+    machine = {'x86_64': 'x64', 'amd64': 'x64', 'aarch64': 'arm64', 'arm64': 'arm64'}.get(
+        platform.machine().lower())
+    name = '%s-%s' % (system, machine)
+    if name not in SASS_SHA256:
+        sys.exit('bin/build-css: no pinned Dart Sass for %s %s' % (sys.platform, platform.machine()))
+    return name
+
+
+def ensure_sass():
+    """Path to the pinned sass executable, downloading it on first use."""
+    name = sass_platform()
+    install_dir = REPO_ROOT / '.cache' / ('dart-sass-%s-%s' % (SASS_VERSION, name))
+    executable = install_dir / 'dart-sass' / 'sass'
+    if executable.exists():
+        return executable
+
+    url = SASS_URL.format(v=SASS_VERSION, p=name)
+    print('Downloading %s' % url)
+    with urllib.request.urlopen(url) as response:
+        tarball = response.read()
+    digest = hashlib.sha256(tarball).hexdigest()
+    if digest != SASS_SHA256[name]:
+        sys.exit('bin/build-css: checksum mismatch for %s\n  expected %s\n  got      %s'
+                 % (url, SASS_SHA256[name], digest))
+
+    # Unpack beside the final folder and rename, so an interrupted run never
+    # leaves a half-extracted install that looks complete.
+    install_dir.parent.mkdir(exist_ok=True)
+    staging = Path(tempfile.mkdtemp(dir=install_dir.parent))
+    with tarfile.open(fileobj=io.BytesIO(tarball), mode='r:gz') as tar:
+        tar.extractall(staging, filter='data')
+    staging.rename(install_dir)
+    return executable
+
+
+def compile_css(sass):
+    result = subprocess.run(
+        [
+            str(sass),
+            '--load-path=%s' % LOAD_PATH,
+            '--style=compressed',
+            '--no-source-map',
+            '--quiet-deps',
+            '--silence-deprecation=%s' % SILENCED_DEPRECATIONS,
+            ENTRY_POINT,
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    sys.stderr.write(result.stderr)
+    if result.returncode != 0:
+        sys.exit('bin/build-css: sass failed (exit %d)' % result.returncode)
+    return result.stdout.strip()
+
+
+def main():
+    started = time.monotonic()
+    sass = ensure_sass()
+    digest = source_hash()
+    body = compile_css(sass)
+    # Sass marks non-ASCII output (Bootstrap's blockquote dash) with a UTF-8
+    # byte order mark, which only counts at the very start of the file.
+    bom = '\ufeff' if body.startswith('\ufeff') else ''
+    css = '%s%s\n%s\n' % (bom, header(digest, SASS_VERSION), body.lstrip('\ufeff'))
+
+    (REPO_ROOT / OUTPUT).write_text(css, encoding='utf-8')
+
+    data = css.encode('utf-8')
+    print('Wrote %s (%.1f KB, %.1f KB gzipped) in %.2fs'
+          % (OUTPUT, len(data) / 1024, len(gzip.compress(data, 9)) / 1024,
+             time.monotonic() - started))
+    print('Sass sources sha256: %s' % digest)
+
+
+if __name__ == '__main__':
+    main()

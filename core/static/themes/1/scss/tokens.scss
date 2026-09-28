@@ -1,0 +1,30 @@
+// Today's Bootstrap 3 palette and type, expressed as Bootstrap 5 Sass
+// variables. This is everything a maintainer owns for light and dark: Bootstrap
+// derives the rest (shades, tints, dark-mode colours, contrast text).
+// After editing, run bin/build-css and commit the rebuilt CSS.
+// Needs bootstrap/functions imported first, for tint-color().
+
+$primary:   #4082c3;
+$success:   #588039;
+$info:      #5bc0de;
+$warning:   #f0ad4e;
+$danger:    #d9534f;
+
+$body-color: #00000f;
+$link-hover-color: #2c5c8b;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+$font-family-sans-serif: "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+$font-size-base: 1.25rem;          // today's 20px body text
+$headings-font-weight: 600;
+$btn-font-weight: 600;
+$input-btn-font-size: 1rem;        // today's 16px controls
+$border-radius: .25rem;
+
+// Dark mode: Bootstrap derives most of it from $primary etc.; only the link needs care.
+$link-color-dark: tint-color($primary, 40%);
+
+// Color modes switch on the data-bs-theme attribute ([data-bs-theme=dark]).
+// This is Bootstrap's default, stated here because the Color mode toggle relies on it.
+$color-mode-type: data;

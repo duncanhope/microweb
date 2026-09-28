@@ -1,0 +1,8 @@
+Bootstrap Icons 1.13.1
+https://github.com/twbs/icons/releases/tag/v1.13.1 (npm: bootstrap-icons@1.13.1, icons/*.svg)
+MIT licence, Copyright (c) 2019-2024 The Bootstrap Authors. Full text in LICENSE.
+
+Only the icons Microweb uses are copied here, unmodified. {% icon %}
+(core/templatetags/icon.py) inlines them, so they are not static files. To add
+one, copy icons/<name>.svg from this same release. The sprite-to-icon mapping
+is in .scratch/bootstrap5/issues/13-icons.md.

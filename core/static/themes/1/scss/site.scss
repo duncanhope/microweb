@@ -1,0 +1,7 @@
+// Entry point for core/static/themes/1/css/bs5.min.css. Build with bin/build-css.
+// "bootstrap/..." resolves against core/static/scss/vendor/ (Bootstrap 5.3.8).
+
+@import "bootstrap/functions";
+@import "tokens";
+@import "bootstrap/bootstrap";
+@import "fonts";

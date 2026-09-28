@@ -15,3 +15,6 @@ newrelic.ini
 local_settings.py
 newrelic.ini
 microweb/local_settings.py
+
+# Tools downloaded by bin/build-css (pinned Dart Sass).
+.cache/
