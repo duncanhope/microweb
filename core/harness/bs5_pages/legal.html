@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% comment %}
+HARNESS ONLY, never served: a stand-in Bootstrap 5 page for checking the base
+before any family migrates (BS5-05). base_browser_tests.py renders
+/about/terms/ with it; to screenshot the base with `manage.py shoot`, copy it
+to core/templates_bs5/legal.html locally and do not commit the copy. The
+legal family's real page replaces it in BS5-15.
+{% endcomment %}
+
+{% block title %}Terms of Use | About{% endblock title %}
+
+{% block description %}This document describes the general terms of use of the forum.{% endblock description %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb small">
+		<li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'list-legal' %}">About</a></li>
+	</ol>
+</nav>
+
+<div class="mw-prose">
+	{{ content.html|safe }}
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<h2 class="h6 text-body-secondary">Terms of Use</h2>
+<p>This document describes the general terms of use of the forum.</p>
+
+<h2 class="h6 text-body-secondary mt-4">Base checks</h2>
+<ul class="list-unstyled" id="harness-checks">
+	<li>Posted <time id="harness-time" datetime="2009-01-18T12:00:00Z">Sun 18th, January 2009</time></li>
+	<li><time class="plain" id="harness-time-plain" datetime="2009-01-18T12:00:00Z">18 Jan 2009</time></li>
+	<li><span stat="1234567">1,234,567</span> comments</li>
+	<li><a href="{% url 'list-profiles' %}" id="harness-tooltip" data-bs-toggle="tooltip" title="A Bootstrap 5 tooltip">Hover for a tooltip</a></li>
+	{% if not user %}<li><button type="button" id="harness-modal" class="btn mw-btn btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#modal-signin">Open the sign-in modal</button></li>{% endif %}
+</ul>
+<form name="paginationByOffset" method="GET" data-initial="1" data-limit="25" data-max="10" class="d-flex align-items-center gap-2 small">
+	Page <input type="text" value="1" class="form-control form-control-sm w-auto" size="3" aria-label="Page"> of 10
+	<input name="offset" type="hidden">
+</form>
+<div data-mw-subscribe data-url="{% url 'single-watcher' %}" data-item-type="conversation" data-item-id="141600" data-update-type="1" data-subscribed="false" class="mt-3 small">
+	{% csrf_token %}
+	<button type="button" class="btn mw-btn btn-sm" data-mw-subscribe-toggle>Follow</button>
+	<label class="ms-2"><input type="checkbox" name="emailme"> Notify me by email</label>
+</div>
+<pre class="mt-3" lang="py"><code>print("prettify")</code></pre>
+{% endblock %}

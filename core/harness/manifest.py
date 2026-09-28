@@ -66,6 +66,13 @@ PAGES = [
     Page('huddles', LFGSS, '/huddles/%d/' % HARNESS_HUDDLE_ID, 'huddle-self', 'the harness user\'s huddle with itself', signed_in=True),
     Page('profiles', LFGSS, '/profiles/%d/edit/' % HARNESS_PROFILE_ID, 'profile-edit', 'profile edit form', signed_in=True),
     Page('activity', LFGSS, '/updates/', 'updates', 'following, signed in', signed_in=True, rows=LIST_ROWS),
+    # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
+    # Bootstrap 3 on both sides; a local scratch copy of legal.html in
+    # core/templates_bs5/ puts the new base under them. The browser checks in
+    # core/harness/base_browser_tests.py bring their own page.
+    Page('base', LFGSS, '/about/terms/', 'base-guest', 'the base as a guest: header, navbar, footer, drawers'),
+    Page('base', LFGSS, '/about/terms/', 'base-member', 'the base signed in: account box, messages badge', signed_in=True),
+    Page('base', 'forum.espruino.com', '/about/terms/', 'base-espruino', 'the base under a background image, link #4898AC'),
 ]
 
 # URLs the interaction checks visit beyond PAGES. `shoot --record` fetches

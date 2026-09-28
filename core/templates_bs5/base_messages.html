@@ -1,0 +1,1 @@
+{% load icon %}{# The Messages envelope, with the unread count in a badge when there is one. #}{% if user.meta.stats.unreadHuddles > 0 %}<span class="badge text-bg-warning">{{ user.meta.stats.unreadHuddles }} {% icon "envelope" %}<span class="visually-hidden"> unread</span></span>{% else %}{% icon "envelope" %}{% endif %}

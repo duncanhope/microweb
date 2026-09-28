@@ -1,0 +1,2 @@
+{# The signed-in user's avatar, for the Bootstrap 5 base's account box and menu drawer. #}
+<img src="{% if 'gravatar' in user.avatar %}{{ user.avatar }}{% elif 'files' in user.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ user.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="32" height="32" class="rounded object-fit-cover">

@@ -405,7 +405,7 @@ class Command(BaseCommand):
                     await page.evaluate(SETTLE_JS)
                     await page.wait_for_timeout(opts['settle'])
                     if page_def.action == 'modal-signin':
-                        await page.locator('[data-target="#modal-signin"]').first.click()
+                        await page.locator('[data-target="#modal-signin"], [data-bs-target="#modal-signin"]').first.click()
                         await page.wait_for_timeout(800)
                     shot.update(await page.evaluate(METRICS_JS, page_def.rows or None))
                     rel = os.path.join('shots', page_def.label, '%d-%s-%s.png' % (width, mode, name))

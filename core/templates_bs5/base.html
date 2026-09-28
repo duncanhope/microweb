@@ -1,0 +1,252 @@
+{% load static icon site_branding %}<!DOCTYPE html>
+{% comment %}
+The Bootstrap 5 base (docs/bootstrap5-plan.md, BS5-05). Same blocks as the
+Bootstrap 3 base: title, description, css, content, sidebar, js.
+Styles: core/static/themes/1/scss/_base.scss. Scripts: core/static/js/bs5/.
+The Color mode toggle (BS5-06) replaces the fixed data-bs-theme below.
+{% endcomment %}
+<html lang="en" data-bs-theme="light">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>{% block title %}{% endblock %}</title>
+		<meta name="Description" content="{% block description %}{% endblock %}">
+		<meta name="referrer" content="origin">
+
+		<link rel="preconnect" href="https://{{ site.subdomain_key }}.microcosm.app">
+		<link rel="stylesheet" href="{% static 'themes/' %}{{ site.theme_id|default:'1' }}/css/bs5.min.css">
+		<link rel="icon" href="{% if site.favicon_url %}{{ site.favicon_url }}{% else %}{% static 'img/favico.png' %}{% endif %}">
+		<meta name="subdomain" content="https://{{ site.subdomain_key }}.microcosm.app">
+
+		{# Site branding, as variables only. _base.scss applies them. #}
+		<style id="site-style">
+		:root {
+			{% with link=site.link_color|rgb_triple %}{% if link %}{# Hover keeps the colour and adds the underline, as today. #}
+			--bs-link-color: rgb({{ link }});
+			--bs-link-hover-color: rgb({{ link }});
+			--bs-link-color-rgb: {{ link }};
+			--bs-link-hover-color-rgb: {{ link }};{% endif %}{% endwith %}
+			{% if site.background_color %}--mw-site-bg-color: {{ site.background_color }};{% endif %}
+			{% if site.background_url %}--mw-site-bg-image: url('{{ site.background_url }}');
+			--mw-site-bg-position: {{ site.background_position|default:'center' }};{% endif %}
+		}
+		</style>
+		{% block css %}{% endblock %}
+	</head>
+	<body{% if site.background_url %} class="{{ site.background_position|background_class }}"{% endif %}>
+		<header class="mw-header">
+			<div class="container d-flex align-items-center gap-2">
+				<button type="button" id="mw-menu-btn" class="btn mw-btn mw-drawer-btn d-md-none" data-bs-toggle="offcanvas" data-bs-target="#mw-menu" aria-controls="mw-menu">{% icon "list" label="Menu" %}</button>
+
+				<a href="/" class="mw-logo mx-auto mx-md-0" title="Return to Homepage"><img src="{{ site.logo_url }}" alt="{{ site.title|safe }} - Powered by Microcosm"></a>
+
+				<div class="mw-account d-none d-md-block ms-auto bg-body">
+					{% if user %}
+					<div class="d-flex align-items-center gap-2 p-2">
+						<a href="{% url 'single-profile' user.id %}" class="flex-shrink-0" title="View your profile">{% include "base_avatar.html" %}</a>
+						<div class="flex-grow-1 lh-sm mw-min-w-0">
+							<a href="{% url 'single-profile' user.id %}" id="profile" class="d-block fw-semibold text-truncate link-body-emphasis" title="View your profile">{{ user.profile_name|safe }}</a>
+							<a href="{% url 'edit-profile' user.id %}" id="edit_profile" class="link-secondary">{% icon "pencil" %} Edit profile</a>
+						</div>
+						<button type="button" id="logout" class="btn btn-link link-secondary p-1" onclick="authSignout();" title="Sign out">{% icon "box-arrow-right" label="Sign out" %}</button>
+					</div>
+					<a href="{% url 'list-huddle' %}" class="d-block px-2 py-1 border-top bg-body-tertiary fw-semibold">{% include "base_messages.html" %} Messages</a>
+					{% else %}
+					<div class="p-2">
+						<p class="mb-2">Browsing as <strong>guest</strong>.</p>
+						<button type="button" id="login" class="btn mw-btn btn-sm w-100" onclick="authSignin();">Sign In or Register</button>
+					</div>
+					{% endif %}
+				</div>
+
+				<button type="button" id="mw-metabar-btn" class="btn mw-btn mw-drawer-btn d-lg-none ms-md-2" data-bs-toggle="offcanvas" data-bs-target="#mw-metabar" aria-controls="mw-metabar">{% icon "layout-sidebar-inset-reverse" label="Sidebar" %}</button>
+			</div>
+		</header>
+
+		<div class="container mw-edge">
+			<nav class="navbar navbar-expand-md p-0 mw-nav" aria-label="Main">
+				<div class="offcanvas offcanvas-start mw-drawer" tabindex="-1" id="mw-menu" aria-labelledby="mw-menu-title">
+					<div class="offcanvas-header">
+						<h2 class="offcanvas-title h5" id="mw-menu-title">Menu</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+					</div>
+					<div class="offcanvas-body flex-md-grow-1 align-items-md-center">
+						<div class="d-md-none mb-3">
+							{% if user %}
+							<a href="{% url 'single-profile' user.id %}" class="d-flex align-items-center gap-2 fw-semibold link-body-emphasis">{% include "base_avatar.html" %} {{ user.profile_name|safe }}</a>
+							<a href="{% url 'list-huddle' %}" class="d-block mt-2 fw-semibold">{% include "base_messages.html" %} Messages</a>
+							{% else %}
+							<p class="mw-drawer-heading">Join our community</p>
+							<button type="button" id="loginNavbar" class="btn mw-btn w-100" onclick="authSignin();">Sign in or Register</button>
+							{% endif %}
+						</div>
+
+						<form class="order-md-last ms-md-auto mb-3 mb-md-0 mw-search" role="search" action="{% url 'single-search' %}">
+							<div class="input-group">
+								<input type="search" id="navbar-search-input" class="form-control" name="q" placeholder="Search" aria-label="Search"{% if content.query.q and not site_section == 'today' %} value="{{ content.query.q }}"{% endif %}>
+								{% if not content.query or site_section == 'today' %}<input type="hidden" name="defaults" value="true">{% endif %}
+								<button class="btn mw-btn" type="submit">{% icon "search" label="Search" %}</button>
+							</div>
+						</form>
+
+						<p class="mw-drawer-heading d-md-none">Pages</p>
+						<ul class="navbar-nav">
+							<li class="nav-item"><a class="nav-link{% if not site_section or site_section == 'microcosm' %} active{% endif %}"{% if not site_section or site_section == 'microcosm' %} aria-current="page"{% endif %} href="{% url 'index' %}">Forums</a></li>
+							<li class="nav-item"><a class="nav-link{% if site_section == 'today' %} active{% endif %}"{% if site_section == 'today' %} aria-current="page"{% endif %} href="{% url 'single-today' %}">Today</a></li>
+							<li class="nav-item"><a class="nav-link{% if site_section == 'updates' %} active{% endif %}"{% if site_section == 'updates' %} aria-current="page"{% endif %} href="{% url 'list-updates' %}">Following</a></li>
+							<li class="nav-item"><a class="nav-link{% if site_section == 'people' %} active{% endif %}"{% if site_section == 'people' %} aria-current="page"{% endif %} href="{% url 'list-profiles' %}?top=true">People</a></li>
+							{% if site.subdomain_key == 'lfgss' %}
+							<li class="nav-item"><a class="nav-link" href="https://opencollective.com/microcosm">Donate</a></li>
+							<li class="nav-item"><a class="nav-link" href="https://www.lfgss.com/conversations/172777/">Report</a></li>
+							{% endif %}
+							{% if site.menu|length > 1 %}
+							<li class="nav-item dropdown">
+								<a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">{% if site.subdomain_key == 'one' %}Events{% else %}{{ site.title }}{% endif %}</a>
+								<ul class="dropdown-menu">
+									{% for menu_item in site.menu %}
+									<li><a class="dropdown-item" href="{{ menu_item.href }}"{% if menu_item.title %} title="{{ menu_item.title }}"{% endif %}>{{ menu_item.text }}</a></li>
+									{% endfor %}
+								</ul>
+							</li>
+							{% endif %}
+						</ul>
+
+						{% if user %}
+						<div class="d-md-none mt-3">
+							<p class="mw-drawer-heading">Your account</p>
+							<ul class="navbar-nav">
+								<li class="nav-item"><a class="nav-link" href="{% url 'edit-profile' user.id %}">Edit profile</a></li>
+								<li class="nav-item"><a class="nav-link" href="{% url 'updates-settings' %}">Notification Settings</a></li>
+								<li class="nav-item"><button type="button" id="logoutNavbar" class="nav-link" onclick="authSignout();">Sign out</button></li>
+							</ul>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+			</nav>
+		</div>
+
+		<div class="container mw-edge mt-md-2">
+			<div class="row g-0 mw-panel mw-main">
+				<main class="col-lg-9 bg-body p-3">
+					{% block content %}{% endblock content %}
+				</main>
+				<aside class="col-lg-3 offcanvas-lg offcanvas-end mw-drawer mw-metabar" tabindex="-1" id="mw-metabar" aria-labelledby="mw-metabar-title">
+					<div class="offcanvas-header">
+						<h2 class="offcanvas-title h5" id="mw-metabar-title">Sidebar</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#mw-metabar" aria-label="Close"></button>
+					</div>
+					<div class="offcanvas-body d-block">
+						{% block sidebar %}{% endblock %}
+					</div>
+				</aside>
+			</div>
+		</div>
+
+		<footer class="container mw-edge my-md-3">
+			<div class="mw-panel mw-footer text-center text-body-secondary px-3 py-2">
+				<ul class="list-inline mb-1">
+					<li class="list-inline-item"><a href="{% url 'index' %}">Forums</a></li>
+					<li class="list-inline-item"><a href="{% url 'single-today' %}">Today</a></li>
+					<li class="list-inline-item"><a href="{% url 'list-updates' %}">Following</a></li>
+					<li class="list-inline-item"><a href="{% url 'list-profiles' %}?top=true">People</a></li>
+					<li class="list-inline-item"><a href="#top">Top</a></li>
+				</ul>
+				<hr class="my-1">
+				<p class="mb-0">&copy; {{ site.title }}, powered by <a href="http://microcosm.app/">microcosm</a>.</p>
+				<p class="mb-0">
+					<a class="link-secondary me-2" href="{% url 'list-legal' %}">About</a>
+					<a class="link-secondary me-2" href="{% url 'single-legal' 'terms' %}">Terms of Use</a>
+					<a class="link-secondary me-2" href="{% url 'single-legal' 'privacy' %}">Privacy Policy</a>
+					<a class="link-secondary me-2" href="{% url 'single-legal' 'cookies' %}">Cookie Policy</a>
+					<a class="link-secondary" href="mailto:support@microcosm.cc">Report a problem</a>
+				</p>
+			</div>
+		</footer>
+
+		{% if not user %}
+		<div id="modal-signin" class="modal fade" tabindex="-1" aria-labelledby="modal-signin-title" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header justify-content-center position-relative mw-surround">
+						<img src="{{ site.logo_url }}" alt="{{ site.title|safe }} - Powered by Microcosm" class="mw-logo-sm">
+						<button type="button" class="btn-close position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body text-center">
+						<h2 class="h4" id="modal-signin-title">{{ site.title|safe }}</h2>
+						<div class="text-body-secondary">{{ site.description|safe }}</div>
+						<button type="button" class="btn mw-btn px-3 py-2 mt-4 mb-2" onclick="authSignin();">Sign in or Register to continue</button>
+					</div>
+					<div class="modal-footer justify-content-center small">
+						<p class="mb-0">&copy; {{ site.title }}, powered by <a href="http://microcosm.app/">microcosm</a>.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		{% endif %}
+
+		{# Signout form is universal to all auth methods #}
+		<form id="signout-form" class="d-none" method="POST" action="{% url 'logout' %}">
+			{% csrf_token %}
+		</form>
+
+		{# jQuery stays as a safety net until every family is ported (ticket 11); the bs5 modules never use it. #}
+		<script src="{% static '3rd/jquery/1.10.2/jquery.min.js' %}"></script>
+		<script src="{% static '3rd/bootstrap/5.3.8/bootstrap.bundle.min.js' %}"></script>
+		<script type="module" src="{% static 'js/bs5/base.js' %}"></script>
+
+		{% if site.auth0_domain and site.auth0_client_id %}
+			{% if not user %}
+				<script src="{% static '3rd/auth0/lock-passwordless/2.2.3/lock-passwordless.min.js' %}"></script>
+				<script>
+				function auth0signin() {
+					var domain = '{{ site.auth0_domain }}';
+					var clientID = '{{ site.auth0_client_id }}';
+					var opt = {
+						autoclose: true,
+						{% if site.auth0_domain == "rapha.auth0.com" %}{% else %}connections: [{% if site.auth0_domain == "espruino.eu.auth0.com" %}'google-oauth2','github'{% else %}'google-oauth2','windowslive'{% endif %}],{% endif %}
+						dict: {
+							title: 'Sign in'
+						},
+						icon: '{{ site.logo_url }}',
+						defaultLocation: 'GB',
+						focusInput: false,
+						popup: false,
+						primaryColor: '{{ site.link_color }}',
+						socialBigButtons: true,
+						authParams: {
+							state: '{{ request.get_full_path }}'
+						},
+						callbackURL: '{{ site.site_url }}/auth0login/',
+						responseType: 'code'
+					};
+					var lock = new Auth0LockPasswordless(clientID, domain);
+					{% if site.auth0_domain == "rapha.auth0.com" %}lock.emailcode(opt);{% else %}lock.socialOrEmailcode(opt);{% endif %}
+				}
+				// Bootstrap 5's modal traps focus, which would stop typing in Lock, so
+				// close #modal-signin first and open Lock once it has gone (ticket 10).
+				// The listener goes on before hide(): without .fade the event fires inside hide().
+				function authSignin() {
+					var modal = document.getElementById('modal-signin');
+					if (modal && modal.classList.contains('show')) {
+						modal.addEventListener('hidden.bs.modal', function () { auth0signin(); }, { once: true });
+						bootstrap.Modal.getOrCreateInstance(modal).hide();
+					} else {
+						auth0signin();
+					}
+				}
+				</script>
+			{% else %}
+				<script>
+				function authSignout() {
+					document.getElementById('signout-form').submit();
+				}
+				</script>
+			{% endif %}
+		{% endif %}
+
+{% block js %}{% endblock js %}
+
+{% if site.subdomain_key == "espruino" %}<script src="//www.espruino.com/js/forum.js" async></script>{% endif %}
+	</body>
+</html>
