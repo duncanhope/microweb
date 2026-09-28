@@ -41,3 +41,11 @@ This project is the server-rendered Django web client for the Microcosm forum pl
 **Legal** — Site-configurable policy documents (terms of service, privacy policy, acceptable use, etc.).
 
 **Attachment** — A file uploaded to a Comment or other resource.
+
+## Presentation
+
+**Color mode** — A viewer-facing palette the whole page renders in, such as light or dark. Chosen by the viewer or their system, not by the Site. Custom modes beyond light and dark (for example high contrast) are further Color modes. _Avoid_: theme, colour scheme.
+
+**Site branding** — A Site's own visual identity: logo, favicon, link colour, background colour, and background image with its position. The same in every Color mode; only the link colour may be adjusted so it stays readable. _Avoid_: site style, theme.
+
+**Site theme** — The stylesheet set a Site is assigned by its `themeId`. Distinct from Color mode and from Site branding. _Avoid_: using "theme" alone.
