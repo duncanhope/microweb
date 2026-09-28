@@ -5,7 +5,7 @@ import logging
 from django.urls import reverse
 from django.conf import settings
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from core.framework import render
 
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_http_methods

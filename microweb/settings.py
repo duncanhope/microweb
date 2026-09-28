@@ -56,7 +56,25 @@ TEMPLATES = [
             ],
         },
     },
+    # Bootstrap 5 migration (docs/bootstrap5-plan.md). core/framework.py picks
+    # this engine for a page whose template exists in BS5_TEMPLATE_DIR; its
+    # includes resolve there first and fall back to the Bootstrap 3 templates.
+    # Removed in BS5-18, when core/templates_bs5/ becomes core/templates/.
+    {
+        'NAME': 'bs5',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(os.path.dirname(PROJECT_ROOT), 'core', 'templates_bs5')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.template.context_processors.static',
+            ],
+        },
+    },
 ]
+
+BS5_TEMPLATE_DIR = TEMPLATES[1]['DIRS'][0]
 
 MIDDLEWARE = [
     # Static file serving

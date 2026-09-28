@@ -24,9 +24,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 
 from django.shortcuts import redirect
-from django.shortcuts import render
+from core.framework import get_template
+from core.framework import render
 
-from django.template import loader
 
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -299,12 +299,12 @@ class ErrorView(object):
     @staticmethod
     def not_found(request, exception=None):
         view_data = build_error_view_data(request, include_user=True)
-        return HttpResponseNotFound(loader.get_template('404.html').render(view_data, request))
+        return HttpResponseNotFound(get_template(request, '404.html').render(view_data, request))
 
     @staticmethod
     def forbidden(request, exception=None):
         view_data = build_error_view_data(request, include_user=True)
-        return HttpResponseForbidden(loader.get_template('403.html').render(view_data, request))
+        return HttpResponseForbidden(get_template(request, '403.html').render(view_data, request))
 
     @staticmethod
     def server_error(request, exception=None):
@@ -315,14 +315,14 @@ class ErrorView(object):
             if 'errorDetail' in exception.detail:
                 view_data['detail'] = exception.detail['errorDetail']
 
-        return HttpResponseServerError(loader.get_template('500.html').render(view_data, request))
+        return HttpResponseServerError(get_template(request, '500.html').render(view_data, request))
 
     @staticmethod
     def requires_login(request):
         view_data = build_error_view_data(request)
         view_data['logout'] = True
 
-        return HttpResponseForbidden(loader.get_template('403.html').render(view_data, request))
+        return HttpResponseForbidden(get_template(request, '403.html').render(view_data, request))
 
 class AuthenticationView(object):
 

@@ -51,7 +51,22 @@ TEMPLATES = [
             ],
         },
     },
+    # Bootstrap 5 migration engine; mirrors microweb/settings.py.
+    {
+        'NAME': 'bs5',
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(os.path.dirname(PROJECT_ROOT), 'core', 'templates_bs5')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.template.context_processors.static',
+            ],
+        },
+    },
 ]
+
+BS5_TEMPLATE_DIR = TEMPLATES[1]['DIRS'][0]
 
 MIDDLEWARE = [
     # Note: if using messages, enable the sessions middleware too

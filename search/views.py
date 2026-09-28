@@ -2,8 +2,10 @@ from core.api import fetch
 import logging
 
 from django.http import HttpResponseBadRequest
-from django.shortcuts import render
 from django.conf import settings
+
+from core.framework import render
+
 from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_safe
 

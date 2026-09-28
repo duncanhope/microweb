@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from django.http import HttpResponseRedirect
 
-from django.shortcuts import render
+from core.framework import render
 
 from django.conf import settings
 from django.views.decorators.cache import cache_control

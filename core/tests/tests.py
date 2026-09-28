@@ -265,7 +265,7 @@ class ErrorHandlingTests(unittest.TestCase):
 
         assert response.status_code == 404
 
-    @patch('core.views.loader.get_template')
+    @patch('core.views.get_template')
     @patch('core.views.Site.build_request')
     def testServerErrorDoesNotRecurseOnUnknownHost(self, mock_build_request, mock_get_template):
         request = self.factory.get('/', HTTP_HOST='139.162.251.45')
