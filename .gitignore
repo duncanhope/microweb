@@ -18,3 +18,7 @@ microweb/local_settings.py
 
 # Tools downloaded by bin/build-css (pinned Dart Sass).
 .cache/
+
+# Visual harness output: fixtures, HARs, screenshots, contact sheets.
+# Holds member content and private huddles; never commit it.
+.harness/

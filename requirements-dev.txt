@@ -1,0 +1,5 @@
+# Development-only tools: the visual harness (manage.py shoot) and the
+# browser-tagged interaction checks (manage.py test --tag browser).
+# After installing, fetch the browser with: python -m playwright install chromium
+playwright==1.63.*
+freezegun==1.5.*

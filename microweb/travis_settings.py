@@ -90,13 +90,16 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'microweb.urls'
 
+# Leaves the Playwright checks (tag 'browser') out unless --tag browser.
+TEST_RUNNER = 'core.test_runner.MicrowebTestRunner'
+
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'microweb.wsgi.application'
 
 INSTALLED_APPS = (
     'django.contrib.humanize',
     'django.contrib.staticfiles',
-    'core',
+    'core.apps.CoreConfig',
     'conversations',
     'events',
     'microcosms',
