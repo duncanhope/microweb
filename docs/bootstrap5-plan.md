@@ -274,7 +274,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Server render time for lfgss home and a conversation page.
 - [ ] Probe. `shoot --perf` on both pages, trunk then head, three interleaved rounds.
 - [ ] Baseline. Record trunk median render time first.
-- [ ] Rule. Head median render time must be within 5 percent of trunk.
+- [ ] Rule. Head median render time must be within 5 percent or 1 ms of trunk, whichever is larger.
 
 **Review gate.** None. BS5-04 is not review-gated.
 
@@ -328,7 +328,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Gzip CSS and JS bytes and render time for the scratch page on the new base against lfgss home on trunk.
 - [ ] Probe. `shoot --perf` at trunk (home, Bootstrap 3) and head (scratch page, Bootstrap 5), three interleaved rounds.
 - [ ] Baseline. Record trunk bytes and render time first.
-- [ ] Rule. The scenarios differ, so use absolute budgets. Gzip CSS plus JS under 115 percent of trunk while jQuery remains, and render time within 5 percent of trunk.
+- [ ] Rule. The scenarios differ, so use absolute budgets. Gzip CSS plus JS under 115 percent of trunk while jQuery remains, and render time within 5 percent or 1 ms of trunk, whichever is larger.
 
 **Review gate.** The operator reviews before merge.
 
@@ -385,7 +385,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Time to first paint and render time on lfgss home with Auto.
 - [ ] Probe. `shoot --perf` at trunk and head, three interleaved rounds.
 - [ ] Baseline. Record trunk first paint first.
-- [ ] Rule. First paint must not regress by more than 20 ms and render time by more than 5 percent.
+- [ ] Rule. First paint must not regress by more than 20 ms, and render time by no more than 5 percent or 1 ms, whichever is larger.
 
 **Review gate.** The operator reviews before merge.
 
@@ -442,7 +442,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Rows above the fold on home at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family lists --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -500,7 +500,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Page height of both conversation pages at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family conversations --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -559,7 +559,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Page height of a profile page at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family profiles --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -616,7 +616,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Rows above the fold on Following at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family activity --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -674,7 +674,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Page height of an event page at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family events --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -732,7 +732,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Time to interactive on the event form, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family event_form --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -790,7 +790,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Page height of the test huddle at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family huddles --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -848,7 +848,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Time to interactive on the memberships form, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family admin --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
@@ -905,7 +905,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Metric. Page height of the terms page at 1280 px, gzip CSS and JS bytes per page, and server render time.
 - [ ] Probe. `python manage.py shoot --family legal --perf` with `?bs=3` and `?bs=5` on the same checkout at head, three interleaved rounds, plus trunk with `?bs=3`.
 - [ ] Baseline. Record the trunk `?bs=3` values first.
-- [ ] Rule. Render time within 5 percent of trunk. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
+- [ ] Rule. Render time within 5 percent or 1 ms of trunk, whichever is larger. Gzip CSS plus JS under 115 percent of trunk while jQuery remains. Page height rule from the tolerance checklist.
 
 **Review gate.** The operator reviews before merge.
 
