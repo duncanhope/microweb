@@ -8,7 +8,7 @@ BS5-01, BS5-02, BS5-03, BS5-04, BS5-05, BS5-06, BS5-07, BS5-08, BS5-09, BS5-10, 
 
 One box is one unit of work. Every box names the evidence that checks it. A nested box is a sub-step of the box above it. Check a box only when its evidence exists, a file, a log line, a screenshot, a test run, or a SHA. The body is a how-to. The appendices explain and record.
 
-The program runs `~/.claude/skills/poteto-mode/playbooks/autopilot-stack.md`, because the work is sequenced and the operator lands every PR. The operator merges each PR bottom-up. BS5-02 waits on the operator's test Profiles, BS5-16 waits on the operator's flip decision, and BS5-17 waits about two weeks after the flip.
+The program runs `~/.claude/skills/poteto-mode/playbooks/autopilot-stack.md`, because the work is sequenced and the operator lands every PR. Work stays local. Each PR is a feature branch `bs5/<pr-id>-<slug>` cut from local `main`, and trunk means local `main`. The operator reviews each branch and merges it into local `main` in order. Nothing is pushed to `origin`, and the operator pushes to `fork` by hand. BS5-02 waits on the operator's test Profiles, BS5-16 waits on the operator's flip decision, and BS5-17 waits about two weeks after the flip.
 
 This repo has no `swarm`, `control-ui` or cloud VMs. Owners are Claude Code `general-purpose` subagents in worktrees. Live lanes are subagents on `sonnet` that drive the Playwright harness from BS5-02. Before BS5-02 lands, BS5-01 uses the throwaway `capture.mjs` from `research/before-screenshots`. Every decision cited here lives in a ticket under `.scratch/bootstrap5/issues/`, indexed by `.scratch/bootstrap5/map.md`.
 
@@ -19,11 +19,11 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 ### Arm the program
 
 - [ ] State the protocol and this plan to the operator, then stop. Start execution only on the operator's explicit go.
-- [ ] On the operator's go, arm a `/goal` with this exact text. "Execute docs/bootstrap5-plan.md, PRs BS5-01 then BS5-02 then BS5-03 then BS5-04 then BS5-05 then BS5-06 then BS5-07 then BS5-08 then BS5-09 then BS5-10 then BS5-11 then BS5-12 then BS5-13 then BS5-14 then BS5-15 then BS5-16 then BS5-17 then BS5-18. Tests alone are not sufficient verification, a PR is verified only when its unit, live, and perf boxes are all checked. The operator reviews and merges every PR. Done when BS5-18 is merged and every box is checked."
-- [ ] Read these from trunk at program start. Re-read them at every tick.
-  - [ ] `git show origin/main:docs/bootstrap5-plan.md`
-  - [ ] `git show origin/main:CLAUDE.md`
-  - [ ] `git show origin/main:CONTEXT.md`
+- [ ] On the operator's go, arm a `/goal` with this exact text. "Execute docs/bootstrap5-plan.md, PRs BS5-01 then BS5-02 then BS5-03 then BS5-04 then BS5-05 then BS5-06 then BS5-07 then BS5-08 then BS5-09 then BS5-10 then BS5-11 then BS5-12 then BS5-13 then BS5-14 then BS5-15 then BS5-16 then BS5-17 then BS5-18. Tests alone are not sufficient verification, a PR is verified only when its unit, live, and perf boxes are all checked. The operator reviews every branch and merges it into local main. Nothing is pushed to origin. Done when BS5-18 is merged into local main and every box is checked."
+- [ ] Read these from local `main` at program start. Re-read them at every tick. The template's `git show origin/main:` reads become `git show main:` here, because nothing is pushed to `origin`.
+  - [ ] `git show main:docs/bootstrap5-plan.md`
+  - [ ] `git show main:CLAUDE.md`
+  - [ ] `git show main:CONTEXT.md`
   - [ ] `cat ~/.claude/skills/poteto-mode/playbooks/autopilot-stack.md` and `playbooks/opening-a-pr.md`, which live outside the repo.
   - [ ] The decision tickets under `.scratch/bootstrap5/issues/` for the PR in hand.
 - [ ] Arm the 30-minute audit tick with a real terminal `/loop`.
@@ -43,24 +43,24 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 ### PR mechanics, for every PR
 
-- [ ] Resolve the forge once. Use `gh` against `origin` (`microcosm-collective/microweb`).
-- [ ] Open the PR ready, never draft, with `gh pr create --base main`.
-- [ ] Run `python manage.py test` once before the PR-facing push. Push with hooks on.
+- [ ] There is no forge step. Each PR is a local branch `bs5/<pr-id>-<slug>` in its own worktree, cut from local `main`. Never push to `origin` and never run `gh pr create`.
+- [ ] Write the PR description to `.harness/review/<pr-id>.md` with the harness summary table and the list of differences outside May change.
+- [ ] Run `python manage.py test` before handing the branch to the operator. Commit with hooks on.
 - [ ] Run `/simplify` before each commit. The repo has no `/deslop` or `/no-comments`.
-- [ ] Put the harness summary table in the PR body, never the screenshots, because they show member content.
-- [ ] Rebase onto current trunk before the code-ready report. Rebase again only at merge prep or on a conflict with trunk.
+- [ ] Keep screenshots under the ignored `.harness/` folder, never in a commit, because they show member content.
+- [ ] Rebase onto current local `main` before the code-ready report. Rebase again only at merge prep or on a conflict with `main`.
 
 ### Verdict and merge, for every PR
 
 - [ ] At the code-ready head SHA and at each later push that changes the patch, run one gates lane, the ten live lanes from the PR's **Verify, live** block, the perf lane from its **Verify, perf** block, and two audit lanes that read the diff and the receipts and distrust the PR body.
 - [ ] Clean only when every lane is `PASS`. Findings go back to the owner. A new head gets a fresh verdict unless the patch-id is unchanged.
-- [ ] The operator merges a clean PR. Nothing merges on a stale verdict.
+- [ ] The operator merges a clean branch into local `main`. Nothing merges on a stale verdict.
 
 ### Boot recipe, for every live lane
 
 Each live lane runs in its own worktree at the PR head, driven by the Playwright harness.
 
-- [ ] `git fetch origin <head-branch> && git checkout <head SHA>`.
+- [ ] `git worktree add .claude/worktrees/<pr-id>-lane-<n> <head SHA>`.
 - [ ] `pip install -r requirements.txt -r requirements-dev.txt`, copy `microweb/local_settings.py`, and set `HARNESS_MEMBER_TOKEN` and `HARNESS_ADMIN_TOKEN` from the operator's environment.
 - [ ] Replay from the recorded fixtures in `.harness/fixtures/`. Record with `--record` only when the lane says so.
 - [ ] Save every screenshot to `.harness/lanes/<pr-id>/<slug>.png` and return the paths with the report.
@@ -114,9 +114,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Build the screenshot and interaction harness (BS5-02)
 
@@ -173,9 +173,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Add the Sass, font and icon toolchain (BS5-03)
 
@@ -229,9 +229,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Add the Bootstrap 5 template engine, render shim and preview cookie (BS5-04)
 
@@ -281,9 +281,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Build the Bootstrap 5 base layout (BS5-05)
 
@@ -339,9 +339,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Add the Color mode toggle (BS5-06)
 
@@ -396,9 +396,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the forum lists family (BS5-07)
 
@@ -453,9 +453,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the conversations and comments family (BS5-08)
 
@@ -511,9 +511,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the profiles family (BS5-09)
 
@@ -570,9 +570,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the activity lists family (BS5-10)
 
@@ -627,9 +627,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the events family (BS5-11)
 
@@ -685,9 +685,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the event form (BS5-12)
 
@@ -743,9 +743,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the huddles family (BS5-13)
 
@@ -801,9 +801,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the forum admin family (BS5-14)
 
@@ -859,9 +859,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Migrate the legal and error pages (BS5-15)
 
@@ -916,9 +916,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Flip every visitor to Bootstrap 5 (BS5-16)
 
@@ -970,9 +970,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Delete Bootstrap 3 and the old scripts (BS5-17)
 
@@ -1023,9 +1023,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Rename the Bootstrap 5 tree into place and remove the switch (BS5-18)
 
@@ -1075,9 +1075,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Merge.**
 
 - [ ] Clean verdict at the exact head SHA.
-- [ ] Review comments triaged.
-- [ ] Rebased onto current trunk after the verdict, patch-id unchanged.
-- [ ] The operator squash-merges the PR.
+- [ ] The operator's review notes triaged.
+- [ ] Rebased onto current local `main` after the verdict, patch-id unchanged.
+- [ ] The operator squash-merges the branch into local `main`.
 
 ## Close the program
 
