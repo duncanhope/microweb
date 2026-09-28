@@ -8,7 +8,7 @@ BS5-01, BS5-02, BS5-03, BS5-04, BS5-05, BS5-06, BS5-07, BS5-08, BS5-09, BS5-10, 
 
 One box is one unit of work. Every box names the evidence that checks it. A nested box is a sub-step of the box above it. Check a box only when its evidence exists, a file, a log line, a screenshot, a test run, or a SHA. The body is a how-to. The appendices explain and record.
 
-The program runs `~/.claude/skills/poteto-mode/playbooks/autopilot-stack.md`, because the work is sequenced and the operator lands every PR. Work stays local. Each PR is a feature branch `bs5/<pr-id>-<slug>` cut from local `main`, and trunk means local `main`. The operator reviews each branch and merges it into local `main` in order. Nothing is pushed to `origin`, and the operator pushes to `fork` by hand. BS5-02 waits on the operator's test Profiles, BS5-16 waits on the operator's flip decision, and BS5-17 waits about two weeks after the flip.
+The program runs `~/.claude/skills/poteto-mode/playbooks/autopilot-stack.md`, because the work is sequenced and the operator lands every PR. Work stays local. Each PR is a feature branch `bs5/<pr-id>-<slug>` cut from local `main`, and trunk means local `main`. The operator reviews each branch and merges it into local `main` in order. Nothing is pushed to `origin`, and the operator pushes to `fork` by hand. BS5-16 waits on the operator's flip decision, and BS5-17 waits about two weeks after the flip.
 
 This repo has no `swarm`, `control-ui` or cloud VMs. Owners are Claude Code `general-purpose` subagents in worktrees. Live lanes are subagents on `sonnet` that drive the Playwright harness from BS5-02. Before BS5-02 lands, BS5-01 uses the throwaway `capture.mjs` from `research/before-screenshots`. Every decision cited here lives in a ticket under `.scratch/bootstrap5/issues/`, indexed by `.scratch/bootstrap5/map.md`.
 
@@ -61,7 +61,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 Each live lane runs in its own worktree at the PR head, driven by the Playwright harness.
 
 - [ ] `git worktree add .claude/worktrees/<pr-id>-lane-<n> <head SHA>`.
-- [ ] `pip install -r requirements.txt -r requirements-dev.txt`, copy `microweb/local_settings.py`, and set `HARNESS_MEMBER_TOKEN` and `HARNESS_ADMIN_TOKEN` from the operator's environment.
+- [ ] `pip install -r requirements.txt -r requirements-dev.txt`, copy `microweb/local_settings.py`, and load `HARNESS_TOKEN` from `~/.config/microweb/harness.env` (the operator's account `duncs`, never committed).
 - [ ] Replay from the recorded fixtures in `.harness/fixtures/`. Record with `--record` only when the lane says so.
 - [ ] Save every screenshot to `.harness/lanes/<pr-id>/<slug>.png` and return the paths with the report.
 
@@ -120,7 +120,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 
 ## Build the screenshot and interaction harness (BS5-02)
 
-**Depends on.** None. The operator creates the test Profile and a second test Profile with a shared huddle first.
+**Depends on.** None.
 
 **Files.**
 
@@ -137,7 +137,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Recorder keyed by method, URL, sorted query and token presence, per [Screenshot and interaction harness design](issues/15-harness-design.md).
 - [ ] `shoot` routes each Site host to the live server with the Host header preserved, records browser-side calls with Playwright HAR, freezes time with `freezegun` and `page.clock`, and writes a contact sheet with the summary table.
 - [ ] Add a `--perf` flag that reports gzip CSS and JS bytes per page and server render time over 20 replayed requests, and an `--html-only` flag that writes each page's rendered HTML for byte comparison.
-- [ ] Seed `manifest.py` with the 21 before pages plus signed-in pages for the test Profile.
+- [ ] Seed `manifest.py` with the 21 before pages plus signed-in pages for the harness user.
 
 **You see.**
 
@@ -155,7 +155,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 3. Open the contact sheet. Save `BS5-02-sheet.png`. Pass when before and after sit side by side per page, width and Color mode.
 - [ ] Lane 4. Read the summary table. Save `BS5-02-summary.png`. Pass when it shows page height at 1280 px, rows above the fold and check results.
 - [ ] Lane 5. Shoot a conversation page with relative times on two different days. Save `BS5-02-clock.png`. Pass when the `<time>` text is identical.
-- [ ] Lane 6. Shoot a signed-in conversation page with `HARNESS_MEMBER_TOKEN` set. Save `BS5-02-member.png`. Pass when the reply box renders.
+- [ ] Lane 6. Shoot a signed-in conversation page with `HARNESS_TOKEN` set. Save `BS5-02-member.png`. Pass when the reply box renders.
 - [ ] Lane 7. Shoot the test huddle. Save `BS5-02-huddle.png`. Pass when it renders and no fixture file is tracked by git.
 - [ ] Lane 8. Run `python manage.py test --tag browser` with one sample check (the page jump input). Save `BS5-02-check.png`. Pass when it passes.
 - [ ] Lane 9. Shoot Espruino and CS Grupetto home. Save `BS5-02-branding.png`. Pass when background images load through the `microco.sm` to `microcosm.app` rewrite.
@@ -433,8 +433,8 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 5. Shoot the same pages at 1440 px, light. Save `BS5-07-1440.png`. Pass when the layout uses the 1320 px container without stretched rows or orphaned whitespace the PR body does not explain.
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-07-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_lists.scss` prints nothing.
 - [ ] Lane 7. Type 3 in the page jump input on a microcosm listing and press Enter. Save `BS5-07-check-a.png`. Pass when the page loads at offset 50.
-- [ ] Lane 8. Click Mark all as read as the test Profile. Save `BS5-07-check-b.png`. Pass when the NEW badges disappear after reload.
-- [ ] Lane 9. Shoot lfgss home as the test Profile. Save `BS5-07-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 8. Click Mark all as read as the harness user. Save `BS5-07-check-b.png`. Pass when the NEW badges disappear after reload.
+- [ ] Lane 9. Shoot lfgss home as the harness user. Save `BS5-07-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Espruino at 1280 px, light and dark. Save `BS5-07-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -490,9 +490,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 4. Shoot the same pages at 1280 px, light, and read the contact sheet summary. Save `BS5-08-1280.png`. Pass when page height grows by 10 percent or less against `?bs=3` and list pages show at least as many rows above the fold.
 - [ ] Lane 5. Shoot the same pages at 1440 px, light. Save `BS5-08-1440.png`. Pass when the layout uses the 1320 px container without stretched rows or orphaned whitespace the PR body does not explain.
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-08-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_conversations.scss` prints nothing.
-- [ ] Lane 7. As the test Profile, select comment text and click Post a reply. Save `BS5-08-check-a.png`. Pass when the reply box opens with the selection quoted.
+- [ ] Lane 7. As the harness user, select comment text and click Post a reply. Save `BS5-08-check-a.png`. Pass when the reply box opens with the selection quoted.
 - [ ] Lane 8. Type `@` and two letters in the reply box. Save `BS5-08-check-b.png`. Pass when `mentions.js` lists up to five profiles, arrow keys move the active option, and Enter inserts the name.
-- [ ] Lane 9. Post, edit and delete a comment in a test conversation as the test Profile. Save `BS5-08-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 9. Post, edit and delete a comment in a test conversation as the harness user. Save `BS5-08-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Islington CC at 1280 px, light and dark. Save `BS5-08-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -550,8 +550,8 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 5. Shoot the same pages at 1440 px, light. Save `BS5-09-1440.png`. Pass when the layout uses the 1320 px container without stretched rows or orphaned whitespace the PR body does not explain.
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-09-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_profiles.scss` prints nothing.
 - [ ] Lane 7. Filter the people list by online now. Save `BS5-09-check-a.png`. Pass when the list updates and the URL carries the filter.
-- [ ] Lane 8. Upload a new avatar on the test Profile's edit page. Save `BS5-09-check-b.png`. Pass when the preview shows the image before save.
-- [ ] Lane 9. Change notification settings as the test Profile. Save `BS5-09-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 8. Upload a new avatar on the harness user's edit page. Save `BS5-09-check-b.png`. Pass when the preview shows the image before save.
+- [ ] Lane 9. Change notification settings as the harness user. Save `BS5-09-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on CS Grupetto at 1280 px, light and dark. Save `BS5-09-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -607,8 +607,8 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 5. Shoot the same pages at 1440 px, light. Save `BS5-10-1440.png`. Pass when the layout uses the 1320 px container without stretched rows or orphaned whitespace the PR body does not explain.
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-10-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_activity.scss` prints nothing.
 - [ ] Lane 7. Search `bike` from the navbar. Save `BS5-10-check-a.png`. Pass when results render with `defaults=true` carried.
-- [ ] Lane 8. Stop following an item on the watchers page as the test Profile. Save `BS5-10-check-b.png`. Pass when it disappears after reload.
-- [ ] Lane 9. Shoot Following as the test Profile. Save `BS5-10-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 8. Stop following an item on the watchers page as the harness user. Save `BS5-10-check-b.png`. Pass when it disappears after reload.
+- [ ] Lane 9. Shoot Following as the harness user. Save `BS5-10-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Islington CC at 1280 px, light and dark. Save `BS5-10-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -666,7 +666,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-11-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_events.scss` prints nothing.
 - [ ] Lane 7. Open the attendees modal. Save `BS5-11-check-a.png`. Pass when it opens, traps focus and closes on Escape.
 - [ ] Lane 8. Pan the event map. Save `BS5-11-check-b.png`. Pass when Leaflet draws tiles and stays in `color-scheme: light` in Dark.
-- [ ] Lane 9. RSVP to a test event as the test Profile. Save `BS5-11-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 9. RSVP to a test event as the harness user. Save `BS5-11-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Espruino at 1280 px, light and dark. Save `BS5-11-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -724,7 +724,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-12-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_event_form.scss` prints nothing.
 - [ ] Lane 7. Pick a date and time with the native inputs and submit. Save `BS5-12-check-a.png`. Pass when the API receives an ISO 8601 value that `core/forms/forms.py` parses.
 - [ ] Lane 8. Open the timezone list. Save `BS5-12-check-b.png`. Pass when it comes from `Intl.supportedValuesOf` and defaults to the browser time zone.
-- [ ] Lane 9. Edit an existing test event as the test Profile. Save `BS5-12-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 9. Edit an existing test event as the harness user. Save `BS5-12-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Islington CC at 1280 px, light and dark. Save `BS5-12-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -780,9 +780,9 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 4. Shoot the same pages at 1280 px, light, and read the contact sheet summary. Save `BS5-13-1280.png`. Pass when page height grows by 10 percent or less against `?bs=3` and list pages show at least as many rows above the fold.
 - [ ] Lane 5. Shoot the same pages at 1440 px, light. Save `BS5-13-1440.png`. Pass when the layout uses the 1320 px container without stretched rows or orphaned whitespace the PR body does not explain.
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-13-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_huddles.scss` prints nothing.
-- [ ] Lane 7. Invite the second test Profile with the people widget. Save `BS5-13-check-a.png`. Pass when the widget suggests the Profile and adds it.
+- [ ] Lane 7. Type a name into the people widget in the self-huddle's invite modal, without sending. Save `BS5-13-check-a.png`. Pass when the widget suggests matching profiles.
 - [ ] Lane 8. Leave the test huddle from the modal. Save `BS5-13-check-b.png`. Pass when the huddle leaves the list.
-- [ ] Lane 9. Reply in the test huddle as the test Profile. Save `BS5-13-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 9. Reply in the self-huddle as the harness user. Save `BS5-13-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on Islington CC at 1280 px, light and dark. Save `BS5-13-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -897,7 +897,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - [ ] Lane 6. Shoot the same pages at 1280 px with `color_mode=dark`. Save `BS5-15-dark.png`. Pass when all text is readable, the Site surround matches light mode, and `grep -E '#[0-9a-fA-F]{3,8}|rgba?\(' core/static/scss/_legal.scss` prints nothing.
 - [ ] Lane 7. Open `/about/terms/`. Save `BS5-15-check-a.png`. Pass when tables and `ol[type=a]` and `ol[type=i]` lists render with Bootstrap 5 styling.
 - [ ] Lane 8. Request a missing URL. Save `BS5-15-check-b.png`. Pass when the 404 page renders on the Bootstrap 5 base.
-- [ ] Lane 9. Request a private huddle as the test Profile without access. Save `BS5-15-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
+- [ ] Lane 9. Request a huddle id the harness user cannot see. Save `BS5-15-signed-in.png`. Pass when the signed-in controls render, work, and match the tolerance checklist.
 - [ ] Lane 10. Shoot the family's main page on CS Grupetto at 1280 px, light and dark. Save `BS5-15-branding.png`. Pass when the Site background, logo and link colour hold, and the dark-mode link colour reaches 4.5 to 1 against the body background.
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
@@ -1110,6 +1110,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - `/search/?q=` without `defaults=true` returns 500 on production. Outside this plan, but BS5-10 must not rely on it.
 - Dart Sass 3 removes `@import`, which Bootstrap 5.3 needs. `bin/build-css` pins 1.x.
 - The mentions autocomplete is our own `core/static/js/bs5/mentions.js` (operator confirmed 2026-09-28). If hand-rolled caret positioning proves fragile in BS5-08, vendor `dom-input-range` for that step only, per the mentions research.
+- The harness user is the operator's real account `duncs`. Checks that post, edit, delete, RSVP or change settings act on live lfgss data, so they run only against the self-huddle 3310071 or a conversation the operator names for testing, record once, and replay after. Recording signed-in GETs can mark items as read.
 - No `control-ui`, `swarm` or cloud VMs exist here. Lanes run as local subagents with Playwright, and throughput is lower than the template assumes.
 
 ## Appendix D. Links and reading list
