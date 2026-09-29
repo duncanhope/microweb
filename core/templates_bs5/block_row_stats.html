@@ -1,0 +1,10 @@
+{% load humanize %}{# The right side of a conversation or event row: its stats and the latest reply (BS5-07). #}
+<ul class="list-inline mb-0 mw-stats">
+	{% if item.total_comments >= 0 %}<li class="list-inline-item"><span stat="{{ item.total_comments|default:0 }}">{{ item.total_comments|default:0|intcomma }}</span> comment{{ item.total_comments|pluralize:",s" }}</li>{% endif %}
+	{% if item.total_views >= 0 %}<li class="list-inline-item"><span stat="{{ item.total_views|default:0 }}">{{ item.total_views|default:0|intcomma }}</span> view{{ item.total_views|pluralize:",s" }}</li>{% endif %}
+</ul>
+{% if item.last_comment_created %}
+<div class="mw-row-recent">
+	<a href="{% url 'single-profile' item.last_comment_created_by.id %}">@{{ item.last_comment_created_by.profile_name|safe }}</a> <a href="{% url 'incontext-comment' item.last_comment_id %}">replied</a> <time datetime="{{ item.last_comment_created|date:"c" }}"></time>
+</div>
+{% endif %}

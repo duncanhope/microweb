@@ -1,0 +1,353 @@
+// The forum lists family (BS5-07): microcosms.html (the Site's home),
+// microcosm.html, the block_*.html rows, pagination and the list metabar.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+//
+// Compact on purpose: today's rows are 6px apart with 20px titles and 16px
+// meta, and the tolerance checklist holds the number of rows above the fold.
+
+// Header and footer of a list --------------------------------------------
+.mw-list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+  margin-bottom: .5rem;
+}
+
+.mw-list-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.mw-list-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: .5rem;
+}
+
+.mw-breadcrumb {
+  --#{$prefix}breadcrumb-margin-bottom: 0;
+  font-size: .875rem;
+}
+
+// Pagination: the page jump field, then the page links.
+.mw-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-left: auto;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+
+  .pagination {
+    --#{$prefix}pagination-font-size: .875rem;
+    --#{$prefix}pagination-padding-x: .625rem;
+    --#{$prefix}pagination-active-color: var(--#{$prefix}emphasis-color);
+    --#{$prefix}pagination-active-bg: var(--#{$prefix}secondary-bg);
+    --#{$prefix}pagination-active-border-color: var(--#{$prefix}border-color);
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.mw-page-jump {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  margin: 0;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    margin: 0;
+  }
+
+  .form-control {
+    width: 3.25rem;
+    padding-block: .125rem;
+    text-align: center;
+  }
+}
+
+// Rows ------------------------------------------------------------------------
+// Title and meta on the left; stats and the latest reply on the right from md.
+.mw-rows {
+  margin: 0;
+  border-block: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-row {
+  padding-block: .375rem;
+
+  & + & {
+    border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  }
+
+  .mw-min-w-0 {
+    min-width: 0;
+  }
+}
+
+.mw-row-pinned {
+  background-color: var(--#{$prefix}warning-bg-subtle);
+}
+
+.mw-row-deleted {
+  background-color: var(--#{$prefix}danger-bg-subtle);
+}
+
+// The type icon (or a forum's logo) in its own column, from lg.
+$mw-row-icon-width: 3.125rem;
+
+.mw-row-icon {
+  flex: 0 0 $mw-row-icon-width;
+  padding-top: .125rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--#{$prefix}tertiary-color);
+
+  a {
+    color: var(--#{$prefix}emphasis-color);
+  }
+
+  img {
+    width: 1.75rem;
+    height: auto;
+  }
+}
+
+.mw-row-title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+
+  a {
+    color: var(--#{$prefix}body-color);
+
+    &:hover {
+      color: var(--#{$prefix}link-hover-color);
+    }
+  }
+
+  .badge {
+    vertical-align: .125em;
+  }
+}
+
+.mw-row-meta,
+.mw-row-side {
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-stats {
+  .list-inline-item:not(:last-child) {
+    margin-right: .625rem;
+  }
+
+  [stat] {
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// One line: a long title gives way, the time never does.
+.mw-row-recent {
+  display: flex;
+  gap: .25em;
+  white-space: nowrap;
+
+  > a {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  > time {
+    flex-shrink: 0;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  // As wide as its stats and latest reply, up to half the row.
+  .mw-row-side {
+    max-width: 50%;
+    text-align: right;
+  }
+
+  .mw-row-recent {
+    justify-content: flex-end;
+  }
+
+  .mw-stats {
+    line-height: 1.875rem; // level with the 20px title's first line
+  }
+}
+
+// A forum's subforums, in one wrapping line under the row.
+.mw-subforums {
+  margin-top: .125rem;
+  font-size: 1rem;
+
+  @include media-breakpoint-up(lg) {
+    padding-left: $mw-row-icon-width;
+  }
+
+  .list-inline-item {
+    margin-right: 1rem;
+    white-space: nowrap;
+  }
+
+  a {
+    color: var(--#{$prefix}body-color);
+  }
+}
+
+.mw-subforum-logo {
+  width: auto;
+  height: 1em;
+  vertical-align: -.125em;
+}
+
+// Forum logos come from the API and are mostly black line art drawn for a
+// light page, so in dark mode they sit on a small light chip.
+@include color-mode(dark) {
+  .mw-row-icon img,
+  .mw-subforum-logo,
+  .mw-forum-logo {
+    padding: .125rem;
+    background-color: var(--#{$prefix}light);
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+}
+
+// An event's date and place, as one pill.
+.mw-event-pill {
+  display: inline-flex;
+  max-width: 100%;
+  font-size: .875rem;
+  line-height: 1.5;
+  vertical-align: middle;
+  color: var(--#{$prefix}primary-text-emphasis);
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}primary-border-subtle);
+  @include border-radius(var(--#{$prefix}border-radius-sm));
+
+  > * {
+    flex-shrink: 0;
+    padding-inline: .3125rem;
+  }
+
+  .mw-event-where {
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: var(--#{$prefix}primary-bg-subtle);
+    border-left: var(--#{$prefix}border-width) solid var(--#{$prefix}primary-border-subtle);
+
+    // The place name's own box, so it is clipped rather than hanging past the row.
+    > span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// Metabar modules ------------------------------------------------------------
+// Shared by the other families' metabars once they migrate.
+.mw-module + .mw-module {
+  margin-top: 1rem;
+}
+
+.mw-module-heading {
+  margin-bottom: .25rem;
+  font-size: 1rem;
+  font-weight: $font-weight-semibold;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-module-title {
+  margin-bottom: .5rem;
+  font-size: 1rem;
+}
+
+.mw-module-text {
+  font-size: .875rem;
+
+  p {
+    margin-bottom: .5rem;
+  }
+}
+
+.mw-module-author {
+  color: var(--#{$prefix}secondary-color);
+
+  a {
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.mw-forum-logo {
+  max-width: 25%;
+  height: auto;
+  margin-bottom: .25rem;
+}
+
+// Name on the left, count on the right.
+.mw-counts li {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+
+  > span {
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// Controls stay small: Bootstrap's -sm sizes scale from the 20px body text.
+.mw-module {
+  .btn-sm,
+  .input-group-sm > .btn {
+    --#{$prefix}btn-font-size: .875rem;
+    --#{$prefix}btn-padding-y: .125rem;
+    --#{$prefix}btn-padding-x: .5rem;
+  }
+
+  .form-control-sm,
+  .form-select-sm,
+  .input-group-sm > .form-control {
+    font-size: .875rem;
+  }
+}
+
+// Stacked full-width buttons: Post a conversation, Post an event and so on.
+.mw-module-actions .btn {
+  --#{$prefix}btn-font-size: .875rem;
+  --#{$prefix}btn-padding-y: .5rem;
+  text-align: left;
+
+  .bi {
+    margin-right: .375rem;
+  }
+}
+
+// The Follow control: js/bs5/metabar.js sets data-state to on, off or loading.
+.mw-subscribe {
+  &:not([data-state="off"]) .mw-subscribe-off,
+  &:not([data-state="on"]) .mw-subscribe-on,
+  &:not([data-state="on"]) .mw-subscribe-email,
+  &:not([data-state="loading"]) .mw-subscribe-loading {
+    display: none;
+  }
+
+  .mw-subscribe-email {
+    font-size: .875rem;
+  }
+}

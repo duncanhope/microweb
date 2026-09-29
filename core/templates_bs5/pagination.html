@@ -1,0 +1,21 @@
+{% load humanize %}{% comment %}
+Pagination for a list (BS5-07): the page jump field, then the page links.
+js/bs5/base.js turns the typed page number into ?offset= and submits the
+form on Enter or when the field loses focus.
+{% endcomment %}{% if pagination and pagination.total_pages > 1 %}
+<nav class="mw-pagination" aria-label="Pages">
+	<form name="paginationByOffset" method="GET" class="mw-page-jump" data-initial="{{ pagination.page }}" data-limit="{{ pagination.limit }}" data-max="{{ pagination.total_pages }}">
+		<label>Page <input type="text" inputmode="numeric" pattern="\d*" value="{{ pagination.page }}" title="Enter the page number to jump to" class="form-control form-control-sm"></label>
+		of {{ pagination.total_pages|default:1|intcomma }}
+		<input name="offset" type="hidden">
+		{% if content.query and content.query.searched %}<input name="q" type="hidden" value="{{ content.query.searched }}">{% endif %}
+	</form>
+	<ul class="pagination pagination-sm mb-0">
+		{% if pagination.first %}<li class="page-item"><a class="page-link" href="{{ pagination.first.href }}">First</a></li>{% endif %}
+		{% if pagination.prev %}<li class="page-item"><a class="page-link" href="{{ pagination.prev.href }}" rel="prev">{{ pagination.prev.title }}</a></li>{% endif %}
+		{% if pagination.self %}<li class="page-item active" aria-current="page"><a class="page-link" href="{{ pagination.self.href }}">{{ pagination.self.title }}</a></li>{% endif %}
+		{% if pagination.next %}<li class="page-item"><a class="page-link" href="{{ pagination.next.href }}" rel="next">{{ pagination.next.title }}</a></li>{% endif %}
+		{% if pagination.last %}<li class="page-item"><a class="page-link" href="{{ pagination.last.href }}">Last</a></li>{% endif %}
+	</ul>
+</nav>
+{% endif %}

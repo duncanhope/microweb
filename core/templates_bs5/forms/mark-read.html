@@ -1,0 +1,8 @@
+{# Mark everything in this Site or forum read, then come back here (BS5-07). A plain form: no script. #}
+<form method="POST" action="{% url 'mark-read' %}" id="mark-read-module">
+	{% csrf_token %}
+	<input type="hidden" name="item_type" value="{{ item_type }}">
+	<input type="hidden" name="item_id" value="{% if item_type == 'site' %}{{ site.site_id }}{% else %}{{ content.id }}{% endif %}">
+	<input type="hidden" name="return_path" value="{{ request.get_full_path }}">
+	<button type="submit" class="btn btn-link p-0 align-baseline">Mark everything read</button>
+</form>

@@ -1,0 +1,131 @@
+{
+ "context": "",
+ "status": 200,
+ "error": null,
+ "data": {
+  "id": 7,
+  "siteId": 5,
+  "visibility": "public",
+  "title": "Rides",
+  "description": "Group rides and races.",
+  "logoUrl": "https://test.microcosm.app/api/v1/files/rides.png",
+  "itemTypes": ["microcosm", "conversation", "event"],
+  "moderators": null,
+  "items": {
+   "total": 60,
+   "limit": 25,
+   "offset": 0,
+   "maxOffset": 50,
+   "totalPages": 3,
+   "page": 1,
+   "type": ["microcosm", "conversation", "event"],
+   "links": [
+    {"rel": "self", "href": "/api/v1/microcosms/7", "title": "1"},
+    {"rel": "next", "href": "/api/v1/microcosms/7?offset=25", "title": "2"},
+    {"rel": "last", "href": "/api/v1/microcosms/7?offset=50", "title": "3"}
+   ],
+   "items": [
+    {
+     "itemType": "microcosm",
+     "item": {
+      "id": 8,
+      "parentId": 7,
+      "siteId": 5,
+      "visibility": "public",
+      "title": "Evening Rides",
+      "description": "Midweek evening rides.",
+      "logoUrl": "",
+      "itemTypes": ["conversation", "event"],
+      "totalItems": 1234,
+      "totalComments": 56789,
+      "children": [
+       {"rel": "microcosm", "href": "/api/v1/microcosms/9", "title": "Tuesday Club", "logoUrl": "https://test.microcosm.app/api/v1/files/tue.png"},
+       {"rel": "microcosm", "href": "/api/v1/microcosms/10", "title": "Wednesday Club"}
+      ],
+      "mostRecentUpdate": {
+       "itemType": "conversation",
+       "item": {
+        "id": 300,
+        "microcosmId": 8,
+        "title": "A very long conversation title that the row truncates",
+        "totalComments": 4,
+        "lastComment": {"id": 9001, "created": "2026-09-20T18:00:00Z", "createdBy": {"id": 11, "profileName": "rider_one", "avatar": ""}},
+        "meta": {"created": "2026-09-01T10:00:00Z", "createdBy": {"id": 12, "profileName": "rider_two", "avatar": ""}, "flags": {}, "links": []}
+       }
+      },
+      "meta": {
+       "created": "2014-01-28T15:35:17Z",
+       "createdBy": {"id": 5, "profileName": "Frodo", "avatar": ""},
+       "flags": {"sticky": false, "open": true, "deleted": false, "moderated": false, "visible": true, "unread": true},
+       "links": [{"rel": "self", "href": "/api/v1/microcosms/8"}]
+      }
+     }
+    },
+    {
+     "itemType": "conversation",
+     "item": {
+      "id": 100,
+      "title": "Pinned and closed",
+      "microcosmId": 7,
+      "totalComments": 1450,
+      "totalViews": 140509,
+      "lastComment": {"id": 9002, "created": "2026-09-21T08:05:41Z", "createdBy": {"id": 11, "profileName": "rider_one", "avatar": ""}},
+      "meta": {
+       "created": "2009-01-02T10:06:12Z",
+       "createdBy": {"id": 12, "profileName": "rider_two", "avatar": ""},
+       "flags": {"sticky": true, "open": false, "deleted": false, "moderated": false, "visible": true, "unread": true},
+       "links": [{"rel": "self", "href": "/api/v1/conversations/100"}, {"rel": "microcosm", "href": "/api/v1/microcosms/7", "title": "Rides"}]
+      }
+     }
+    },
+    {
+     "itemType": "conversation",
+     "item": {
+      "id": 101,
+      "title": "An ordinary conversation",
+      "microcosmId": 7,
+      "totalComments": 0,
+      "totalViews": 3,
+      "meta": {
+       "created": "2026-09-19T10:00:00Z",
+       "createdBy": {"id": 11, "profileName": "rider_one", "avatar": ""},
+       "flags": {"sticky": false, "open": true, "deleted": false, "moderated": false, "visible": true, "unread": false},
+       "links": [{"rel": "self", "href": "/api/v1/conversations/101"}, {"rel": "microcosm", "href": "/api/v1/microcosms/7", "title": "Rides"}]
+      }
+     }
+    },
+    {
+     "itemType": "event",
+     "item": {
+      "id": 200,
+      "title": "Festival ride",
+      "microcosmId": 7,
+      "when": "2026-09-20T09:00:00Z",
+      "tz": "Europe/London",
+      "duration": 540,
+      "where": "Regent's Park, London",
+      "status": "upcoming",
+      "rsvpLimit": 0,
+      "rsvpAttend": 1,
+      "totalComments": 2,
+      "totalViews": 210,
+      "lastComment": {"id": 9003, "created": "2026-09-17T17:08:43Z", "createdBy": {"id": 13, "profileName": "rider_three", "avatar": ""}},
+      "meta": {
+       "created": "2026-09-17T14:04:13Z",
+       "createdBy": {"id": 12, "profileName": "rider_two", "avatar": ""},
+       "flags": {"sticky": false, "open": true, "deleted": false, "moderated": false, "visible": true, "unread": false},
+       "links": [{"rel": "self", "href": "/api/v1/events/200"}, {"rel": "microcosm", "href": "/api/v1/microcosms/7", "title": "Rides"}]
+      }
+     }
+    }
+   ]
+  },
+  "meta": {
+   "created": "2014-08-04T18:19:38Z",
+   "createdBy": {"id": 5, "profileName": "Frodo", "avatar": "/api/v1/files/frodo.png"},
+   "flags": {"sticky": false, "open": true, "deleted": false, "moderated": false, "visible": true, "unread": false, "watched": false},
+   "links": [{"rel": "self", "href": "/api/v1/microcosms/7"}, {"rel": "site", "href": "/api/v1/sites/5"}],
+   "permissions": {"create": true, "read": true, "update": false, "delete": false, "guest": false, "owner": false, "moderator": false, "siteOwner": false}
+  }
+ }
+}

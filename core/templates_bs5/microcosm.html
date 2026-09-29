@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% comment %}
+One forum's listing: subforums, conversations and events (single_microcosm, BS5-07).
+Rows come from the block_*.html includes. Styles: _lists.scss. The Follow
+control is forms/subscribe.html, which js/bs5/metabar.js drives.
+{% endcomment %}
+{% load icon conversation event microcosm %}
+
+{% block title %}{{ content.title|safe }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block description %}{{ content.description|striptags }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=True %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title"><a id="title" href="{{ content.meta.links.self.href }}">{{ content.title|safe }}</a></h1>
+	{% include 'pagination.html' %}
+</div>
+
+<ul class="list-unstyled mw-rows">
+{% for item in content.items.items %}
+	{% if item.item_type == "microcosm" %}{% microcosm item %}
+	{% elif item.item_type == "conversation" %}{% conversation item %}
+	{% elif item.item_type == "event" %}{% event item %}
+	{% endif %}
+{% endfor %}
+</ul>
+
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+	{% if content.meta.flags.open %}
+		{% include 'block_post_buttons.html' %}
+	{% else %}
+		<p class="mb-0">This forum is closed and is not accepting new posts.</p>
+	{% endif %}
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		{% if content.logoUrl %}<img src="{{ content.logoUrl|safe }}" alt="" class="d-block mx-auto mw-forum-logo">{% endif %}
+		<h3 class="mw-module-title{% if content.logoUrl %} text-center{% endif %}">{{ content.title|safe }}</h3>
+		<div class="mw-module-text">
+			<p>{{ content.description|safe }}</p>
+			<p class="mw-module-author">
+				Created by <a href="{% url 'single-profile' content.meta.created_by.id %}" id="created_by"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in content.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name|safe }}" width="20" height="20" class="rounded object-fit-cover"> @{{ content.meta.created_by.profile_name|safe|truncatechars:25 }}</a>
+				<time datetime="{{ content.meta.created|date:"c" }}"></time>
+			</p>
+			<p class="mb-0"><a href="{% url 'list-memberships' content.id %}">Who has access to this forum?</a></p>
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		<form class="mb-2" role="search" action="{% url 'single-search' %}">
+			<div class="input-group input-group-sm">
+				<input type="search" id="mw-forum-search-input" class="form-control" name="q" placeholder="Search forum" aria-label="Search this forum">
+				<input type="hidden" name="forumId" value="{{ content.id }}">
+				<input type="hidden" name="defaults" value="true">
+				<button class="btn mw-btn" type="submit">{% icon "search" label="Search" %}</button>
+			</div>
+		</form>
+		{% include 'forms/subscribe.html' with update_type=8 %}
+	</section>
+
+	{% if user %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Controls</h2>
+		{% include 'forms/mark-read.html' %}
+		{% include 'forms/metabar-moderation.html' %}
+		{% if not content.meta.permissions.owner %}
+		<form action="/ignore/" method="POST" id="ignore_form" class="mt-2">
+			{% csrf_token %}
+			<input type="hidden" name="item_type" value="microcosm">
+			<input type="hidden" name="item_id" value="{{ content.id }}">
+			{% if content.meta.flags.ignored %}
+			<input type="hidden" name="delete" value="true">
+			<button type="submit" class="btn mw-btn btn-sm">Unignore</button>
+			{% else %}
+			<button type="submit" class="btn mw-btn btn-sm">Ignore</button>
+			{% endif %}
+		</form>
+		{% endif %}
+		{% if content.meta.permissions.admin %}
+		<div class="btn-group-vertical w-100 mt-2 mw-module-actions">
+			<a id="edit-microcosm" href="{% url 'edit-microcosm' content.id %}" class="btn mw-btn">{% icon "pencil" %} Edit Forum</a>
+		</div>
+		{% endif %}
+	</section>
+	{% endif %}
+{% endblock %}

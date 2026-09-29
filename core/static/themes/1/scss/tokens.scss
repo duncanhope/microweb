@@ -10,6 +10,10 @@ $info:      #5bc0de;
 $warning:   #f0ad4e;
 $danger:    #d9534f;
 
+// Today's pinned-row yellow, a Must hold colour (BS5-07). Bootstrap's default
+// tint of $warning is peach; dark mode keeps Bootstrap's dark shade.
+$warning-bg-subtle: #fef9de;
+
 $body-color: #00000f;
 $link-hover-color: #2c5c8b;
 $link-decoration: none;

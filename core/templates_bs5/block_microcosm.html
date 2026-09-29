@@ -1,0 +1,46 @@
+{% load humanize icon %}{# A forum row in a list (BS5-07). Styles: _lists.scss. #}
+<li class="mw-row" id="{{ microcosm.item_type }}{{ microcosm.item.id }}">
+	<div class="row g-0 gx-md-3">
+		<div class="col-md d-flex mw-min-w-0">
+			<div class="mw-row-icon d-none d-lg-block">
+				<a href="{% url 'single-microcosm' microcosm.item.id %}" title="Forum" tabindex="-1">{% if microcosm.item.logoUrl %}<img src="{{ microcosm.item.logoUrl|safe }}" alt="" width="28" height="28">{% else %}{% icon "chat-square-text" label="Forum" %}{% endif %}</a>
+			</div>
+			<div class="mw-min-w-0">
+				<h2 class="mw-row-title">
+					<a href="{% url 'single-microcosm' microcosm.item.id %}">{{ microcosm.item.title|safe }}</a>
+					{% if microcosm.item.meta.flags.unread or microcosm.unread %}<span class="badge text-bg-warning">NEW</span>{% endif %}
+				</h2>
+				<div class="mw-row-meta d-none d-md-block">
+					{{ microcosm.item.description|safe }}
+					{% if showForum and microcosm.item.meta.links.parent %}
+					<br>in <a href="{{ microcosm.item.meta.links.parent.href }}">{{ microcosm.item.meta.links.parent.title|safe }}</a>
+					{% endif %}
+				</div>
+				{% if showForum and item.breadcrumb %}
+				<div class="mw-row-meta">
+					in {% for key, value in item.breadcrumb.breadcrumb.items %}<a href="{{ value.href }}">{{ value.title|safe }}</a>{% if not forloop.last %} / {% endif %}{% endfor %}
+				</div>
+				{% endif %}
+			</div>
+		</div>
+		<div class="col-md-auto mw-row-side">
+			<ul class="list-inline mb-0 mw-stats">
+				<li class="list-inline-item"><span stat="{{ microcosm.item.total_items|default:0 }}">{{ microcosm.item.total_items|default:0|intcomma }}</span> conversation{{ microcosm.item.total_items|default:0|pluralize:",s" }}</li>
+				<li class="list-inline-item"><span stat="{{ microcosm.item.total_comments|default:0 }}">{{ microcosm.item.total_comments|default:0|intcomma }}</span> comment{{ microcosm.item.total_comments|default:0|pluralize:",s" }}</li>
+			</ul>
+			{% with recent=microcosm.item.most_recent_update %}{% if recent %}
+			<div class="mw-row-recent">
+				<a href="/{{ recent.item_type }}s/{{ recent.id }}/{% if user %}newest/{% endif %}" title="{{ recent.title|safe }}">{{ recent.title|safe|truncatechars:30 }}</a>
+				{% if recent.total_comments %}<time datetime="{{ recent.last_comment_created|date:"c" }}"></time>{% else %}<time datetime="{{ recent.meta.created|date:"c" }}"></time>{% endif %}
+			</div>
+			{% endif %}{% endwith %}
+		</div>
+	</div>
+	{% if microcosm.item.children %}
+	<ul class="list-inline mb-0 mw-subforums">
+		{% for key, value in microcosm.item.children.children.items %}
+		<li class="list-inline-item"><a href="{{ value.href }}">{% if value.logoUrl %}<img src="{{ value.logoUrl|safe }}" alt="" class="mw-subforum-logo"> {% endif %}{{ value.title|safe }}</a></li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+</li>

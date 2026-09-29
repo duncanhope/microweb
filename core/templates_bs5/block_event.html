@@ -1,0 +1,35 @@
+{% load humanize icon %}{# An event row in a list (BS5-07). Styles: _lists.scss. #}
+<li class="mw-row{% if item.meta.flags.sticky %} mw-row-pinned{% endif %}{% if item.is_deleted %} mw-row-deleted{% endif %}" id="{{ item_type }}{{ item.id }}" itemscope itemtype="http://schema.org/Event">
+	<div class="row g-0 gx-md-3">
+		<div class="col-md d-flex mw-min-w-0">
+			<div class="mw-row-icon d-none d-lg-block">
+				{% if not item.meta.flags.open %}<span title="Closed event">{% icon "lock" label="Closed event" %}</span>
+				{% elif item.meta.flags.sticky %}<span title="Pinned event">{% icon "pin-angle" label="Pinned event" %}</span>
+				{% else %}<span title="Event">{% icon "calendar-event" label="Event" %}</span>{% endif %}
+			</div>
+			<div class="mw-min-w-0">
+				<h3 class="mw-row-title" itemprop="name">
+					<a href="/events/{{ item.id }}/{% if user %}newest/{% endif %}" itemprop="url">{% if item.highlight %}{{ item.highlight|safe }}{% else %}{{ item.title|safe }}{% endif %}</a>
+					{% if unread or item.unread or item.meta.flags.unread %}<span class="badge text-bg-warning">NEW</span>{% endif %}
+				</h3>
+				<div class="mw-row-meta">
+					{% if item.meta.created_by %}
+					<span class="d-none d-md-inline">
+						<span itemprop="attendee" itemscope itemtype="http://schema.org/Person"><a href="{% url 'single-profile' item.meta.created_by.id %}" itemprop="url">@<span itemprop="name">{{ item.meta.created_by.profile_name|safe|truncatechars:25 }}</span></a></span>
+						{% if user %}<a href="/events/{{ item.id }}/">started</a>{% else %}started{% endif %}
+						<time datetime="{{ item.meta.created|date:"c" }}"></time>
+					</span>
+					{% endif %}
+					<span class="mw-event-pill">
+						{% if item.when %}<time class="plain" datetime="{{ item.when|date:"c" }}" itemprop="startDate">{{ item.when|date:"M jS" }}</time>{% else %}<span title="Date to be determined">TBD</span>{% endif %}
+						{% if item.where %}<span class="mw-event-where" itemprop="location" itemscope itemtype="http://schema.org/Place"><span itemprop="name" title="{{ item.where|safe }}">{{ item.where|safe }}</span></span>{% else %}<span class="mw-event-where" title="Location to be determined">TBD</span>{% endif %}
+					</span>
+				</div>
+				{% if showForum %}{% include "block_row_forum.html" %}{% endif %}
+			</div>
+		</div>
+		<div class="col-md-auto mw-row-side">
+			{% include "block_row_stats.html" %}
+		</div>
+	</div>
+</li>

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% comment %}
+The Site's home: its top-level forums and pinned items (root_microcosm, BS5-07).
+Rows come from the block_*.html includes. Styles: _lists.scss.
+{% endcomment %}
+{% load humanize conversation event microcosm %}
+
+{% block title %}{{ site.title|safe }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock title %}
+
+{% block description %}{{ site.description }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+<div class="mw-list-header">
+	{% include 'breadcrumbs.html' with skipself=True %}
+	{% include 'pagination.html' %}
+</div>
+
+<ul class="list-unstyled mw-rows">
+{% for item in content.items.items %}
+	{% if item.item_type == "microcosm" %}{% microcosm item %}
+	{% elif item.item_type == "conversation" %}{% conversation item %}
+	{% elif item.item_type == "event" %}{% event item %}
+	{% endif %}
+{% endfor %}
+</ul>
+
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	{% if content.meta.flags.open %}{% if content.meta.permissions.admin or content.meta.permissions.owner or content.meta.permissions.moderator or site.subdomain_key == "one" %}
+	<section class="mw-module">
+		{% if user or site.subdomain_key == "one" %}{% include 'block_post_buttons.html' %}{% endif %}
+	</section>
+	{% endif %}{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">{{ site.title|safe }}</h3>
+		<div class="mw-module-text">{{ site.description|safe }}</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Population</h2>
+		<ul class="list-unstyled mb-0 mw-counts">
+			<li><a href="/profiles/?top=true">People</a> <span>{{ site.meta.stats.totalProfiles|default:0|intcomma }}</span></li>
+			{% if site.meta.stats.onlineProfiles %}<li><a href="/profiles/?top=true&amp;online=true">Online now</a> <span>{{ site.meta.stats.onlineProfiles|default:0|intcomma }}</span></li>{% endif %}
+		</ul>
+	</section>
+
+	{% if site.meta.stats.totalConversations or site.meta.stats.totalEvents %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Content</h2>
+		<ul class="list-unstyled mb-0 mw-counts">
+			{% if site.meta.stats.totalConversations %}<li><a href="/search/?type=conversation" title="Find recently updated conversations">Conversations</a> <span>{{ site.meta.stats.totalConversations|default:0|intcomma }}</span></li>{% endif %}
+			{% if site.meta.stats.totalEvents %}
+			<li><a href="/search/?type=event" title="Find recently updated events">Events</a> <span>{{ site.meta.stats.totalEvents|default:0|intcomma }}</span></li>
+			<li class="ps-4"><a href="/search?type=event&amp;eventAfter=0&amp;sort=oldest">upcoming events</a></li>
+			<li class="ps-4"><a href="/search?type=event&amp;eventBefore=0&amp;sort=newest">past events</a></li>
+			{% endif %}
+			{% if site.meta.stats.totalComments %}<li>Comments <span>{{ site.meta.stats.totalComments|default:0|intcomma }}</span></li>{% endif %}
+		</ul>
+	</section>
+	{% endif %}
+
+	{% if user %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		{% include 'forms/mark-read.html' %}
+		{% if content.meta.permissions.admin or content.meta.permissions.owner or content.meta.permissions.moderator %}
+		<p class="mb-0 mt-1"><a href="{% url 'list-memberships' content.id %}">Manage site permissions</a></p>
+		{% endif %}
+	</section>
+	{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% load humanize icon %}{# A conversation row in a list (BS5-07). Styles: _lists.scss. #}
+<li class="mw-row{% if item.meta.flags.sticky %} mw-row-pinned{% endif %}{% if item.is_deleted %} mw-row-deleted{% endif %}" id="{{ item_type }}{{ item.id }}" itemscope itemtype="http://schema.org/Article">
+	<div class="row g-0 gx-md-3">
+		<div class="col-md d-flex mw-min-w-0">
+			<div class="mw-row-icon d-none d-lg-block">
+				{% if not item.meta.flags.open %}<span title="Closed conversation">{% icon "lock" label="Closed conversation" %}</span>
+				{% elif item.meta.flags.sticky %}<span title="Pinned conversation">{% icon "pin-angle" label="Pinned conversation" %}</span>
+				{% else %}<span title="Conversation">{% icon "chat-left-text" label="Conversation" %}</span>{% endif %}
+			</div>
+			<div class="mw-min-w-0">
+				<h3 class="mw-row-title" itemprop="name">
+					<a href="/conversations/{{ item.id }}/{% if user %}newest/{% endif %}" itemprop="url">{% if item.highlight %}{{ item.highlight|safe }}{% else %}{{ item.title|safe }}{% endif %}</a>
+					{% if unread or item.unread or item.meta.flags.unread %}<span class="badge text-bg-warning">NEW</span>{% endif %}
+				</h3>
+				{% if item.meta.created_by %}
+				<div class="mw-row-meta d-none d-md-block">
+					<span itemprop="author" itemscope itemtype="http://schema.org/Person"><a href="{% url 'single-profile' item.meta.created_by.id %}" itemprop="url">@<span itemprop="name">{{ item.meta.created_by.profile_name|safe|truncatechars:25 }}</span></a></span>
+					{% if user %}<a href="/conversations/{{ item.id }}/">started</a>{% else %}started{% endif %}
+					<time datetime="{{ item.meta.created|date:"c" }}" itemprop="dateCreated"></time>
+				</div>
+				{% endif %}
+				{% if showForum %}{% include "block_row_forum.html" %}{% endif %}
+			</div>
+		</div>
+		<div class="col-md-auto mw-row-side">
+			{% include "block_row_stats.html" %}
+		</div>
+	</div>
+</li>

@@ -1,0 +1,45 @@
+{% comment %}
+Moderation actions in the metabar (BS5-07). Forums offer them to admins and
+moderators; conversations, events and the rest to owners as well, with the
+stronger actions kept for admins and moderators.
+{% endcomment %}{% if item_type == "microcosm" %}
+	{% if content.meta.permissions.admin or content.meta.permissions.moderator %}
+	<form class="d-flex gap-2 mt-2 mw-moderation" action="{% url 'moderate-item' %}" method="POST">
+		{% csrf_token %}
+		<input type="hidden" name="item_id" value="{{ content.id }}">
+		<input type="hidden" name="item_type" value="{{ item_type }}">
+		<select id="metabar-admin-actions" class="form-select form-select-sm w-auto" name="action" aria-label="Moderation action">
+			{% if content.meta.permissions.admin %}
+				{% if content.meta.flags.sticky %}<option value="unpin">Unpin</option>{% else %}<option value="pin">Pin</option>{% endif %}
+			{% endif %}
+			{% if content.meta.flags.open %}<option value="close">Close</option>{% else %}<option value="open">Open</option>{% endif %}
+			{% if content.meta.permissions.admin %}
+				{% if content.meta.flags.moderated %}<option value="approve">Approve</option>{% endif %}
+				<option value="move">Move</option>
+				{% if content.meta.flags.deleted %}<option value="undelete">Undelete</option>{% else %}<option value="delete">Delete</option>{% endif %}
+			{% endif %}
+		</select>
+		<button type="submit" class="btn mw-btn btn-sm">Go</button>
+	</form>
+	{% endif %}
+{% else %}
+	{% if content.meta.permissions.admin or content.meta.permissions.moderator or content.meta.permissions.owner %}
+	<form class="d-flex gap-2 mt-2 mw-moderation" action="{% url 'moderate-item' %}" method="POST">
+		{% csrf_token %}
+		<input type="hidden" name="item_id" value="{{ content.id }}">
+		<input type="hidden" name="item_type" value="{{ item_type }}">
+		<select id="metabar-admin-actions" class="form-select form-select-sm w-auto" name="action" aria-label="Moderation action">
+			{% if content.meta.permissions.admin or content.meta.permissions.moderator %}
+				{% if content.meta.flags.sticky %}<option value="unpin">Unpin</option>{% else %}<option value="pin">Pin</option>{% endif %}
+			{% endif %}
+			{% if content.meta.flags.open %}<option value="close">Close</option>{% elif content.meta.permissions.open %}<option value="open">Open</option>{% endif %}
+			{% if content.meta.permissions.admin or content.meta.permissions.moderator %}
+				{% if content.meta.flags.moderated %}<option value="approve">Approve</option>{% endif %}
+				<option value="move">Move</option>
+				{% if content.meta.flags.deleted %}<option value="undelete">Undelete</option>{% else %}<option value="delete">Delete</option>{% endif %}
+			{% endif %}
+		</select>
+		<button type="submit" class="btn mw-btn btn-sm">Go</button>
+	</form>
+	{% endif %}
+{% endif %}

@@ -1,0 +1,17 @@
+{% load icon %}{# Post a conversation / Post an event (and Create a forum for staff), for the forum in `content` (BS5-07). Guests get the sign-in modal. #}
+{% if user %}
+<div class="btn-group-vertical w-100 mw-module-actions">
+	{% if "conversation" in content.item_types %}<a id="create_conversation" href="{% url 'create-conversation' content.id %}" class="btn mw-btn">{% icon "chat-left-text" %} Post a conversation</a>{% endif %}
+	{% if "event" in content.item_types %}<a id="create_event" href="{% url 'create-event' content.id %}" class="btn mw-btn">{% icon "calendar-event" %} Post an event</a>{% endif %}
+</div>
+{% if content.meta.permissions.admin or content.meta.permissions.owner or content.meta.permissions.moderator %}{% if "microcosm" in content.item_types %}
+<div class="btn-group-vertical w-100 mt-2 mw-module-actions">
+	<a id="create_microcosm" href="{% url 'create-child-microcosm' content.id %}" class="btn mw-btn">{% icon "chat-square-text" %} Create a forum</a>
+</div>
+{% endif %}{% endif %}
+{% else %}
+<div class="btn-group-vertical w-100 mw-module-actions">
+	{% if "conversation" in content.item_types %}<button type="button" class="btn mw-btn" data-bs-toggle="modal" data-bs-target="#modal-signin">{% icon "chat-left-text" %} Post a conversation</button>{% endif %}
+	{% if "event" in content.item_types %}<button type="button" class="btn mw-btn" data-bs-toggle="modal" data-bs-target="#modal-signin">{% icon "calendar-event" %} Post an event</button>{% endif %}
+</div>
+{% endif %}

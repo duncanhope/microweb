@@ -1,0 +1,24 @@
+{% load icon %}{% comment %}
+The Follow control (BS5-07), driven by js/bs5/metabar.js through its data
+attributes. update_type is the watcher's update type: 1 unless the page says
+otherwise (a forum is 8). metabar.js sets data-state (on, off, loading);
+_lists.scss shows the matching part.
+{% endcomment %}{% if user and not content.id == user.id %}
+<div class="mw-subscribe" data-mw-subscribe data-url="{% url 'single-watcher' %}" data-item-type="{{ item_type }}" data-item-id="{{ content.id }}" data-update-type="{{ update_type|default:1 }}" data-subscribed="{{ content.meta.flags.watched|yesno:'true,false' }}" data-state="{{ content.meta.flags.watched|yesno:'on,off' }}">
+	{% csrf_token %}
+	<div class="mw-subscribe-off">
+		<button type="button" class="btn mw-btn btn-sm" data-mw-subscribe-toggle>Follow{% if item_type == 'profile' %} @{{ content.profile_name|safe }}{% endif %}</button>
+	</div>
+	<div class="mw-subscribe-on">
+		{% icon "check-lg" %} <strong>Following</strong>
+		(<button type="button" class="btn btn-link p-0 align-baseline" data-mw-subscribe-toggle>unfollow</button>)
+	</div>
+	<div class="mw-subscribe-loading">
+		<span class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Updating</span></span>
+	</div>
+	<div class="form-check mt-1 mw-subscribe-email" title="Emails will only be sent if emails are enabled in your notification settings">
+		<input class="form-check-input" type="checkbox" name="emailme" id="mw-subscribe-email"{% if content.meta.flags.sendEmail %} checked{% endif %}>
+		<label class="form-check-label" for="mw-subscribe-email">Notify me by email</label>
+	</div>
+</div>
+{% endif %}

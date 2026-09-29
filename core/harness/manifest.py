@@ -9,12 +9,16 @@ from dataclasses import dataclass
 
 # List rows, counted above the fold at 1280 px. Family PRs that change the
 # list markup add their Bootstrap 5 selector here, comma separated.
-LIST_ROWS = 'ul.list-collection > li, ul.list-profiles > li'
+LIST_ROWS = 'ul.list-collection > li, ul.list-profiles > li, ul.mw-rows > li'
 
 HARNESS_PROFILE_ID = 54446
 # The harness user's huddle with only itself. Never shoot another huddle:
 # the account holds real private messages.
 HARNESS_HUDDLE_ID = 3310071
+# The forum whose Mark everything read the lists checks click as the harness
+# user (BS5-07): lfgss Social, quiet and without subforums. Never click it on
+# another forum or on the home page, which would mark the whole Site read.
+HARNESS_MARK_READ_MICROCOSM_ID = 558
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,8 @@ LFGSS = 'www.lfgss.com'
 PAGES = [
     Page('forum-lists', LFGSS, '/', 'home', 'microcosm list, pinned rows, metabar', rows=LIST_ROWS),
     Page('forum-lists', LFGSS, '/microcosms/509/', 'microcosm', 'a microcosm listing', rows=LIST_ROWS),
+    Page('forum-lists', LFGSS, '/microcosms/508/', 'microcosm-mixed',
+         'subforums, events and conversations in one listing', rows=LIST_ROWS),
     Page('conversations', LFGSS, '/conversations/141600/', 'conv-quotes-embeds', 'nested blockquote, iframes, inline image'),
     Page('conversations', LFGSS, '/conversations/357218/?offset=250', 'conv-code', 'pre > code, inline code (prettify)'),
     Page('conversations', LFGSS, '/conversations/392730/', 'conv-pre-iframes', 'pre blocks, many iframes'),
@@ -66,6 +72,10 @@ PAGES = [
     Page('huddles', LFGSS, '/huddles/%d/' % HARNESS_HUDDLE_ID, 'huddle-self', 'the harness user\'s huddle with itself', signed_in=True),
     Page('profiles', LFGSS, '/profiles/%d/edit/' % HARNESS_PROFILE_ID, 'profile-edit', 'profile edit form', signed_in=True),
     Page('activity', LFGSS, '/updates/', 'updates', 'following, signed in', signed_in=True, rows=LIST_ROWS),
+    Page('forum-lists', LFGSS, '/', 'home-signedin', 'home signed in: NEW badges, Actions', signed_in=True,
+         rows=LIST_ROWS),
+    Page('forum-lists', LFGSS, '/microcosms/%d/' % HARNESS_MARK_READ_MICROCOSM_ID, 'microcosm-signedin',
+         'a forum signed in: NEW badges, Follow, Controls', signed_in=True, rows=LIST_ROWS),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in
@@ -89,14 +99,17 @@ CHECK_URLS = [
 ]
 
 FAMILIES = sorted({p.family for p in PAGES})
+# Other names for a family: the plan calls forum-lists "lists" (BS5-07).
+ALIASES = {'lists': 'forum-lists'}
 
 
 def pages_for(family):
     if family == 'all':
         return list(PAGES)
+    family = ALIASES.get(family, family)
     pages = [p for p in PAGES if p.family == family]
     if not pages:
-        raise ValueError('Unknown family %r. Known: all, %s' % (family, ', '.join(FAMILIES)))
+        raise ValueError('Unknown family %r. Known: all, %s' % (family, ', '.join(FAMILIES + sorted(ALIASES))))
     return pages
 
 
