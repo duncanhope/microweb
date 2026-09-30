@@ -6,9 +6,12 @@ Replace this with more appropriate tests for your application.
 """
 
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase
+
+from comments.views import delete
 
 
 class SimpleTest(SimpleTestCase):
@@ -75,3 +78,26 @@ class CommentTemplateTests(SimpleTestCase):
         self.assertIn('Comment body', rendered)
         self.assertIn('Click here to read the full conversation.', rendered)
         self.assertNotIn("href=\"/profiles/\"", rendered)
+
+
+class CommentDeleteRedirectTests(SimpleTestCase):
+    """After a delete, the viewer goes back to the item the comment was on."""
+
+    def delete(self, item_type, item_id):
+        request = RequestFactory().post('/comments/1/delete/')
+        request.access_token = 'token'
+        comment = SimpleNamespace(item_type=item_type, item_id=item_id, delete=lambda host, token: None)
+        with patch('comments.views.Comment.retrieve', return_value=comment):
+            return delete(request, 1)
+
+    def test_conversation_comment(self):
+        self.assertEqual(self.delete('conversation', 141600)['Location'], '/conversations/141600/')
+
+    def test_event_comment(self):
+        self.assertEqual(self.delete('event', 4488)['Location'], '/events/4488/')
+
+    def test_huddle_comment(self):
+        self.assertEqual(self.delete('huddle', 3310071)['Location'], '/huddles/3310071/')
+
+    def test_other_item_goes_to_the_forums(self):
+        self.assertEqual(self.delete('profile', 54446)['Location'], '/microcosms/')
