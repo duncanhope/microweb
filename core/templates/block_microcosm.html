@@ -17,16 +17,16 @@
 				<div class="row-meta">
 					<span class="microcosm-item-description">
 						{{ microcosm.item.description | safe }}
-						{% if showForum and microcosm.item.meta.links.parent %}
+						{% if showForum and microcosm.item.meta.links.parent and not microcosm.item.breadcrumb %}
 							<br />in <a href="{{ microcosm.item.meta.links.parent.href }}">{{ microcosm.item.meta.links.parent.title | safe }}</a>
 						{% endif %}
 					</span>
 				</div>
 			</div>
-			{% if showForum and item.breadcrumb %}
+			{% if showForum and microcosm.item.breadcrumb %}
 			<div class="cell-forum">
 				in 
-				{% for key,value in item.breadcrumb.breadcrumb.items %}
+				{% for key,value in microcosm.item.breadcrumb.breadcrumb.items %}
 					<a href="{{ value.href }}">{{ value.title | safe }}</a> {% if not forloop.last %}/{% endif %}
 				{% endfor %}
 			</div>
