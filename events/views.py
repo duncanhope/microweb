@@ -283,7 +283,7 @@ def create(request, microcosm_id):
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
 
         else:
-            print('Event form is not valid')
+            logger.debug('Event form is not valid: %s', form.errors.as_json())
             view_data['form'] = form
             view_data['microcosm_id'] = microcosm_id
             return render(request, form_template, view_data)

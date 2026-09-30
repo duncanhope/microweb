@@ -1,3 +1,4 @@
+import io
 import json
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -67,6 +68,29 @@ class FakeAPI(object):
 
     def attendee_calls(self):
         return [params for url, params in self.calls if url == ATTENDEES_URL]
+
+
+class EventCreateInvalidTests(SimpleTestCase):
+    """An event form that fails validation comes back with its errors, and
+    says so in the debug log, not on the server's stdout."""
+
+    def test_an_invalid_form_prints_nothing(self):
+        request = RequestFactory().post('/microcosms/1/create/event/', {'microcosmId': '1', 'title': ''},
+                                        HTTP_HOST=HOST)
+        request.access_token = 'token'
+        request.whoami_url = WHOAMI_URL
+        request.site_url = SITE_URL
+        request.view_requests = [views.fetch.get(SITE_URL), views.fetch.get(WHOAMI_URL)]
+        with patch('requests.get', side_effect=FakeAPI(going=0, invited=0).get), \
+                patch.object(views, 'render', return_value=HttpResponse()) as render, \
+                patch('sys.stdout', new_callable=io.StringIO) as stdout, \
+                self.assertLogs('events.views', 'DEBUG') as logs:
+            views.create(request, '1')
+        self.assertEqual(stdout.getvalue(), '')
+        self.assertIn('title', render.call_args.args[2]['form'].errors)
+        self.assertEqual(len(logs.records), 1)
+        self.assertEqual(logs.records[0].levelname, 'DEBUG')
+        self.assertIn('title', logs.output[0])
 
 
 class EventAttendeesTests(SimpleTestCase):
