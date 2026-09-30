@@ -181,10 +181,10 @@
 
 {% if content.comments.page == 1 %}
 <script src="{{ STATIC_URL }}3rd/leaflet/0.7.7/leaflet.js"></script>
-<script src="https://maps.google.com/maps/api/js?v=3.24&key=AIzaSyA1wa4M7NYbphGTpYnZS-7totQahCZV-VQ"></script>
+{% include 'google_maps_loader.html' %}
 
-<script src="{{ STATIC_URL }}js/leaflet.js"></script>
-<script src="{{ STATIC_URL }}js/eventMap.js?v20160609"></script>
+<script src="{{ STATIC_URL }}js/leaflet.js?v20260930"></script>
+<script src="{{ STATIC_URL }}js/eventMap.js?v20260930"></script>
 
 <script type="text/javascript">
 var lat = {{ content.lat   | default:"null" }},
@@ -196,7 +196,8 @@ var lat = {{ content.lat   | default:"null" }},
 
 if (lat && lon) {
 	var eventMap = new EventMap({
-		map : 'map-canvas'
+		map : 'map-canvas',
+		thunderforestKey : '{{ thunderforest_api_key|escapejs }}'
 	});
 	eventMap.restore(lat,lon,[[n,w],[s,e]]);
 }

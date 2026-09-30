@@ -10,6 +10,8 @@ MEMCACHE_HOST = os.getenv('MEMCACHE_HOST', '127.0.0.1')
 MEMCACHE_PORT = os.getenv('MEMCACHE_PORT', 11211)
 PAGE_SIZE = 25
 SECRET_KEY = os.getenv('SECRET_KEY', '')
+# Optional: Thunderforest's tile key for the event maps (see settings.py).
+THUNDERFOREST_API_KEY = os.getenv('THUNDERFOREST_API_KEY', '')
 DEBUG = False
 
 # Absolute path to the directory static files should be collected to.

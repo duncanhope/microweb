@@ -18,23 +18,8 @@
       this.map = L.map( options.map , { zoomAnimation : false })
                   .setMaxBounds([[-90,-180],[90,180]]); // Restrict map to valid lat:lng pairs
 
-      var googleLayer = new L.Google('ROADMAP');
-      this.map.addLayer(googleLayer);
-
-      var attribution = {
-        attribution: 'Maps &copy; <a href="http://www.thunderforest.com">Thunderforest</a>, Data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-        maxZoom: 22
-      }
-
-      var osmCycleLayer = new L.TileLayer("https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png", attribution);
-      var osmLandscapeLayer = new L.TileLayer("https://a.tile.thunderforest.com/landscape/{z}/{x}/{y}.png", attribution);
-
-      this.map.addControl(new L.Control.Layers({
-        'Open Cycle Map' : osmCycleLayer,
-        'Landscape'      : osmLandscapeLayer,
-        'Google Maps'    : googleLayer
-        })
-      );
+      // Google's road map once it loads, and the tile layers (js/leaflet.js).
+      L.Google.addBaseLayers(this.map, options.thunderforestKey);
 
       return this;
     };

@@ -153,6 +153,9 @@ dokku config:set --no-restart microweb MEMCACHE_HOST=dokku-memcached-microweb-me
 dokku config:set --no-restart microweb CLIENT_SECRET=123456
 # use single quotes if you have special chars!
 dokku config:set --no-restart microweb SECRET_KEY='!aoeui12345'
+# Optional: a Thunderforest tile key turns on the event maps' OpenCycleMap and
+# Landscape layers. Without one the maps offer OpenStreetMap's standard tiles.
+# dokku config:set --no-restart microweb THUNDERFOREST_API_KEY=abc123
 # Optional: `requests` uses the bundled certifi CA store, which is kept current.
 # Set this only if you need the system CA bundle instead (e.g. private CAs).
 # dokku config:set --no-restart microweb REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
