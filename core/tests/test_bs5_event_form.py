@@ -205,9 +205,9 @@ class Bs5EventFormTests(SimpleTestCase):
         self.assertIn('id="attendee-limit-max" value="1" checked>', html)
         self.assertIn('name="rsvpLimit" min="1" max="999" inputmode="numeric" aria-label="Max number of attendees" '
                       'value="30">', html)
-        # EventEdit.from_event_instance binds the form, so the empty reason is an
-        # error from the start, as on Bootstrap 3 and the conversation form.
-        self.assertIn('class="form-control is-invalid" id="editReason" name="editReason"', html)
+        # Nothing has been posted, so the empty reason is not an error yet.
+        self.assertIn('class="form-control" id="editReason" name="editReason"', html)
+        self.assertNotIn('is-invalid', html)
         self.assertIn('>Edit event</button>', html)
         self.assertNotIn('firstcomment', html)
 

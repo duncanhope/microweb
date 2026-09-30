@@ -200,7 +200,8 @@ def edit_microcosm(request, microcosm_id):
                 access_token=request.access_token)
         except APIException as exc:
             return respond_with_error(request, exc)
-        view_data['form'] = microcosm_edit_form(microcosm.as_dict)
+        # Unbound: nothing has been posted yet, so the form shows no errors.
+        view_data['form'] = microcosm_edit_form(initial=microcosm.as_dict)
 
         return render(request, microcosm_form_template, view_data)
 

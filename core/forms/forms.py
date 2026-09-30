@@ -130,6 +130,10 @@ class EventEdit(EventCreate):
     def from_event_instance(cls, event):
         """
         Populate form from an event instance.
+
+        The form is unbound, with the event as its initial values: nothing
+        has been posted yet, so it shows no errors (the reason for editing
+        is empty until the member gives one).
         """
         repr = {}
         repr['id'] = event.id
@@ -153,7 +157,7 @@ class EventEdit(EventCreate):
         if hasattr(event, 'rsvp_limit'): repr['rsvpLimit'] = event.rsvp_limit
         if hasattr(event, 'rsvp_spaces'): repr['rsvpSpaces'] = event.rsvp_spaces
 
-        return cls(repr)
+        return cls(initial=repr)
 
 
 class ConversationCreate(ItemForm):
@@ -183,6 +187,10 @@ class ConversationEdit(ConversationCreate):
     def from_conversation_instance(cls, conversation):
         """
         Populate a conversation edit form from a conversation instance.
+
+        The form is unbound, with the conversation as its initial values: nothing
+        has been posted yet, so it shows no errors (the reason for editing
+        is empty until the member gives one).
         """
 
         repr = {}
@@ -190,7 +198,7 @@ class ConversationEdit(ConversationCreate):
         repr['microcosmId'] = conversation.microcosm_id
         repr['title'] = conversation.title
 
-        return cls(repr)
+        return cls(initial=repr)
 
 
 class HuddleCreate(django.forms.Form):
@@ -229,13 +237,17 @@ class HuddleEdit(HuddleCreate):
     def from_huddle_instance(cls, huddle):
         """
         Populate a huddle edit form from a huddle instance.
+
+        The form is unbound, with the huddle as its initial values: nothing
+        has been posted yet, so it shows no errors (the reason for editing
+        is empty until the member gives one).
         """
 
         repr = {}
         repr['id'] = huddle.id
         repr['title'] = huddle.title
 
-        return cls(repr)
+        return cls(initial=repr)
 
 
 class MicrocosmCreate(django.forms.Form):
