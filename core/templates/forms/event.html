@@ -562,12 +562,14 @@
 	////////////////////////
 	//    Invite object   //
 	////////////////////////
-	{% if form.inviteObject %}
-	window.form_invitees = "{{form.inviteObject.value|safe|escape}}";
+	// Everyone with an RSVP (edit), or the people chosen before an error.
+	{% with invitees=attendees_json|default:form.inviteObject.value %}
+	{% if invitees %}
+	try {
+		window.form_invitees = JSON.parse('{{ invitees|escapejs }}');
+	} catch (e) {}
 	{% endif %}
-	{% if attendees_json %}
-	window.form_invitees = {{ attendees_json|safe|default:"" }}
-	{% endif %}
+	{% endwith %}
 })();
 </script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/eventForm.js"></script>

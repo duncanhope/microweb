@@ -166,6 +166,7 @@
         participating.hide();
       }
       updateInvitedField();
+      updateInviteJSONField(peopleWidget.people_invited);
     }
 
   });
