@@ -1112,7 +1112,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 - `/search/?q=` without `defaults=true` returns 500 on production. Outside this plan, but BS5-10 must not rely on it.
 - Dart Sass 3 removes `@import`, which Bootstrap 5.3 needs. `bin/build-css` pins 1.x.
 - The mentions autocomplete is our own `core/static/js/bs5/mentions.js` (operator confirmed 2026-09-28). If hand-rolled caret positioning proves fragile in BS5-08, vendor `dom-input-range` for that step only, per the mentions research.
-- The harness user is the operator's real account `duncs`. Checks that post, edit, delete, RSVP or change settings act on live lfgss data, so they run only against the self-huddle 3310071 or a conversation the operator names for testing, record once, and replay after. Recording signed-in GETs can mark items as read.
+- The harness user is the operator's real account `duncs`. Checks that post, edit, delete, RSVP or change settings act on live lfgss data, so they run only against the self-huddle 3310071 or a conversation the operator names for testing, record once, and replay after. Recording signed-in GETs can mark items as read. A signed-in GET of `/whoami` on a Site where the harness user has no profile creates one (BS5-12 made `user14037` on Islington CC), so signed-in recording stays on lfgss, and other Sites' signed-in checks use made-up whoami answers. Checks that create or change public content (RSVP, event create and edit) run stubbed only, by the operator's choice.
 - No `control-ui`, `swarm` or cloud VMs exist here. Lanes run as local subagents with Playwright, and throughput is lower than the template assumes.
 
 ## Appendix D. Links and reading list
