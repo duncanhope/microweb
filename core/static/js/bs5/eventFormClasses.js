@@ -15,7 +15,7 @@
 //   people as JSON, so the form shows them again after an error.
 
 import { addBaseLayers } from './eventMap.js';
-import { searchProfiles } from './mentions.js';
+import { ProfileSearch } from './mentions.js';
 
 const { L } = window;
 
@@ -283,6 +283,7 @@ function readPeople(json) {
 export class InvitePeople {
   constructor(root, { apiBase = '' } = {}) {
     this.apiBase = apiBase;
+    this.searches = new ProfileSearch(apiBase);
     this.input = root.querySelector('input[type=text]');
     this.chosen = root.querySelector('.mw-event-form-invited');
     this.ids = root.querySelector('input[name=invite]');
@@ -331,20 +332,18 @@ export class InvitePeople {
 
   async search() {
     const term = this.input.value.trim();
-    this.request?.abort();
     if (!term) {
       this.close();
       return;
     }
-    const request = this.request = new AbortController();
     let found;
     try {
-      found = await searchProfiles(this.apiBase, term, { signal: request.signal });
+      found = await this.searches.search(term);
     } catch {
-      if (request === this.request) this.hide();
+      this.hide();
       return;
     }
-    if (request !== this.request) return;
+    if (!found) return;
     const invited = new Set(this.people.map((person) => person.id));
     this.results = found.filter((profile) => !invited.has(profile.id));
     this.open(term);
@@ -385,8 +384,7 @@ export class InvitePeople {
   // Stop any search, and hide the list.
   close() {
     clearTimeout(this.timer);
-    this.request?.abort();
-    this.request = null;
+    this.searches.cancel();
     this.hide();
   }
 

@@ -41,6 +41,45 @@ export async function searchProfiles(apiBase, term, { signal } = {}) {
   return cache.get(key);
 }
 
+// The member searches of one box (the mentions here, the event form's
+// invite box), one at a time: each search aborts the one before it, and only
+// the latest may answer. search() resolves to the members found, or to null
+// when a later search or cancel() has overtaken it, and rejects only when it
+// is still the latest and failed. A failure is for the box to show, never a
+// reason to cancel: a search typed since may be waiting out its debounce.
+export class ProfileSearch {
+  constructor(apiBase) {
+    this.apiBase = apiBase;
+    this.controller = null;
+  }
+
+  // A search has started and neither answered nor been cancelled.
+  get pending() {
+    return this.controller !== null;
+  }
+
+  async search(term) {
+    this.controller?.abort();
+    const controller = this.controller = new AbortController();
+    let found;
+    try {
+      found = await searchProfiles(this.apiBase, term, { signal: controller.signal });
+    } catch (error) {
+      if (controller !== this.controller) return null;
+      this.controller = null;
+      throw error;
+    }
+    if (controller !== this.controller) return null;
+    this.controller = null;
+    return found;
+  }
+
+  cancel() {
+    this.controller?.abort();
+    this.controller = null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Where the caret is, measured with a hidden copy of the textarea.
 
@@ -81,6 +120,7 @@ class Mentions {
   constructor(textarea, apiBase) {
     this.textarea = textarea;
     this.apiBase = apiBase;
+    this.searches = new ProfileSearch(apiBase);
     this.id = 'mw-mentions-' + ++count;
     this.results = [];
     this.active = -1;
@@ -140,27 +180,25 @@ class Mentions {
     this.match = match;
     clearTimeout(this.timer);
     if (!match) {
-      if (this.isOpen || this.request) this.close();
+      if (this.isOpen || this.searches.pending) this.close();
       return;
     }
     this.timer = setTimeout(() => this.search(match), DEBOUNCE_MS);
   }
 
   async search(match) {
-    this.request?.abort();
-    const request = this.request = new AbortController();
     let results;
     try {
-      results = await searchProfiles(this.apiBase, match.term, { signal: request.signal });
+      results = await this.searches.search(match.term);
     } catch {
-      if (!request.signal.aborted) this.close();
+      this.hide();
       return;
     }
     // Only the latest search for the mention still being typed may show.
-    if (request !== this.request || this.match !== match) return;
+    if (!results || this.match !== match) return;
     this.results = results;
     if (!results.length) {
-      this.close();
+      this.hide();
       this.announce('No matching members');
       return;
     }
@@ -246,10 +284,15 @@ class Mentions {
     replaceText(this.textarea, match.start, match.end, match.symbol + profile.profileName + ' ');
   }
 
+  // Stop any search, and hide the list.
   close() {
     clearTimeout(this.timer);
-    this.request?.abort();
-    this.request = null;
+    this.searches.cancel();
+    this.hide();
+  }
+
+  // Hide the list only: a search typed since may still be on its way.
+  hide() {
     this.caret = null;
     this.list.classList.remove('show');
     this.list.replaceChildren();

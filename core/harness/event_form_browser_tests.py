@@ -32,7 +32,7 @@ from django.test import override_settings
 from core import colors
 from core.harness import manifest, recorder
 from core.harness.browser_tests import BrowserTestCase
-from core.harness.conversations_browser_tests import _fixture, _write
+from core.harness.conversations_browser_tests import _fixture, _write, hold_search
 from core.harness.lists_browser_tests import OverlayRecording
 
 LFGSS = manifest.LFGSS
@@ -272,6 +272,28 @@ class CreateEventTests(EventFormTestCase):
         self.assertTrue(page.get_by_text('From 1 to 999, please.').is_visible())
         self.assertEqual(posts, [])
         self.assertEqual(self.api_writes, [])
+
+
+class InviteSearchTests(EventFormTestCase):
+
+    def test_a_failed_search_does_not_cancel_the_next(self):
+        """A member search that fails while the next one waits out its
+        debounce leaves that one to run (mentions.js ProfileSearch, shared
+        with the comment box's mentions)."""
+        page = self.open_form()
+        hold_search(page, 'd')
+        invite = page.get_by_role('combobox', name='Optional. Do you wish to invite others to your event?')
+        invite.press_sequentially('d', delay=30)
+        page.wait_for_function('() => window.mwFailSearch')
+        # Type "u", and fail the search for "d" while the one for "du" waits.
+        invite.evaluate('''(input) => {
+          document.execCommand('insertText', false, 'u');
+          window.mwFailSearch();
+        }''')
+        options = page.get_by_role('listbox', name='Members').get_by_role('option')
+        options.first.wait_for(timeout=5000)
+        self.assertEqual(page.evaluate('window.mwSearches'), ['d', 'du'])
+        self.assertEqual(invite.get_attribute('aria-expanded'), 'true')
 
 
 # ---------------------------------------------------------------------------

@@ -200,6 +200,48 @@ class MentionsTests(ConversationsTestCase):
         page.wait_for_timeout(400)
         self.assertFalse(listbox.is_visible())
 
+    def test_a_failed_search_does_not_cancel_the_next(self):
+        """A search that fails while the next one waits out its debounce
+        leaves that one to run."""
+        page = self.open_bs5(CONVERSATION, signed_in=True)
+        self.wait_for_scripts(page)
+        box = page.locator(REPLY_BOX)
+        listbox = page.locator('#' + box.get_attribute('aria-controls'))
+        hold_search(page, 'd')
+        box.click()
+        box.press_sequentially('Hello @d', delay=30)
+        page.wait_for_function('() => window.mwFailSearch')
+        # Type "u", and fail the search for "d" while the one for "du" waits.
+        page.evaluate('''() => {
+          document.execCommand('insertText', false, 'u');
+          window.mwFailSearch();
+        }''')
+        options = listbox.get_by_role('option')
+        options.first.wait_for(timeout=5000)
+        self.assertEqual(page.evaluate('window.mwSearches'), ['d', 'du'])
+        names = [o.inner_text().strip() for o in options.all()]
+        self.assertTrue(all(n.lower().startswith('@du') for n in names), names)
+        self.assertEqual(box.get_attribute('aria-activedescendant'), options.nth(0).get_attribute('id'))
+
+
+def hold_search(page, term):
+    """Make the page's member search for term wait until the check calls
+    window.mwFailSearch(), then fail with a 500. Other searches go through,
+    and window.mwSearches lists every term searched for."""
+    page.evaluate('''(held) => {
+      const fetch = window.fetch;
+      window.mwSearches = [];
+      window.fetch = (url, options) => {
+        const term = new URL(url, location.href).searchParams.get('q');
+        if (!String(url).includes('/api/v1/profiles')) return fetch(url, options);
+        window.mwSearches.push(term);
+        if (term !== held) return fetch(url, options);
+        return new Promise((resolve) => {
+          window.mwFailSearch = () => resolve(new Response('{}', { status: 500 }));
+        });
+      };
+    }''', term)
+
 
 class EditorTests(ConversationsTestCase):
     """The formatting toolbar, Preview, the help modal, the check before posting and attachments."""
