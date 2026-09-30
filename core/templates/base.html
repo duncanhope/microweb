@@ -253,7 +253,8 @@
 					<li><a href="{% url 'single-today'%}">Today</a></li>
 					<li><a href="{% url 'list-updates' %}">Following</a></li>
 					<li><a href="{% url 'list-profiles' %}?top=true">People</a></li>
-					<li><a href="#" onClick="$('html, body').animate({ scrollTop: 0 }, 'fast'); return false;">Top</a></li>
+					<li><a href="#" onClick="$('html, body').animate({ scrollTop: 0 }, 'fast'); return false;">Top</a></li>{% if user %}
+					<li><a href="?{% for key, value in request.GET.items %}{% if key != 'bs' %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endif %}{% endfor %}bs=5" rel="nofollow">Try the new design (beta)</a></li>{% endif %}
 				</ul>
 				<hr />
 				<p>&copy; {{ site.title }}, powered by <a href="http://microcosm.app/">microcosm</a>.</p>

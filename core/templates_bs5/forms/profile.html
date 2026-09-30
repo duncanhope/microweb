@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% comment %}
+Edit your profile (profiles/views.py edit, BS5-09): the name, the avatar and
+the bio. js/bs5/profilePicture.js shows a chosen or dropped image in the
+avatar box before the form is saved. The bio is the comment box without its
+own form (as_component); js/bs5/comments.js wires it and checks the form
+before it is sent (data-mw-validate). Styles: _profiles.scss, and
+_conversations.scss for the form and the comment box.
+{% endcomment %}
+{% load static commentBox %}
+
+{% block title %}Edit profile | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<div class="mw-form-header">
+	<h1 class="mw-list-title">Edit Profile</h1>
+	<a href="{% url 'updates-settings' %}">Notification Settings &rarr;</a>
+</div>
+
+<form id="profileform" class="mw-item-form" action="{% url 'edit-profile' user.id %}" method="POST" enctype="multipart/form-data" novalidate data-mw-validate>
+	{% csrf_token %}
+	{{ form.id }}
+
+	<div class="mb-3">
+		<label class="form-label" for="edit_profile_name">{{ form.profileName.label }}</label>
+		<input type="text" class="form-control{% if form.errors.profileName %} is-invalid{% endif %}" id="edit_profile_name" name="{{ form.profileName.name }}" value="{{ form.profileName.value|default:'' }}" placeholder="Enter username..." maxlength="{{ form.fields.profileName.max_length }}" minlength="2" pattern="[^@+\s]+" required>
+		<div class="invalid-feedback">{% if form.errors.profileName %}{{ form.errors.profileName|join:' ' }}{% else %}{{ form.fields.profileName.error_messages.required }}. {{ form.fields.profileName.error_messages.valid_chars|safe }}{% endif %}</div>
+	</div>
+
+	<div class="mb-3">
+		<label class="form-label" for="avatar">{{ form.avatar.label }}</label>
+		<div class="mw-avatar-picker" data-mw-avatar>
+			<label class="mw-avatar-drop{% if 'files' in user.avatar %} has-image{% endif %}" data-mw-avatar-drop>
+				<img{% if 'files' in user.avatar %} src="https://{{ site.subdomain_key }}.microcosm.app{{ user.avatar }}"{% else %} hidden{% endif %} alt="Your avatar">
+				<span>Click here</span>
+				<input id="avatar" name="{{ form.avatar.name }}" type="file" accept="image/*" class="visually-hidden">
+			</label>
+			<div class="mw-avatar-help">
+				<p class="mw-avatar-help-title">Click on or drag an image over the box on the left to change your picture</p>
+				{% if avatar_error %}
+				<p class="text-danger mb-0">{{ avatar_error }}</p>
+				{% else %}
+				<p class="mb-0">Your avatar should be a jpg, png or gif file.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<div class="mb-3">
+		<label class="form-label" for="mw-editor-markdown">Tell us about yourself</label>
+		{% commentBox as_component=True no_attachments=True value=form.markdown.value %}
+	</div>
+
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button id="submit" type="submit" class="btn mw-btn px-3 py-2">Save Changes</button>
+		<button type="reset" class="btn mw-btn px-3 py-2">Cancel</button>
+	</div>
+</form>
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Edit Profile</h3>
+	</section>
+{% endblock %}
+
+{% block js %}
+{% include 'comments_scripts.html' %}
+<script type="module" src="{% static 'js/bs5/profilePicture.js' %}"></script>
+{% endblock js %}

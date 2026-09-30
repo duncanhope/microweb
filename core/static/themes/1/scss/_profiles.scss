@@ -1,0 +1,267 @@
+// The profiles family (BS5-09): profile.html, profiles.html, block_profile.html,
+// block_list_comments.html, ignored.html, forms/profile.html and
+// forms/update_settings.html. Rows, the list header and the metabar modules
+// come from _lists.scss; the form and the comment box from _conversations.scss.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+//
+// Compact, as today: a 64px avatar beside the name, people rows one line
+// with a 20px avatar, comment excerpts in Merriweather 15/24 (.mw-prose).
+
+$mw-profile-avatar: 64px;
+$mw-small-avatar: 20px;
+$mw-avatar-drop: 100px;
+
+// A heading over a section of the content, with today's heavy rule under it.
+.mw-section-heading {
+  margin: 0 0 .25rem;
+  padding-block: .25rem;
+  font-size: 1rem;
+  font-weight: $font-weight-semibold;
+  border-bottom: 3px solid var(--#{$prefix}secondary-bg);
+
+  .mw-section-title {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  + .mw-rows {
+    border-top: 0;
+  }
+}
+
+// The profile header: avatar, name and dates, then the stats. Centred on
+// phones; one row from sm, with the stats on the right.
+.mw-profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  text-align: center;
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+
+  @include media-breakpoint-up(sm) {
+    flex-direction: row;
+    align-items: flex-end;
+    text-align: left;
+  }
+}
+
+.mw-profile-avatar {
+  flex-shrink: 0;
+  width: $mw-profile-avatar;
+  height: $mw-profile-avatar;
+  object-fit: cover;
+  @include border-radius(var(--#{$prefix}border-radius-sm));
+}
+
+.mw-profile-text {
+  min-width: 0;
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-profile-name {
+  margin: 0 0 .25rem;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  overflow-wrap: break-word;
+}
+
+.mw-profile-stats {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+
+  @include media-breakpoint-up(sm) {
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .list-inline-item {
+    text-align: center;
+
+    &:not(:last-child) {
+      margin-right: 1.25rem;
+    }
+
+    @include media-breakpoint-up(sm) {
+      text-align: right;
+    }
+  }
+
+  [stat] {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: $font-weight-semibold;
+    line-height: 1.2;
+  }
+}
+
+.mw-profile-bio {
+  margin-bottom: 1rem;
+}
+
+// People rows: the avatar and the name on one line, "send message" on the right.
+.mw-person-link {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+  color: var(--#{$prefix}body-color);
+
+  img {
+    flex-shrink: 0;
+    width: $mw-small-avatar;
+    height: $mw-small-avatar;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  strong {
+    overflow: hidden;
+    font-weight: $font-weight-semibold;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    color: var(--#{$prefix}link-hover-color);
+  }
+}
+
+.mw-person-message {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: .5rem;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+
+  &:hover {
+    color: var(--#{$prefix}link-hover-color);
+  }
+}
+
+// A comment in a list: its author's avatar beside the comment text.
+.mw-row-action {
+  margin-bottom: .25rem;
+}
+
+.mw-excerpt {
+  display: flex;
+  gap: .5rem;
+  margin-top: .375rem;
+
+  img {
+    display: block;
+    width: $mw-small-avatar;
+    height: $mw-small-avatar;
+    margin-top: 2px;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+}
+
+.mw-excerpt-avatar {
+  flex-shrink: 0;
+}
+
+.mw-excerpt-text {
+  min-width: 0;
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Form pages: the title, and the link to the other settings page on the right.
+.mw-form-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 1rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+// The avatar box: click or drop an image; js/bs5/profilePicture.js shows it here.
+.mw-avatar-picker {
+  display: flex;
+  gap: .75rem;
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-avatar-drop {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: $mw-avatar-drop;
+  height: $mw-avatar-drop;
+  overflow: hidden;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  border: 2px dashed var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &.has-image span {
+    display: none;
+  }
+
+  &.is-dragover,
+  &:focus-within {
+    border-color: var(--#{$prefix}primary);
+  }
+
+  &.is-dragover {
+    background-color: var(--#{$prefix}primary-bg-subtle);
+  }
+}
+
+.mw-avatar-help-title {
+  margin-bottom: .5rem;
+  font-weight: $font-weight-semibold;
+  color: var(--#{$prefix}body-color);
+}
+
+// Notification settings: a switch per row, the global one highlighted.
+.mw-settings {
+  --#{$prefix}table-bg: transparent;
+  font-size: 1rem;
+
+  th {
+    font-weight: $font-weight-semibold;
+  }
+
+  label {
+    display: block;
+  }
+
+  .mw-settings-switch {
+    width: 6rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .form-check-input {
+    margin: 0;
+  }
+
+  .mw-settings-master > * {
+    --#{$prefix}table-bg-state: var(--#{$prefix}warning-bg-subtle);
+  }
+}

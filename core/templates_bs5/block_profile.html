@@ -1,0 +1,11 @@
+{% load icon %}{% comment %}
+A person's row, rendered by {% profile %} (BS5-09): the people list and the
+ignored list. no_icon leaves out the type icon; send_message adds a link to
+message them for members. Styles: _lists.scss (rows) and _profiles.scss.
+{% endcomment %}<li class="mw-row mw-person" id="{{ profile.item_type }}{{ profile.item.id }}">
+	<div class="d-flex align-items-center">
+		{% if not no_icon %}<div class="mw-row-icon d-none d-lg-block"><span title="Profile">{% icon "person" label="Profile" %}</span></div>{% endif %}
+		<a class="mw-person-link" href="{% url 'single-profile' profile.item.id %}"><img src="{% if 'gravatar' in profile.item.avatar %}{{ profile.item.avatar }}{% elif 'files' in profile.item.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ profile.item.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ profile.item.profile_name|safe }}" width="20" height="20"> <strong>@{{ profile.item.profile_name|safe }}</strong></a>
+		{% if user and send_message %}<a class="mw-person-message" href="{% url 'create-huddle' %}?to={{ profile.item.id }}">send message</a>{% endif %}
+	</div>
+</li>

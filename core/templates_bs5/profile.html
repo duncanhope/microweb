@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% comment %}
+A member's profile (profiles/views.py single, BS5-09): the header, their bio
+and their most recent activity, whose rows come from the block_*.html
+includes. The Follow control is forms/subscribe.html, driven by
+js/bs5/metabar.js through base.js. Styles: _profiles.scss, and _lists.scss
+for the rows and the metabar modules.
+{% endcomment %}
+{% load humanize icon list_comment microcosm conversation event %}
+
+{% block title %}@{{ content.profile_name|safe }} | {{ site.title|safe }}{% endblock title %}
+
+{% block description %}Profile page for {{ content.profile_name|striptags }},  {% if content.profile_comment %}{{ content.profile_comment.html|striptags }}{% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=True %}
+<div class="mw-profile-header">
+	<img class="mw-profile-avatar" src="{% if 'gravatar' in content.avatar %}{{ content.avatar }}{% elif 'files' in content.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.profile_name|safe }}" width="64" height="64">
+	<div class="mw-profile-text">
+		<h1 class="mw-profile-name"><a href="{{ content.meta.links.self.href }}">{{ content.profile_name|safe }}</a></h1>
+		<p class="mb-0">Member since {{ content.created|date:"M Y" }} &bull; Last active {{ content.last_active|date:"M Y" }}</p>
+	</div>
+	<ul class="list-inline mw-profile-stats">
+		<li class="list-inline-item"><span stat="{{ content.item_count|default:'0' }}">{% if content.item_count > 0 %}<a href="/search?type=conversation&amp;authorId={{ content.id }}">{{ content.item_count|intcomma }}</a>{% else %}0{% endif %}</span> conversations</li>
+		<li class="list-inline-item"><span stat="{{ content.comment_count|default:'0' }}">{% if content.comment_count > 0 %}<a href="/search?type=comment&amp;authorId={{ content.id }}">{{ content.comment_count|intcomma }}</a>{% else %}0{% endif %}</span> comments</li>
+	</ul>
+</div>
+
+{% if content.profile_comment %}
+<div class="mw-prose mw-profile-bio">{{ content.profile_comment.html|safe }}</div>
+{% endif %}
+
+<section aria-labelledby="mw-activity-title">
+{% if search.results.items|length == 0 %}
+	<h2 class="mw-section-heading" id="mw-activity-title">Recent activity</h2>
+	<p class="mw-row-meta">This person has not yet posted anything.</p>
+{% else %}
+	<h2 class="mw-section-heading" id="mw-activity-title">Most recent activity</h2>
+	<ul class="list-unstyled mw-rows">
+	{% for result in search.results.items %}
+		{% if result.item_type == 'microcosm' %}{% microcosm result %}
+		{% elif result.item_type == 'conversation' %}{% conversation result %}
+		{% elif result.item_type == 'event' %}{% event result %}
+		{% elif result.item_type == 'comment' %}{% list_comment result %}
+		{% endif %}
+	{% endfor %}
+	</ul>
+{% endif %}
+</section>
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+		{% if content.id == user.id %}
+			<a href="{% url 'edit-profile' user.id %}" class="btn mw-btn">{% icon "pencil" %} Edit your Profile</a>
+			<a href="{% url 'list-ignored' %}" class="btn mw-btn">{% icon "list-ol" %} View Ignored</a>
+		{% elif user %}
+			<a href="{% url 'create-huddle' %}?to={{ content.id }}" class="btn mw-btn">{% icon "envelope" %} Send Message</a>
+		{% else %}
+			<button type="button" class="btn mw-btn" data-bs-toggle="modal" data-bs-target="#modal-signin">{% icon "envelope" %} Send Message</button>
+		{% endif %}
+		</div>
+	</section>
+
+	{% if content.email %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<p class="mw-module-text mb-0"><a href="mailto:{{ content.email|safe }}">{{ content.email|safe }}</a></p>
+	</section>
+	{% endif %}
+
+	{% if user and content.id != user.id %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		{% include 'forms/subscribe.html' %}
+		<form action="{% url 'ignore-item' %}" method="POST" id="ignore_form" class="mt-2">
+			{% csrf_token %}
+			<input type="hidden" name="item_type" value="profile">
+			<input type="hidden" name="item_id" value="{{ content.id }}">
+			{% if content.meta.flags.ignored %}
+			<input type="hidden" name="delete" value="true">
+			<button type="submit" class="btn mw-btn btn-sm">Unignore</button>
+			{% else %}
+			<button type="submit" class="btn mw-btn btn-sm">Ignore</button>
+			{% endif %}
+		</form>
+		{% if content.meta.permissions.admin %}
+		<form action="{% url 'patch-profile' content.id %}" method="POST" id="patch_form" class="mt-2">
+			{% csrf_token %}
+			{% if content.is_member %}
+			<button type="submit" name="member" value="false" class="btn mw-btn btn-sm">Revoke membership</button>
+			{% else %}
+			<button type="submit" name="member" value="true" class="btn mw-btn btn-sm">Grant membership</button>
+			{% endif %}
+		</form>
+		{% endif %}
+	</section>
+	{% endif %}
+{% endblock %}

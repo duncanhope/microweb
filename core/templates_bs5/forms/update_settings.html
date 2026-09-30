@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% comment %}
+Notification settings (updates/views.py UpdatePreferenceView.settings,
+BS5-09): the global email switch, then one email switch per kind of update.
+js/bs5/updateSettings.js makes the global switch turn the whole group on or
+off, as today. Styles: _profiles.scss, and _conversations.scss for the form.
+{% endcomment %}
+{% load static %}
+
+{% block title %}Notification Settings | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<div class="mw-form-header">
+	<h1 class="mw-list-title">Notification Settings</h1>
+	<a href="{% url 'edit-profile' user.id %}">Edit Profile &rarr;</a>
+</div>
+
+<form action="" method="POST" class="mw-item-form" data-mw-settings>
+	{% csrf_token %}
+	<table class="table mw-settings">
+		<thead>
+			<tr>
+				<th scope="col">Configure which notifications you receive with the controls below.</th>
+				<th scope="col" class="mw-settings-switch">By Email</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr class="mw-settings-master">
+				<td>
+					<label for="profile_receive_email"><strong>Enable notifications</strong><br>
+					This is a global switch, and will override all other settings.</label>
+				</td>
+				<td class="mw-settings-switch">
+					<input class="form-check-input" id="profile_receive_email" name="profile_receive_email" type="checkbox"{% if globaloptions.emailNotifications %} checked{% endif %} data-mw-group="email" data-mw-master>
+				</td>
+			</tr>
+			{% for preference in content %}
+			<tr>
+				<td><label for="send_email_{{ preference.id }}">{{ preference.description|safe }}</label></td>
+				<td class="mw-settings-switch">
+					<input type="hidden" name="id_{{ preference.id }}" value="{{ preference.id }}">
+					<input class="form-check-input" id="send_email_{{ preference.id }}" name="send_email_{{ preference.id }}" type="checkbox"{% if preference.send_email %} checked{% endif %} data-mw-group="email">
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button type="submit" class="btn mw-btn px-3 py-2">Save Changes</button>
+		<button type="reset" class="btn mw-btn px-3 py-2">Cancel</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Notification Settings</h3>
+		<div class="mw-module-text">
+			<p>You can optionally receive notifications when someone mentions you in a comment, replies to one of your comments, and for items that you are following.</p>
+			<p>Even if you opt to receive emails instantly for items that you are following, disabling emails in the global setting will override all other settings.</p>
+			<p class="mb-0">Changes to the settings change all *future* updates, but will leave existing updates untouched.</p>
+		</div>
+	</section>
+{% endblock %}
+
+{% block js %}
+<script type="module" src="{% static 'js/bs5/updateSettings.js' %}"></script>
+{% endblock %}

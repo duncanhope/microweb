@@ -181,6 +181,8 @@ as Bootstrap's docs do.
 					<li class="list-inline-item"><a href="{% url 'list-updates' %}">Following</a></li>
 					<li class="list-inline-item"><a href="{% url 'list-profiles' %}?top=true">People</a></li>
 					<li class="list-inline-item"><a href="#top">Top</a></li>
+					{# The member preview (BS5-09): back to Bootstrap 3 on the same page. The Bootstrap 3 footer links here for members. #}
+					<li class="list-inline-item"><a href="?{% for key, value in request.GET.items %}{% if key != 'bs' %}{{ key|urlencode }}={{ value|urlencode }}&amp;{% endif %}{% endfor %}bs=3" rel="nofollow">Back to the classic design</a></li>
 				</ul>
 				<hr class="my-1">
 				<p class="mb-0">&copy; {{ site.title }}, powered by <a href="http://microcosm.app/">microcosm</a>.</p>

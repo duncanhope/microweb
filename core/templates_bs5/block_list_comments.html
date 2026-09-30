@@ -1,0 +1,41 @@
+{% load icon %}{% comment %}
+A comment in a list, rendered by {% list_comment %} (BS5-09): a member's
+recent activity on their profile, and later search, Today and Following.
+The item it belongs to, where and when, then the comment's text beside its
+author's avatar. action adds who replied to or mentioned the member.
+Styles: _lists.scss (rows) and _profiles.scss (the excerpt).
+{% endcomment %}<li class="mw-row">
+	{% if action == 'reply_to_comment' %}
+	<p class="mw-row-meta mw-row-action"><a href="{{ update.profile_link }}">@{{ update.item.meta.created_by.profile_name|safe }}</a> replied to your comment</p>
+	{% elif action == 'mentioned' %}
+	<p class="mw-row-meta mw-row-action"><a href="{{ update.profile_link }}">@{{ update.item.meta.created_by.profile_name|safe }}</a> mentioned you</p>
+	{% endif %}
+	<div class="d-flex">
+		<div class="mw-row-icon d-none d-lg-block">
+			{% if result.parent_item_type == 'huddle' %}<span title="Message">{% icon "envelope" label="Message" %}</span>
+			{% elif result.parent_item_type == 'profile' %}<span title="Profile">{% icon "person" label="Profile" %}</span>
+			{% else %}<span title="Comment">{% icon "chat" label="Comment" %}</span>{% endif %}
+		</div>
+		<div class="mw-min-w-0 flex-grow-1">
+			<h3 class="mw-row-title">
+				{% if result.parent_item_type == 'profile' %}
+				<a href="{% url 'single-profile' result.item.meta.created_by.id %}">@{{ result.parent_item.profile_name|safe }}</a>
+				{% else %}
+				<a href="{{ result.item.meta.links.self.href }}incontext/">{{ result.parent_item.title|safe }}</a>
+				{% endif %}
+			</h3>
+			<div class="mw-row-meta">
+				in
+				{% if result.parent_item_type == 'huddle' %}<a href="{% url 'list-huddle' %}">Messages</a>
+				{% elif result.parent_item_type == 'profile' %}<a href="{% url 'single-profile' result.item.meta.created_by.id %}">Profiles</a>
+				{% else %}<a href="{{ result.parent_item.meta.links.microcosm.href }}">{{ result.parent_item.meta.links.microcosm.title|safe }}</a>{% endif %}
+				&bull;
+				<time datetime="{{ result.item.meta.created|date:"c" }}"></time>
+			</div>
+			<div class="mw-excerpt">
+				<a href="{% url 'single-profile' result.item.meta.created_by.id %}" class="mw-excerpt-avatar"><img src="{% if 'gravatar' in result.item.meta.created_by.avatar %}{{ result.item.meta.created_by.avatar }}{% elif 'files' in result.item.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ result.item.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ result.item.meta.created_by.profile_name|safe }}" width="20" height="20"></a>
+				<div class="mw-prose mw-excerpt-text">{% if result.highlight %}{{ result.highlight|safe }}{% else %}{{ result.item.html|safe }}{% endif %}</div>
+			</div>
+		</div>
+	</div>
+</li>

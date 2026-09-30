@@ -1,10 +1,12 @@
 {% load icon %}{% comment %}
 The Follow control (BS5-07), driven by js/bs5/metabar.js through its data
 attributes. update_type is the watcher's update type: 1 unless the page says
-otherwise (a forum is 8). metabar.js sets data-state (on, off, loading);
-_lists.scss shows the matching part.
+otherwise (a forum is 8). watch_type and watch_id name what is followed when
+it is not the page's item (the People page is 'profile' and '0', BS5-09).
+metabar.js sets data-state (on, off, loading); _lists.scss shows the
+matching part.
 {% endcomment %}{% if user and not content.id == user.id %}
-<div class="mw-subscribe" data-mw-subscribe data-url="{% url 'single-watcher' %}" data-item-type="{{ item_type }}" data-item-id="{{ content.id }}" data-update-type="{{ update_type|default:1 }}" data-subscribed="{{ content.meta.flags.watched|yesno:'true,false' }}" data-state="{{ content.meta.flags.watched|yesno:'on,off' }}">
+<div class="mw-subscribe" data-mw-subscribe data-url="{% url 'single-watcher' %}" data-item-type="{% firstof watch_type item_type %}" data-item-id="{% firstof watch_id content.id %}" data-update-type="{{ update_type|default:1 }}" data-subscribed="{{ content.meta.flags.watched|yesno:'true,false' }}" data-state="{{ content.meta.flags.watched|yesno:'on,off' }}">
 	{% csrf_token %}
 	<div class="mw-subscribe-off">
 		<button type="button" class="btn mw-btn btn-sm" data-mw-subscribe-toggle>Follow{% if item_type == 'profile' %} @{{ content.profile_name|safe }}{% endif %}</button>

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% comment %}
+The people list (profiles/views.py list, BS5-09). Rows come from
+block_profile.html. The metabar's filters are a GET form that
+js/bs5/filters.js submits on every change, so the URL carries them. The
+Follow control is forms/subscribe.html: following the People page (watcher
+update type 9, item 0) sends new member notifications.
+Styles: _profiles.scss, and _lists.scss for the list and metabar modules.
+{% endcomment %}
+{% load static profile %}
+{% block title %}People{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block description %}List of site profiles{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=True %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title"><a href="{% url 'list-profiles' %}">People</a></h1>
+	{% include 'pagination.html' %}
+</div>
+
+<div class="mw-section-heading d-flex flex-wrap justify-content-between gap-2">
+	<h2 class="mw-section-title">Directory{% if subtitle %} <span class="text-body-secondary fw-normal">/ {{ subtitle }}</span>{% endif %}</h2>
+	{% if filter_name %}<span class="text-body-secondary fw-normal">{{ filter_name }}</span>{% endif %}
+</div>
+<ul class="list-unstyled mw-rows mw-people">
+{% for item in content.profiles.items %}
+	{% profile item no_icon=True send_message=True %}
+{% endfor %}
+</ul>
+
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Filters</h2>
+		<form action="{% url 'list-profiles' %}" method="GET" class="mw-filters" data-mw-filters>
+			<h3 class="mw-module-title">Show me ...</h3>
+			<div class="mb-2">
+				<label class="form-label" for="filter-name">Name starting with</label>
+				<select id="filter-name" name="q" class="form-select form-select-sm">
+					<option value="">Anyone</option>
+					{% if q and q|length > 1 %}<option value="{{ q }}" selected>{{ q }}</option>{% endif %}
+					{% for letter in alphabet %}
+					<option value="{{ letter }}"{% if q|lower == letter %} selected{% endif %}>{{ letter }}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" id="filter-online" type="checkbox" name="online" value="true"{% if online %} checked{% endif %}>
+				<label class="form-check-label" for="filter-online">Online now</label>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" id="filter-following" type="checkbox" name="following" value="true"{% if following %} checked{% endif %}>
+				<label class="form-check-label" for="filter-following">Following</label>
+			</div>
+			<h3 class="mw-module-title mt-2">Options</h3>
+			<div class="form-check">
+				<input class="form-check-input" id="filter-comment-count" type="checkbox" name="top" value="true"{% if top %} checked{% endif %}>
+				<label class="form-check-label" for="filter-comment-count">Order by comment count</label>
+			</div>
+			<noscript><button type="submit" class="btn mw-btn btn-sm mt-2">Apply filters</button></noscript>
+		</form>
+	</section>
+
+	{% if user %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		{% include 'forms/subscribe.html' with update_type=9 watch_type='profile' watch_id='0' %}
+	</section>
+	{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">People</h3>
+		<p class="mw-module-text">Find and discover other people in your community.</p>
+	</section>
+{% endblock %}
+
+{% block js %}
+<script type="module" src="{% static 'js/bs5/filters.js' %}"></script>
+{% endblock %}

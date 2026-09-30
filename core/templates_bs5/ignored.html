@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% comment %}
+What the member is ignoring (ignored/views.py ignored, BS5-09): forums,
+conversations, events and people, as rows from the block_*.html includes.
+Styles: _lists.scss.
+{% endcomment %}
+{% load microcosm profile conversation event %}
+{% block title %}Ignored items on {{ site.title }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block description %}Ignored items on {{ site.title }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+{% if content.items|length == 0 %}
+<h1 class="mw-list-title">You are not ignoring anything.</h1>
+{% else %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title">Ignored Items</h1>
+	{% include 'pagination.html' %}
+</div>
+<ul class="list-unstyled mw-rows">
+	{% for result in content.items %}
+		{% if result.item_type == 'conversation' %}{% conversation result %}
+		{% elif result.item_type == 'event' %}{% event result %}
+		{% elif result.item_type == 'microcosm' %}{% microcosm result %}
+		{% elif result.item_type == 'profile' %}{% profile result %}
+		{% endif %}
+	{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Ignored</h2>
+		<div class="mw-module-text">
+			<p>A list of all items that you are currently ignoring. These items will not be visible anywhere else and you will not receive notifications when they are updated.</p>
+			<p class="mb-0">To remove an item from the ignored list, visit the item and unignore it.</p>
+		</div>
+	</section>
+{% endblock %}

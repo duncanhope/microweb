@@ -90,6 +90,19 @@ PAGES = [
          rows=LIST_ROWS),
     Page('forum-lists', LFGSS, '/microcosms/%d/' % HARNESS_MARK_READ_MICROCOSM_ID, 'microcosm-signedin',
          'a forum signed in: NEW badges, Follow, Controls', signed_in=True, rows=LIST_ROWS),
+    # The rest of the profiles family (BS5-09). Only GETs: the forms render, nothing is posted.
+    Page('profiles', LFGSS, '/profiles/%d/' % HARNESS_PROFILE_ID, 'profile-own',
+         'the harness user\'s own profile: Edit your Profile, View Ignored', signed_in=True),
+    Page('profiles', LFGSS, '/profiles/47714/', 'profile-signedin',
+         'someone else\'s profile signed in: Send Message, Follow, Ignore', signed_in=True),
+    Page('profiles', LFGSS, '/profiles/?top=true', 'profiles-signedin',
+         'people list signed in: send message, Follow the People page', signed_in=True, rows=LIST_ROWS),
+    Page('profiles', LFGSS, '/updates/settings/', 'update-settings', 'the notification settings form',
+         signed_in=True),
+    Page('profiles', LFGSS, '/ignored/', 'ignored', 'the harness user\'s ignored items', signed_in=True,
+         rows=LIST_ROWS),
+    Page('profiles', 'csgrupetto.microcosm.app', '/profiles/?top=true', 'csgrupetto-profiles',
+         'people list under a background image (cover)', rows=LIST_ROWS),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in
@@ -110,6 +123,8 @@ PAGES = [
 # them too, so `test --tag browser` replays from the same recording.
 CHECK_URLS = [
     'https://%s/microcosms/509/?offset=50' % LFGSS,
+    # The people list filtered by Online now, as filters.js asks for it (BS5-09).
+    'https://%s/profiles/?online=true&top=true' % LFGSS,
 ]
 
 FAMILIES = sorted({p.family for p in PAGES})
