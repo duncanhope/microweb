@@ -244,6 +244,11 @@ class Router(object):
         if found is None:
             return ('abort',)
         status, out, body = found
+        # A recorded CORS answer names the Site that recorded it; answer the
+        # Site asking now, as the host would (Google Maps from any event page).
+        origin = headers.get('origin')
+        if origin and out.get('access-control-allow-origin') not in (None, '*', origin):
+            out = dict(out, **{'access-control-allow-origin': origin})
         return ('fulfill', status, out, first_gif_frame(body))
 
     def local(self, method, url, headers, body, is_navigation):

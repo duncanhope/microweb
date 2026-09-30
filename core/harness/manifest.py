@@ -24,6 +24,9 @@ STUB_WRITE_CONVERSATION_ID = 141600
 # user (BS5-07): lfgss Social, quiet and without subforums. Never click it on
 # another forum or on the home page, which would mark the whole Site read.
 HARNESS_MARK_READ_MICROCOSM_ID = 558
+# lfgss's "Test event - do not attend" (BS5-11). The RSVP check answers from a
+# made-up recording built on it: nothing is written (operator's decision).
+RSVP_EVENT_ID = 9667
 
 
 @dataclass(frozen=True)
@@ -118,6 +121,19 @@ PAGES = [
          'Today on a quiet Site: link #185945 on surround #bfc3c5'),
     Page('activity', 'forum.islington.cc', '/search/?q=ride&defaults=true', 'islington-search',
          'search results under Islington CC branding', rows=LIST_ROWS),
+    # The rest of the events family (BS5-11). Only GETs: the RSVP check answers
+    # its write from made-up fixtures (core/harness/events_browser_tests.py).
+    Page('events', LFGSS, '/events/4488/?offset=25', 'event-later', 'a later comment page: the small event header'),
+    Page('events', LFGSS, '/events/10110/', 'event-limit', 'an RSVP limit: the places bar, a map, nobody going'),
+    Page('events', LFGSS, '/events/%d/' % RSVP_EVENT_ID, 'event-no-place',
+         'the test event: no map, the small header, three going'),
+    Page('events', LFGSS, '/microcosms/573/', 'event-list', 'an event list: a forum of mostly events', rows=LIST_ROWS),
+    Page('events', LFGSS, '/events/4488/', 'event-signedin', 'an event signed in: reply box, Follow, Controls',
+         signed_in=True),
+    Page('events', LFGSS, '/events/%d/' % RSVP_EVENT_ID, 'event-rsvp-signedin',
+         'the test event signed in: the base of the made-up RSVP', signed_in=True),
+    Page('events', 'forum.espruino.com', '/events/613/', 'espruino-event',
+         'a three-day event with a map under a background image, link #4898AC'),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in

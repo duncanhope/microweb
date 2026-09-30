@@ -1,0 +1,284 @@
+// The events family (BS5-11): event.html, event_header_small.html (with
+// event_header_large.html, its map variant) and modal_event_attendees.html.
+// The item header, comments and reply box come from _conversations.scss; the
+// event row's date and place pill from _lists.scss.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+//
+// Compact, as today: a 52px day beside the weekday on desktop, one line of
+// date on phones, the map 300px tall beside the facts from md.
+
+.mw-event {
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+}
+
+// The map --------------------------------------------------------------------
+// Leaflet's own light UI: .leaflet-container stays color-scheme: light (_base.scss).
+.mw-event-map {
+  height: 150px;
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+
+  @include media-breakpoint-up(md) {
+    height: 300px;
+  }
+}
+
+// The facts: when, where and who -----------------------------------------------
+.mw-event-facts {
+  margin: 0;
+}
+
+.mw-event-fact {
+  display: flex;
+  gap: .75rem;
+  padding-block: .625rem;
+
+  & + & {
+    border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  }
+}
+
+.mw-event-icon {
+  flex: 0 0 1.5rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--#{$prefix}tertiary-color);
+}
+
+// The small header: three columns from md, with a hairline between.
+@include media-breakpoint-up(md) {
+  .mw-event:not(.mw-event-large) {
+    .mw-event-facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: .5rem;
+    }
+
+    .mw-event-fact {
+      padding: 0 .75rem;
+      border-top: 0;
+
+      &:first-child {
+        padding-left: .625rem;
+      }
+
+      & + .mw-event-fact {
+        border-left: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+      }
+    }
+  }
+
+  // The large header: the facts stack beside the map, without rules.
+  .mw-event-large {
+    .mw-event-facts {
+      padding-right: 1rem;
+    }
+
+    .mw-event-fact {
+      padding-left: .625rem;
+      border-top: 0;
+    }
+  }
+}
+
+.mw-event-date,
+.mw-event-place {
+  font-weight: $font-weight-semibold;
+  line-height: 1.3;
+  color: var(--#{$prefix}emphasis-color);
+}
+
+.mw-event-date {
+  > time {
+    display: block;
+  }
+
+  strong {
+    font-weight: inherit;
+  }
+
+  // Desktop: the day as a big number, weekday, month and year beside it.
+  @include media-breakpoint-up(md) {
+    font-size: 1.25rem;
+    line-height: 1.05;
+
+    > time {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .mw-event-day {
+      font-size: 3.25rem;
+      line-height: .8;
+    }
+
+    strong {
+      display: block;
+    }
+  }
+}
+
+// The time line is today's blue, in both headers and every Site.
+.mw-event-time {
+  display: block;
+  margin-top: .25rem;
+  font-size: .875rem;
+  color: var(--#{$prefix}primary);
+
+  @include media-breakpoint-up(md) {
+    font-size: 1rem;
+  }
+}
+
+@include color-mode(dark) {
+  .mw-event-time {
+    color: var(--#{$prefix}primary-text-emphasis);
+  }
+}
+
+.mw-event-place {
+  overflow-wrap: anywhere;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+
+  @include media-breakpoint-up(md) {
+    font-size: 1.25rem;
+  }
+}
+
+// Who is going: 32px avatars, and +N for the rest.
+.mw-event-people {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+
+  img {
+    display: block;
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  .btn {
+    --#{$prefix}btn-font-size: .875rem;
+    --#{$prefix}btn-padding-y: .25rem;
+  }
+
+  .mw-event-large & {
+    padding: .75rem;
+    border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+    @include border-radius(var(--#{$prefix}border-radius));
+  }
+}
+
+.mw-event-places {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .5rem;
+
+  .progress {
+    flex: 0 1 11rem;
+  }
+}
+
+// RSVP and the Going and Invited counts ------------------------------------------
+.mw-event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: .75rem;
+  padding: .9375rem;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+  background-color: var(--#{$prefix}tertiary-bg);
+  border-block: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-event-rsvp {
+  flex: 1 1 15rem;
+}
+
+.mw-event-status {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--#{$prefix}emphasis-color);
+}
+
+.mw-event-counts {
+  display: flex;
+  gap: 1.25rem;
+  padding: .3125rem .625rem;
+  font-size: .875rem;
+  line-height: 1.3;
+  color: var(--#{$prefix}secondary-color);
+  text-align: right;
+  background-color: var(--#{$prefix}body-bg);
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color-translucent);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  > span > span {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: $font-weight-semibold;
+  }
+
+  &:hover,
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 var(--#{$prefix}focus-ring-width) var(--#{$prefix}focus-ring-color);
+  }
+}
+
+// The attendees modal ---------------------------------------------------------------
+.mw-event-summary {
+  padding-bottom: .9375rem;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-event-summary-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--#{$prefix}emphasis-color);
+}
+
+.mw-attendees {
+  margin: 0;
+  font-size: .875rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+    padding-block: .125rem;
+  }
+
+  img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  span {
+    flex-shrink: 0;
+    color: var(--#{$prefix}secondary-color);
+  }
+
+  em {
+    padding-right: .5rem;
+    font-style: normal;
+    color: var(--#{$prefix}tertiary-color);
+  }
+}

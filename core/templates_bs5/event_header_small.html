@@ -1,0 +1,107 @@
+{% load humanize icon %}{% comment %}
+The event header (BS5-11): when, where, who is going, and the RSVP controls.
+Small, the default: the facts in three columns from md. With large=True
+(event_header_large.html) the facts stack beside the map, and a multi-day
+event shows its end as well. Styles: _events.scss.
+{% endcomment %}
+<section class="mw-event{% if large %} mw-event-large{% endif %}" aria-label="When and where">
+	<div class="row g-0">
+		{% if large %}
+		<div class="col-md-6 order-md-last">
+			<div id="map-canvas" class="mw-event-map" data-mw-event-map data-lat="{{ content.lat }}" data-lon="{{ content.lon }}" data-north="{{ content.north|default:'' }}" data-west="{{ content.west|default:'' }}" data-south="{{ content.south|default:'' }}" data-east="{{ content.east|default:'' }}"></div>
+		</div>
+		{% endif %}
+		<div class="{% if large %}col-md-6{% else %}col-12{% endif %}">
+			<ul class="list-unstyled mw-event-facts">
+				<li class="mw-event-fact">
+					<span class="mw-event-icon" title="Date">{% if large and event_dates.type == 'multiple' %}{% icon "calendar-range" label="Starts" %}{% else %}{% icon "calendar-event" label="Date" %}{% endif %}</span>
+					<div class="mw-event-date">
+						{% if content.when %}
+						<time class="plain" datetime="{{ content.when|date:"c" }}" itemprop="startDate"><span class="mw-event-day">{{ content.when|date:"j" }}</span> <span class="mw-event-weekday">{{ content.when|date:"l" }} <strong>{{ content.when|date:"F Y" }}</strong></span></time>
+						<span class="mw-event-time"><time class="plain" itemprop="duration" datetime="P{{ content.duration }}M">{{ content.when|date:"g:i A" }}{% if event_dates.type == 'single' %} - {{ event_dates.end|date:"g:i A" }}{% endif %}</time></span>
+						{% else %}
+						<abbr title="To be determined">TBD</abbr>
+						{% endif %}
+					</div>
+				</li>
+				{% if large and event_dates.type == 'multiple' %}
+				<li class="mw-event-fact">
+					<span class="mw-event-icon" title="Ends">{% icon "calendar-event" label="Ends" %}</span>
+					<div class="mw-event-date">
+						<time class="plain" datetime="{{ event_dates.end|date:"c" }}" itemprop="endDate"><span class="mw-event-day">{{ event_dates.end|date:"j" }}</span> <span class="mw-event-weekday">{{ event_dates.end|date:"l" }} <strong>{{ event_dates.end|date:"F Y" }}</strong></span></time>
+						<span class="mw-event-time">{{ event_dates.end|date:"g:i A" }}</span>
+					</div>
+				</li>
+				{% endif %}
+				<li class="mw-event-fact">
+					<span class="mw-event-icon" title="Location">{% icon "geo-alt" label="Location" %}</span>
+					<div class="mw-event-place" itemprop="location" itemscope itemtype="http://schema.org/Place">
+						{% if content.where %}
+						<span itemprop="name">{{ content.where|safe }}</span>
+						{% if content.lat and content.lon %}<span itemprop="geo" itemscope itemtype="http://schema.org/GeoCoordinates" hidden><meta itemprop="latitude" content="{{ content.lat }}"><meta itemprop="longitude" content="{{ content.lon }}"></span>{% endif %}
+						{% else %}
+						<abbr title="To be determined">TBD</abbr>
+						{% endif %}
+					</div>
+				</li>
+				{% if not large or rsvp_num_attending or rsvp_num_invited %}
+				<li class="mw-event-fact">
+					<span class="mw-event-icon" title="Attendees">{% icon "person-check" label="Attendees" %}</span>
+					<div class="mw-min-w-0">
+						{% if rsvp_num_attending or rsvp_num_invited %}
+						<ul class="list-unstyled mw-event-people">
+							{# Who is going, or who is invited when nobody is going yet. #}
+							{% for attendee in attendees_yes|default:attendees_invited|slice:":5" %}
+							<li{% if attendee.rsvp == 'yes' %} itemprop="attendee" itemscope itemtype="http://schema.org/Person"{% endif %}><a href="{% url 'single-profile' attendee.profile_id %}" data-bs-toggle="tooltip" title="@{{ attendee.profile.profile_name|safe }}"><img src="{% if 'gravatar' in attendee.profile.avatar %}{{ attendee.profile.avatar }}{% elif 'files' in attendee.profile.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ attendee.profile.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ attendee.profile.profile_name|safe }}" width="32" height="32"></a></li>
+							{% endfor %}
+							{% with total=content.rsvp_attend|default:rsvp_num_invited %}{% if total > 5 %}<li><button type="button" class="btn mw-btn btn-sm" data-bs-toggle="modal" data-bs-target="#modal-event-attendees" aria-label="Everyone going and invited">+{{ total|add:"-5" }}</button></li>{% endif %}{% endwith %}
+						</ul>
+						{% endif %}
+						{% if content.rsvp_limit %}
+						<div class="mw-event-places">
+							<div class="progress" role="progressbar" aria-label="Places taken" aria-valuenow="{{ rsvp_percentage|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">
+								<div class="progress-bar" style="width: {{ rsvp_percentage|floatformat:0 }}%"></div>
+							</div>
+							<strong>{{ content.rsvp_attend|default:0 }}/{{ content.rsvp_limit }}</strong>
+						</div>
+						{% endif %}
+					</div>
+				</li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
+
+	{% if not is_expired or rsvp_num_attending or rsvp_num_invited %}
+	<div class="mw-event-actions">
+		<div class="mw-event-rsvp">
+			{% if is_expired %}
+			<p class="mb-0">Follow this forum to be notified whenever a new event is added.</p>
+			{% elif not user %}
+			<h2 class="mw-event-status">Sign in to reserve your place in this event!</h2>
+			<button type="button" class="btn mw-btn mt-2" id="login_link" onclick="authSignin();">Sign in or register to attend</button>
+			{% elif content.attending %}
+			<h2 class="mw-event-status">You are attending this event.</h2>
+			<form method="POST" action="{% url 'rsvp-event' content.id %}" class="mt-2">
+				{% csrf_token %}
+				<input type="hidden" name="rsvp" value="no">
+				<button id="rsvp_no" type="submit" class="btn mw-btn">Can't make it</button>
+			</form>
+			{% elif content.rsvp_limit and not content.rsvp_spaces %}
+			<h2 class="mw-event-status">This event is full.</h2>
+			<p class="mb-0">Follow the event to be notified when people leave a comment.</p>
+			{% else %}
+			<form method="POST" action="{% url 'rsvp-event' content.id %}">
+				{% csrf_token %}
+				<input type="hidden" name="rsvp" value="yes">
+				<button id="rsvp_yes" type="submit" class="btn mw-btn btn-lg">Yes, I'm attending!</button>
+			</form>
+			{% endif %}
+		</div>
+		<button type="button" class="mw-event-counts" data-bs-toggle="modal" data-bs-target="#modal-event-attendees" aria-label="Going {{ content.rsvp_attend|default:0 }}, invited {{ rsvp_num_invited|default:0 }}: see who">
+			<span>Going <span stat="{{ content.rsvp_attend|default:0 }}">{{ content.rsvp_attend|default:0|intcomma }}</span></span>
+			<span>Invited <span stat="{{ rsvp_num_invited|default:0 }}">{{ rsvp_num_invited|default:0|intcomma }}</span></span>
+		</button>
+	</div>
+	{% endif %}
+</section>

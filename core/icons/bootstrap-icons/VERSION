@@ -9,3 +9,6 @@ is in .scratch/bootstrap5/issues/13-icons.md.
 
 Added for the Color mode toggle (BS5-06): sun-fill, moon-stars-fill,
 circle-half, check2.
+
+Added for the events family (BS5-11): calendar-range, the start of a
+multi-day event (the sprite had calendar-2 for it).

@@ -1,0 +1,45 @@
+{% load icon %}{% comment %}
+Everyone going and invited (BS5-11): a Bootstrap 5 modal, opened by the
+event header's Going and Invited counts and its +N button. Bootstrap traps
+focus inside it and closes it on Escape. Styles: _events.scss.
+{% endcomment %}
+<div id="modal-event-attendees" class="modal fade" tabindex="-1" aria-labelledby="modal-event-attendees-title" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header justify-content-center position-relative mw-surround">
+				<img src="{{ site.logo_url }}" alt="{{ site.title|safe }} - Powered by Microcosm" class="mw-logo-sm">
+				<button type="button" class="btn-close position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="d-flex gap-3 mw-event-summary">
+					<span class="mw-event-icon">{% icon "calendar-event" %}</span>
+					<div class="mw-min-w-0">
+						<h2 class="mw-event-summary-title" id="modal-event-attendees-title">{{ content.title|safe }}</h2>
+						<p class="mb-0"><strong>{{ content.where|safe }}</strong></p>
+						{% if content.when %}
+						<p class="mb-0">
+						{% if event_dates.type == 'multiple' %}
+							{{ content.when|date:"j F Y" }} - {{ event_dates.end|date:"j F Y" }}
+						{% else %}
+							{{ content.when|date:"j F Y" }} @ {{ content.when|date:"g:i A" }} - {{ event_dates.end|date:"g:i A" }}
+						{% endif %}
+						</p>
+						{% endif %}
+					</div>
+				</div>
+				<h3 class="mw-module-heading mt-3">Attendees / Invited</h3>
+				<ul class="list-unstyled mw-attendees">
+					{% for attendee in attendees_yes %}
+					<li><a href="{% url 'single-profile' attendee.profile_id %}"><img src="{% if 'gravatar' in attendee.profile.avatar %}{{ attendee.profile.avatar }}{% elif 'files' in attendee.profile.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ attendee.profile.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="20" height="20" loading="lazy"> @{{ attendee.profile.profile_name|safe }}</a> <span>{{ attendee.rsvpd_on|date:"j M" }}</span></li>
+					{% endfor %}
+					{% for attendee in attendees_invited %}
+					<li><a href="{% url 'single-profile' attendee.profile_id %}"><img src="{% if 'gravatar' in attendee.profile.avatar %}{{ attendee.profile.avatar }}{% elif 'files' in attendee.profile.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ attendee.profile.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="20" height="20" loading="lazy"> @{{ attendee.profile.profile_name|safe }}</a> <span><em>invited</em> {{ attendee.rsvpd_on|date:"j M" }}</span></li>
+					{% endfor %}
+				</ul>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn mw-btn btn-sm" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>

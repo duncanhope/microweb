@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% comment %}
+An event and its comments (events/views.py single, BS5-11). The header is
+event_header_large.html, with its map, on the first page of an event that
+has a place on the map, and event_header_small.html otherwise. Going and
+Invited open modal_event_attendees.html. RSVP is a plain form posting to
+events/views.py rsvp. Comments and the reply box are as on a conversation
+(BS5-08): js/bs5/comments.js for members. The map is js/bs5/eventMap.js.
+Styles: _events.scss, _conversations.scss, and _lists.scss for the metabar.
+{% endcomment %}
+{% load static icon commentBox comments %}
+
+{% block title %}{{ content.title|safe }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block description %}Where: {{ content.where }}, When: {{ content.when|date:"j F Y" }}, {{ content.comments.items.0.html|striptags }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block css %}
+{% if content.comments.page == 1 and content.where and content.lat and content.lon %}
+<link rel="stylesheet" href="{% static '3rd/leaflet/0.7.7/leaflet.css' %}">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div itemscope itemtype="http://schema.org/Event"{% if user %} data-mw-comments{% endif %}>
+	{% include 'breadcrumbs.html' with skipself=True %}
+	<div class="mw-item-header">
+		<h1 class="mw-item-title" itemprop="name"><a id="title" href="{{ content.meta.links.self.href }}">{{ content.title|safe }}</a></h1>
+		<div class="mw-item-meta">
+			<p class="mb-0">Posted on <strong><time class="plain" itemprop="dateCreated" datetime="{{ content.meta.created|date:"c" }}">{{ content.meta.created|date:"D jS, F Y" }}</time></strong></p>
+			{% include 'pagination.html' %}
+		</div>
+	</div>
+
+	{% if content.comments.page == 1 and content.where and content.lat and content.lon %}
+		{% include 'event_header_large.html' %}
+	{% else %}
+		{% include 'event_header_small.html' %}
+	{% endif %}
+
+	<ul class="list-unstyled mw-comments">
+		{% comments content.comments.items %}
+	</ul>
+
+	{% if pagination and pagination.total_pages > 1 %}
+	<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+	{% endif %}
+
+	<section id="reply" class="mw-comment mw-reply" data-mw-reply-default aria-labelledby="mw-reply-title">
+		<span class="mw-comment-avatar"><img src="{% if user %}{% if 'gravatar' in user.avatar %}{{ user.avatar }}{% elif 'files' in user.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ user.avatar }}{% else %}/static/img/avatar.gif{% endif %}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="64" height="64"></span>
+		<div class="mw-comment-main">
+			<h2 id="mw-reply-title" class="mw-reply-title">Post a reply</h2>
+			{% commentBox %}
+		</div>
+	</section>
+</div>
+
+{% include 'modal_event_attendees.html' %}
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+		{% if user %}
+			<a id="post-a-reply-handle" href="#reply" class="btn mw-btn">{% icon "chat-left-text" %} Post a reply</a>
+			{% if content.meta.permissions.update %}
+			<a id="edit-event" href="{% url 'edit-event' content.id %}" class="btn mw-btn">{% icon "pencil" %} Edit Event</a>
+			{% endif %}
+		{% else %}
+			<button type="button" class="btn mw-btn" data-bs-toggle="modal" data-bs-target="#modal-signin">{% icon "chat-left-text" %} Post a reply</button>
+		{% endif %}
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">{{ content.title|safe }}</h3>
+		<div class="mw-module-text">
+			<p class="mw-module-author mb-0">
+				Posted by <a href="{% url 'single-profile' content.meta.created_by.id %}"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in content.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name|safe }}" width="20" height="20" class="rounded object-fit-cover"> @{{ content.meta.created_by.profile_name|safe|truncatechars:25 }}</a>
+				<time datetime="{{ content.meta.created|date:"c" }}"></time>
+			</p>
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		<form class="mb-2" role="search" action="{% url 'single-search' %}">
+			<div class="input-group input-group-sm">
+				<input type="search" id="mw-event-search-input" class="form-control" name="q" placeholder="Search event" aria-label="Search this event">
+				<input type="hidden" name="type" value="event">
+				<input type="hidden" name="type" value="comment">
+				<input type="hidden" name="id" value="{{ content.id }}">
+				<input type="hidden" name="sort" value="date">
+				<button class="btn mw-btn" type="submit">{% icon "search" label="Search" %}</button>
+			</div>
+		</form>
+		{% include 'forms/subscribe.html' %}
+	</section>
+
+	{% if user %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Controls</h2>
+		{% include 'forms/metabar-moderation.html' %}
+		{% if not content.meta.permissions.owner %}
+		<form action="/ignore/" method="POST" id="ignore_form" class="mt-2">
+			{% csrf_token %}
+			<input type="hidden" name="item_type" value="event">
+			<input type="hidden" name="item_id" value="{{ content.id }}">
+			{% if content.meta.flags.ignored %}
+			<input type="hidden" name="delete" value="true">
+			<button type="submit" class="btn mw-btn btn-sm">Unignore</button>
+			{% else %}
+			<button type="submit" class="btn mw-btn btn-sm">Ignore</button>
+			{% endif %}
+		</form>
+		{% endif %}
+		{% if content.meta.permissions.owner or content.meta.permissions.admin or content.meta.permissions.moderator %}
+		<p class="mt-2 mb-0 mw-module-text"><a id="csv-event" href="{% url 'csv-event' content.id %}">Download Attendees CSV</a></p>
+		{% endif %}
+	</section>
+	{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if content.comments.page == 1 and content.where and content.lat and content.lon %}
+<script src="{% static '3rd/leaflet/0.7.7/leaflet.js' %}"></script>
+<script src="https://maps.google.com/maps/api/js?v=3.24&amp;key=AIzaSyA1wa4M7NYbphGTpYnZS-7totQahCZV-VQ"></script>
+<link rel="modulepreload" href="{% static 'js/bs5/leafletGoogle.js' %}">
+<script type="module" src="{% static 'js/bs5/eventMap.js' %}"></script>
+{% endif %}
+{% if user %}
+{% include 'modal_formatting_help.html' %}
+{% include 'comments_scripts.html' %}
+{% endif %}
+{% endblock js %}
