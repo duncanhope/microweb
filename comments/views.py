@@ -263,8 +263,10 @@ def delete(request, comment_id):
         return HttpResponseRedirect(reverse('single-event', args=(comment.item_id,)))
     elif comment.item_type == 'conversation':
         return HttpResponseRedirect(reverse('single-conversation', args=(comment.item_id,)))
+    elif comment.item_type == 'huddle':
+        return HttpResponseRedirect(reverse('single-huddle', args=(comment.item_id,)))
     else:
-        return HttpResponseRedirect(reverse('microcosm-list'))
+        return HttpResponseRedirect(reverse('list-microcosms'))
 
 
 @require_authentication
