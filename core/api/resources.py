@@ -1688,6 +1688,21 @@ class Event(APIResource):
 
         return event
 
+    @property
+    def rsvp_open(self):
+        """
+        Whether the viewer can RSVP. The API takes an RSVP only from someone
+        with create permission on the event (a guest, or a member without
+        that right in the forum, has none), and a closed or cancelled event
+        takes none. The API does not check the last two itself.
+        """
+
+        meta = getattr(self, 'meta', None)
+        if meta is None:
+            return False
+        return (meta.permissions.create and meta.flags.get('open', True)
+                and getattr(self, 'status', None) != 'cancelled')
+
     @classmethod
     def from_create_form(cls, data):
         event = cls()

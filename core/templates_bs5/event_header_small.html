@@ -82,11 +82,17 @@ event shows its end as well. Styles: _events.scss.
 			<button type="button" class="btn mw-btn mt-2" id="login_link" onclick="authSignin();">Sign in or register to attend</button>
 			{% elif content.attending %}
 			<h2 class="mw-event-status">You are attending this event.</h2>
+			{% if content.rsvp_open %}
 			<form method="POST" action="{% url 'rsvp-event' content.id %}" class="mt-2">
 				{% csrf_token %}
 				<input type="hidden" name="rsvp" value="no">
 				<button id="rsvp_no" type="submit" class="btn mw-btn">Can't make it</button>
 			</form>
+			{% else %}
+			<p class="mb-0 mt-2">RSVP is closed.</p>
+			{% endif %}
+			{% elif not content.rsvp_open %}
+			<h2 class="mw-event-status">RSVP is closed.</h2>
 			{% elif content.rsvp_limit and not content.rsvp_spaces %}
 			<h2 class="mw-event-status">This event is full.</h2>
 			<p class="mb-0">Follow the event to be notified when people leave a comment.</p>

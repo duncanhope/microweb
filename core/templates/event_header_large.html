@@ -181,11 +181,17 @@
 						{% if user %}
 							{% if content.attending %}
 								<h3>You are attending this event.</h3>
+								{% if content.rsvp_open %}
 								<form method="POST" action="{% url 'rsvp-event' content.id %}">
 									{% csrf_token %}
 									<input type="hidden" name="rsvp" value="no" />
 									<input id="rsvp_no" type="submit" value="Can't make it" class="btn btn-default">
 								</form>
+								{% else %}
+								<p>RSVP is closed.</p>
+								{% endif %}
+							{% elif not content.rsvp_open %}
+								<h3>RSVP is closed.</h3>
 							{% else %}
 								{% if content.rsvp_limit and not content.rsvp_spaces %}
 									<h3>This event is full.</h3>

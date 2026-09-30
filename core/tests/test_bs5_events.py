@@ -75,6 +75,8 @@ class Bs5EventsTests(SimpleTestCase):
         request.site_url = SITE_URL
         request.view_requests = []
         request.color_mode = 'auto'
+        # The API grants a member create on the event, which lets them RSVP.
+        self.event['meta']['permissions'].update(create=member, guest=not member)
         # A later comment page, as the API answers ?offset=25.
         self.event['comments']['page'] = 2 if 'offset=' in path else 1
         going = sum(1 for a in self.people if a['rsvp'] == 'yes')
