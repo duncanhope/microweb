@@ -84,8 +84,8 @@ class AttendeesModalTests(EventsTestCase):
         modal.wait_for()
         self.assertEqual(page.locator(MODAL).get_attribute('aria-modal'), 'true')
         self.assertEqual(modal.get_by_role('heading', level=2).inner_text(), 'The IKEA ride')
-        # The view asks the API for one page of attendees, 25 of the 26 (as on
-        # Bootstrap 3); Going is the API's own count.
+        # The view asks the API for every attendee: 20 going and 5 invited are
+        # listed, and the 26th said no. Going is the API's own count.
         self.assertEqual(modal.locator('.mw-attendees li').count(), 25)
         self.assertEqual(modal.locator('.mw-attendees li em').count(), 5, 'five invited')
         self.assertTrue(self.in_modal(page), 'focus did not move into the modal')
@@ -213,7 +213,7 @@ class RsvpTests(EventsTestCase):
             self.skipTest('The made-up RSVP recording runs in replay mode only: it must never reach the API.')
         self.event_url = '%s/events/%d' % (LFGSS_API, self.EVENT_ID)
         event = self._recorder.load('GET %s auth' % self.event_url)
-        attendees = self._recorder.load('GET %s/attendees auth' % self.event_url)
+        attendees = self._recorder.load('GET %s/attendees?limit=250 auth' % self.event_url)
         whoami = self._recorder.load('GET %s/whoami auth' % LFGSS_API)
         if not (event and attendees and whoami):
             self.skipTest('No signed-in recording of event %d. Run shoot --record with HARNESS_TOKEN.' % self.EVENT_ID)
@@ -253,7 +253,7 @@ class RsvpTests(EventsTestCase):
         return data
 
     def make_steps(self):
-        get_event, get_attendees = 'GET %s auth' % self.event_url, 'GET %s/attendees auth' % self.event_url
+        get_event, get_attendees = 'GET %s auth' % self.event_url, 'GET %s/attendees?limit=250 auth' % self.event_url
         put = 'PUT %s/attendees auth' % self.event_url
         steps = {
             'invited': [_fixture(get_event, 200, self.event_data(False)),

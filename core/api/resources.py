@@ -11,6 +11,7 @@ from urllib.parse import urlunparse
 
 from dateutil.parser import parse as parse_timestamp
 
+from core.api import fetch
 from core.api.exceptions import APIException
 from microweb.helpers import DateTimeEncoder
 
@@ -1791,23 +1792,46 @@ class Event(APIResource):
         resource = APIResource.retrieve(url, params={}, headers=APIResource.make_request_headers(access_token))
         return resource
 
+    # The largest page of attendees the API gives: it pages at 25 by default
+    # and refuses a limit above 250 (or one that is not a multiple of 5).
+    ATTENDEES_LIMIT = 250
+
     @staticmethod
-    def build_attendees_request(host, id, access_token=None):
+    def build_attendees_request(host, id, access_token=None, offset=None):
         url = build_url(host, [Event.api_path_fragment, id, 'attendees'])
-        params = {}
+        params = {'limit': Event.ATTENDEES_LIMIT}
+        if offset:
+            params['offset'] = offset
         headers = APIResource.make_request_headers(access_token)
         return url, params, headers
 
     @staticmethod
     def get_attendees(host, id, access_token=None):
         """
-        Retrieve a list of attendees for an event.
-        TODO: pagination support
+        Retrieve every attendee of an event.
         """
 
         url, params, headers = Event.build_attendees_request(host, id, access_token)
-        resource = APIResource.retrieve(url, params, headers)
-        return AttendeeList(resource)
+        attendees = AttendeeList(APIResource.retrieve(url, params, headers))
+        Event.get_remaining_attendees(host, id, attendees, access_token)
+        return attendees
+
+    @staticmethod
+    def get_remaining_attendees(host, id, attendees, access_token=None):
+        """
+        Add the pages after the first to an AttendeeList, fetching them
+        concurrently. Only an event with more than ATTENDEES_LIMIT attendees
+        has any. The pages share one URL, so they are read here rather than
+        through response_list_to_dict, which keys responses by URL.
+        """
+
+        page = attendees.items
+        offsets = range(page.offset + page.limit, page.max_offset + 1, page.limit)
+        batch = [fetch.get(*Event.build_attendees_request(host, id, access_token, offset=offset))
+                 for offset in offsets]
+        for response in fetch.map(batch):
+            if response is not None:
+                page.items.extend(AttendeeList(APIResource.process_response(response.url, response)).items.items)
 
     @classmethod
     def rsvp_api(cls, host, event_id, profile_id, attendance_data, access_token):

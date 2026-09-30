@@ -70,7 +70,8 @@ def single(request, event_id):
         offset=offset, access_token=request.access_token)
     request.view_requests.append(fetch.get(event_url, params=event_params, headers=event_headers))
 
-    # Create request for event attendees.
+    # Create request for event attendees: the first page, as many as the API
+    # gives at once, which is every attendee of all but the largest events.
     att_url, att_params, att_headers = Event.build_attendees_request(request.get_host(), event_id,
         request.access_token)
     request.view_requests.append(fetch.get(att_url, params=att_params, headers=att_headers))
@@ -78,6 +79,8 @@ def single(request, event_id):
     # Perform requests and instantiate view objects.
     try:
         responses = response_list_to_dict(fetch.map(request.view_requests))
+        attendees = AttendeeList(responses[att_url])
+        Event.get_remaining_attendees(request.get_host(), event_id, attendees, request.access_token)
     except APIException as exc:
         return respond_with_error(request, exc)
     event = Event.from_api_response(responses[event_url])
@@ -85,7 +88,6 @@ def single(request, event_id):
 
     user = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
 
-    attendees = AttendeeList(responses[att_url])
     attendees_yes = []
     attendees_invited = []
     user_is_attending = False
@@ -322,16 +324,15 @@ def edit(request, event_id):
                 attendees_json.append({
                     'id': attendee.profile.id,
                     'profileName': attendee.profile.profile_name,
-                    'avatar': attendee.profile.avatar,
+                    'avatar': getattr(attendee.profile, 'avatar', ''),
                     'sticky': 'true'
                 })
 
             if len(attendees_json) > 0:
                 view_data['attendees_json'] = json.dumps(attendees_json)
-        except APIException:
+        except APIException as exc:
             # Missing RSVPs is not critical, but we should know if it doesn't work.
-            logger.error(str(APIException))
-            pass
+            logger.error(str(exc))
 
         return render(request, form_template, view_data)
 
