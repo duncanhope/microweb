@@ -39,18 +39,8 @@
       this.map = L.map( 'map-canvas' , { zoomAnimation : false })
                   .setMaxBounds([[-90,-180],[90,180]]); // Restrict map to valid lat:lng pairs
 
-      var googleLayer = new L.Google('ROADMAP');
-      this.map.addLayer(googleLayer);
-
-      var osmCycleLayer = new L.TileLayer("https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png");
-      var osmLandscapeLayer = new L.TileLayer("https://a.tile.thunderforest.com/landscape/{z}/{x}/{y}.png");
-
-      this.map.addControl(new L.Control.Layers({
-        'Open Cycle Map' : osmCycleLayer,
-        'Landscape'      : osmLandscapeLayer,
-        'Google Maps'    : googleLayer
-        })
-      );
+      // Google's road map once it loads, and the tile layers (js/leaflet.js).
+      L.Google.addBaseLayers(this.map, opts.thunderforestKey);
 
       this.bind();
 

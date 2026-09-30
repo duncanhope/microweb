@@ -2,22 +2,75 @@
 // script in event.html without jQuery. event_header_small.html renders
 //
 //   <div id="map-canvas" data-mw-event-map data-lat data-lon
-//        data-north data-west data-south data-east></div>
+//        data-north data-west data-south data-east data-thunderforest-key></div>
 //
-// and this module draws a Leaflet 0.7 map on it: Google's road map, with
-// OpenCycleMap and Landscape to choose from, fitted to the place's bounds,
-// with a marker on the place. The Leaflet map is kept on the element as
+// and this module draws a Leaflet 0.7 map on it, fitted to the place's bounds,
+// with a marker on the place: Google's road map once its API loads, and
+// tile layers to choose from. The tile layers are Thunderforest's
+// OpenCycleMap and Landscape when there is a key
+// (settings.THUNDERFOREST_API_KEY), which they need, and OpenStreetMap's
+// standard tiles when there is not. The Leaflet map is kept on the element as
 // el.mwMap. Leaflet draws its own light UI, so _base.scss keeps
 // .leaflet-container in color-scheme: light in every Color mode.
 
-import { GoogleLayer } from './leafletGoogle.js';
+import { GoogleLayer, loadGoogleMaps } from './leafletGoogle.js';
 
 const { L } = window;
 
 const THUNDERFOREST = {
-  attribution: 'Maps &copy; <a href="http://www.thunderforest.com">Thunderforest</a>, Data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+  attribution: 'Maps &copy; <a href="https://www.thunderforest.com">Thunderforest</a>, Data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   maxZoom: 22,
 };
+const OPENSTREETMAP = {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
+};
+
+export function tileLayers(thunderforestKey) {
+  if (thunderforestKey) {
+    const options = { ...THUNDERFOREST, apikey: thunderforestKey };
+    return {
+      'Open Cycle Map': L.tileLayer('https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey={apikey}', options),
+      Landscape: L.tileLayer('https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey={apikey}', options),
+    };
+  }
+  return { OpenStreetMap: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', OPENSTREETMAP) };
+}
+
+// Google's road map is the default once its API loads. If it cannot load
+// (blocked or offline), or Google refuses the key on this domain, the first
+// tile layer stands in.
+async function addBaseLayers(map, thunderforestKey) {
+  const layers = tileLayers(thunderforestKey);
+  const fallback = Object.values(layers)[0];
+  const control = L.control.layers(layers).addTo(map);
+  let google = null;
+  let refused = false;
+  const useFallback = () => {
+    if (google) {
+      map.removeLayer(google);
+      control.removeLayer(google);
+      google = null;
+    }
+    map.addLayer(fallback);
+  };
+  // Google calls this when the key is not allowed on this domain, and draws
+  // an error in place of the map.
+  window.gm_authFailure = () => {
+    refused = true;
+    useFallback();
+  };
+
+  const loaded = await loadGoogleMaps();
+  if (Object.values(layers).some((layer) => map.hasLayer(layer))) return;
+  if (!loaded || refused) {
+    useFallback();
+    return;
+  }
+  google = new GoogleLayer('ROADMAP');
+  control.addBaseLayer(google, 'Google Maps');
+  map.addLayer(google);
+}
 
 export function drawEventMap(el) {
   const number = (name) => (el.dataset[name] === '' ? NaN : Number(el.dataset[name]));
@@ -25,20 +78,6 @@ export function drawEventMap(el) {
   if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
 
   const map = L.map(el, { zoomAnimation: false }).setMaxBounds([[-90, -180], [90, 180]]);
-  const layers = {
-    'Open Cycle Map': L.tileLayer('https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', THUNDERFOREST),
-    Landscape: L.tileLayer('https://a.tile.thunderforest.com/landscape/{z}/{x}/{y}.png', THUNDERFOREST),
-  };
-  // Google's road map is the default, as today; without the Google script
-  // (blocked or offline) OpenCycleMap stands in.
-  let base = layers['Open Cycle Map'];
-  if (window.google?.maps) {
-    base = new GoogleLayer('ROADMAP');
-    layers['Google Maps'] = base;
-  }
-  map.addLayer(base);
-  map.addControl(L.control.layers(layers));
-
   if ([north, west, south, east].some(Number.isNaN)) {
     map.setView([lat, lon], 15);
   } else {
@@ -47,6 +86,7 @@ export function drawEventMap(el) {
     map.zoomIn();
   }
   L.marker([lat, lon]).addTo(map);
+  addBaseLayers(map, el.dataset.thunderforestKey);
   el.mwMap = map;
   return map;
 }

@@ -8,7 +8,7 @@ event shows its end as well. Styles: _events.scss.
 	<div class="row g-0">
 		{% if large %}
 		<div class="col-md-6 order-md-last">
-			<div id="map-canvas" class="mw-event-map" data-mw-event-map data-lat="{{ content.lat }}" data-lon="{{ content.lon }}" data-north="{{ content.north|default:'' }}" data-west="{{ content.west|default:'' }}" data-south="{{ content.south|default:'' }}" data-east="{{ content.east|default:'' }}"></div>
+			<div id="map-canvas" class="mw-event-map" data-mw-event-map data-lat="{{ content.lat }}" data-lon="{{ content.lon }}" data-north="{{ content.north|default:'' }}" data-west="{{ content.west|default:'' }}" data-south="{{ content.south|default:'' }}" data-east="{{ content.east|default:'' }}" data-thunderforest-key="{{ thunderforest_api_key }}"></div>
 		</div>
 		{% endif %}
 		<div class="{% if large %}col-md-6{% else %}col-12{% endif %}">

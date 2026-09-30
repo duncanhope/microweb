@@ -165,6 +165,15 @@ from microweb.local_settings import DEBUG
 # Allow override of STATIC_ROOT for production
 from microweb.local_settings import STATIC_ROOT
 
+# Thunderforest's tile key, for the event maps' OpenCycleMap and Landscape
+# layers. Optional: without one the maps offer OpenStreetMap's standard tiles
+# instead. Every tile URL carries it, so it is public in the page, but never
+# commit a real one.
+try:
+    from microweb.local_settings import THUNDERFOREST_API_KEY
+except ImportError:
+    THUNDERFOREST_API_KEY = ''
+
 # Site information cache (CNAME lookups, Site objects).
 CACHES = {
     'default': {

@@ -11,6 +11,8 @@ MEMCACHE_HOST = os.getenv('MEMCACHE_HOST', '127.0.0.1')
 MEMCACHE_PORT = os.getenv('MEMCACHE_PORT', 11211)
 PAGE_SIZE = 25
 SECRET_KEY = 'CHANGE THIS STRING TO BE A RANDOM SECRET FOR THIS CLIENT'
+# Optional: Thunderforest's tile key for the event maps (see settings.py).
+THUNDERFOREST_API_KEY = os.getenv('THUNDERFOREST_API_KEY', '')
 STATIC_ROOT = '/srv/www/django/microweb/static/'
 
 LOGGING = {

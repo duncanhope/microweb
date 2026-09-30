@@ -4,6 +4,7 @@ import requests
 import json
 import logging
 
+from django.conf import settings
 from django.urls import reverse
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -158,7 +159,8 @@ def single(request, event_id):
         'rsvp_percentage': rsvp_percentage,
 
         'is_expired': is_expired,
-        'attachments': attachments
+        'attachments': attachments,
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
 
     return render(request, single_template, view_data)
@@ -195,6 +197,7 @@ def create(request, microcosm_id):
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False),
         'site': Site(responses[request.site_url]),
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
     user = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
 
@@ -257,6 +260,7 @@ def create(request, microcosm_id):
                         'content': comment,
                         'comment_form': comment_form,
                         'error': 'Sorry, one of your files was over 5MB. Please try again.',
+                        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
                         }
                     return render(request, form_template, view_data)
 
@@ -289,7 +293,8 @@ def edit(request, event_id):
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False),
         'site': Site(responses[request.site_url]),
-        'state_edit': True
+        'state_edit': True,
+        'thunderforest_api_key': settings.THUNDERFOREST_API_KEY,
     }
 
     if request.method == 'POST':

@@ -26,6 +26,7 @@ import tempfile
 from datetime import timedelta
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from django.test import override_settings
 
 from core import colors
@@ -156,13 +157,12 @@ class EventMapTests(EventsTestCase):
         after = page.evaluate(MAP_FACTS_JS)
         self.assertNotEqual(after['center'], before['center'], 'the map did not pan')
         self.assertEqual(after['zoom'], before['zoom'])
-        # Google moves its first picture with the pan but draws no more of it,
-        # on Bootstrap 3 too (a Google Maps API problem, reported in BS5-11).
         self.assertGreater(after['imagery'], 0, 'Google drew nothing after the pan')
 
-        # The other layers are Leaflet's own tiles.
+        # The other layers are Leaflet's own tiles: Thunderforest's with a key,
+        # OpenStreetMap's without one.
         page.locator('.leaflet-control-layers').hover()
-        page.get_by_label('Open Cycle Map').check()
+        page.get_by_label('Open Cycle Map' if settings.THUNDERFOREST_API_KEY else 'OpenStreetMap').check()
         page.wait_for_function('() => [...document.querySelectorAll("img.leaflet-tile-loaded")]'
                                '.some(i => i.naturalWidth > 0)', timeout=10000)
         self.assertEqual(page.locator('.leaflet-google-layer').count(), 0)
