@@ -981,6 +981,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 **Files.**
 
 - [ ] Delete every Bootstrap 3 template in `core/templates/` that has a bs5 copy.
+- [ ] Move `core/static/js/Markdown.Converter.js` to `core/static/3rd/`, and point `core/static/js/bs5/simpleEditor.js` at it, before deleting the old scripts. Preview needs it (BS5-08).
 - [ ] Delete `core/static/themes/1/css/theme.css`, `core/static/js/bootstrap.min.js`, `img/icons.png`, `img/icons@2x.png` and the unported `core/static/js/*.js`.
 - [ ] Delete `core/static/3rd/jquery/`, `3rd/moment.js/`, `3rd/moment-timezone/`, `3rd/jsTimezoneDetect/`, `3rd/timezones/` and `core/static/js/jquery.textcomplete.min.js`.
 - [ ] Edit `core/templates_bs5/base.html` to stop loading jQuery.
@@ -1082,6 +1083,7 @@ Each live lane runs in its own worktree at the PR head, driven by the Playwright
 ## Close the program
 
 - [ ] Every box above is checked with its evidence.
+- [ ] Hand the operator the post-migration follow-up to test the BS5-08 formatting toolbar properly (dropped Ctrl+U, H and R, no Shift+Enter list continuation, browser undo, toggling Quote and List), which the operator accepted at merge for testing later.
 - [ ] Reply to the operator with the report `autopilot-stack.md` names, and move `.scratch/bootstrap5/` decision tickets into `docs/` or delete them.
 
 ## Appendix A. Prototype evidence
