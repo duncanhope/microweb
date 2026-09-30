@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% comment %}
+Trending (trending/views.py list, BS5-10): the 25 hottest conversations and
+events on the Site. Rows come from the block_*.html includes.
+Styles: _lists.scss and _activity.scss.
+{% endcomment %}
+{% load conversation event %}
+
+{% block title %}Trending | {{ site.title|safe }}{% endblock title %}
+
+{% block description %}The top 25 posts on the site right now.{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title"><a href="{% url 'list-trending' %}">Trending</a></h1>
+	{% include 'pagination.html' %}
+</div>
+
+{% if not content.items.items %}
+<p class="mw-empty">Nothing is trending right now.</p>
+{% else %}
+<ul class="list-unstyled mw-rows">
+	{% for item in content.items.items %}
+		{% if item.item_type == 'conversation' %}{% conversation item showForum=True %}
+		{% elif item.item_type == 'event' %}{% event item showForum=True %}
+		{% endif %}
+	{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Trending</h3>
+		<p class="mw-module-text mb-0">The 25 hottest items on the site at the moment.</p>
+	</section>
+{% endblock %}

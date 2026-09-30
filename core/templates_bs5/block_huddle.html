@@ -1,0 +1,40 @@
+{% load humanize icon %}{% comment %}
+A message row, rendered by {% huddle %} (BS5-10): Following, Today and
+search. Up to six participants' avatars, then how many more. Styles:
+_lists.scss (rows) and _activity.scss (the avatars).
+{% endcomment %}<li class="mw-row" id="huddle{{ item.id }}">
+	<div class="row g-0 gx-md-3">
+		<div class="col-md d-flex mw-min-w-0">
+			<div class="mw-row-icon d-none d-lg-block"><span title="Message">{% icon "envelope" label="Message" %}</span></div>
+			<div class="mw-min-w-0">
+				<h3 class="mw-row-title">
+					<a href="{% url 'newest-huddle' item.id %}">{{ item.title|safe }}</a>
+					{% if unread or item.unread or item.meta.flags.unread %}<span class="badge text-bg-warning">NEW</span>{% endif %}
+				</h3>
+				<div class="mw-row-meta d-flex flex-wrap align-items-center column-gap-2">
+					{% if item.meta.created_by %}
+					<span class="d-none d-md-inline"><a href="{% url 'single-profile' item.meta.created_by.id %}">@{{ item.meta.created_by.profile_name|safe|truncatechars:25 }}</a> <a href="/huddles/{{ item.id }}/">started</a> <time datetime="{{ item.meta.created|date:"c" }}"></time></span>
+					{% endif %}
+					<ul class="list-inline mb-0 mw-participants">
+						{% for participant in item.participants|slice:":6" %}
+						<li class="list-inline-item"><a href="{% url 'single-profile' participant.id %}" data-bs-toggle="tooltip" title="@{{ participant.profile_name|safe }}"><img src="{% if 'gravatar' in participant.avatar %}{{ participant.avatar }}{% elif 'files' in participant.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ participant.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ participant.profile_name|safe }}" width="20" height="20"></a></li>
+						{% endfor %}
+						{% if item.participants|length > 6 %}<li class="list-inline-item">+{{ item.participants|length|add:"-6" }}</li>{% endif %}
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-auto mw-row-side">
+			<ul class="list-inline mb-0 mw-stats">
+				<li class="list-inline-item"><span stat="{{ item.total_comments|default:0 }}">{{ item.total_comments|default:0|intcomma }}</span> comment{{ item.total_comments|pluralize:",s" }}</li>
+			</ul>
+			<div class="mw-row-recent">
+				{% if item.last_comment_created %}
+				<a href="{% url 'single-profile' item.last_comment_created_by.id %}">@{{ item.last_comment_created_by.profile_name|safe|truncatechars:25 }}</a> <a href="{% url 'incontext-comment' item.last_comment_id %}">replied</a> <time datetime="{{ item.last_comment_created|date:"c" }}"></time>
+				{% elif item.meta.created_by %}
+				<a href="{% url 'single-profile' item.meta.created_by.id %}">@{{ item.meta.created_by.profile_name|safe|truncatechars:25 }}</a> replied <time datetime="{{ item.meta.created|date:"c" }}"></time>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</li>

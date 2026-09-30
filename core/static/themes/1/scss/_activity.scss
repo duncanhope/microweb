@@ -1,0 +1,70 @@
+// The activity lists family (BS5-10): updates.html (Following), today.html,
+// trending.html, search.html, watchers.html and block_huddle.html. Rows, the
+// list header and the metabar modules come from _lists.scss; comment rows
+// from _profiles.scss.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+
+// A list's empty state, and the search result count under the title: 16px
+// grey, as today.
+.mw-empty,
+.mw-search-stats {
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-empty {
+  margin-top: .5rem;
+}
+
+.mw-search-stats {
+  margin: 0;
+}
+
+// A message row's participants: small avatars in a line.
+.mw-participants {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem;
+  line-height: 1;
+
+  .list-inline-item {
+    margin: 0;
+  }
+
+  img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+}
+
+// Search and Today options: long lists of checkboxes and radios, at 16px
+// and without gaps, as today.
+.mw-options .form-check {
+  min-height: 0;
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+// The watchers page: a switch column each for email and stop following.
+.mw-watchers {
+  --#{$prefix}table-bg: transparent;
+  font-size: 1rem;
+
+  th {
+    font-weight: $font-weight-semibold;
+  }
+
+  .mw-watchers-switch {
+    width: 8rem;
+    text-align: center;
+  }
+
+  .form-check-input {
+    margin: 0;
+  }
+}

@@ -1,7 +1,8 @@
 // A list's filters in the metabar (BS5-09): a GET form marked data-mw-filters,
-// first on the people list (profiles.html). Ported from js/filters.js without
-// jQuery. Any change loads the list again with the form's values, empty ones
-// left out, so the URL carries the filters: ?online=true&top=true.
+// on the people list (profiles.html), and on Today and search (BS5-10).
+// Ported from js/filters.js without jQuery. Any change loads the list again
+// with the form's values, empty ones left out, so the URL carries the
+// filters: ?online=true&top=true.
 // Without scripts the form's own button does the same, empty values and all.
 
 export function filterUrl(form) {

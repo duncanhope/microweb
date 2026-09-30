@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% comment %}
+Today (today/views.py single, BS5-10): conversations, events, new people
+and the member's messages active in the last 24 hours, from the search API.
+The Following filter is a GET form that js/bs5/filters.js submits on
+change, so the URL carries it (?following=true).
+Styles: _lists.scss and _activity.scss.
+{% endcomment %}
+{% load static profile conversation event huddle %}
+{% block title %}Today on {{ site.title }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block description %}Search results for {{ content.query.searched|striptags }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+{% if content.results.items|length == 0 %}
+<h1 class="mw-list-title">The forum has been quiet today.</h1>
+<p class="mw-empty">Be the first to make a post today.</p>
+{% else %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title">Today on {{ site.title }}</h1>
+	{% include 'pagination.html' %}
+</div>
+<ul class="list-unstyled mw-rows">
+	{% for result in content.results.items %}
+		{% if result.item_type == 'conversation' %}{% conversation result unread=result.unread showForum=True %}
+		{% elif result.item_type == 'event' %}{% event result unread=result.unread showForum=True %}
+		{% elif result.item_type == 'profile' %}{% profile result send_message=True %}
+		{% elif result.item_type == 'huddle' %}{% huddle result unread=result.unread %}
+		{% endif %}
+	{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Today</h2>
+		<div class="mw-module-text">
+			<p>All updates within the last 24 hours are listed here.</p>
+			<p class="mb-0">In addition to new conversations and events you will also see any new members listed here, and any messages that you are a member of.</p>
+		</div>
+	</section>
+
+	{% if user %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Filters</h2>
+		<form action="{% url 'single-today' %}" method="GET" class="mw-filters mw-options" data-mw-filters>
+			<div class="form-check">
+				<input class="form-check-input" id="filter-following" type="checkbox" name="following" value="true"{% if content.query.following %} checked{% endif %}>
+				<label class="form-check-label" for="filter-following">Following</label>
+			</div>
+			<noscript><button type="submit" class="btn mw-btn btn-sm mt-2">Apply filters</button></noscript>
+		</form>
+	</section>
+	{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if user %}<script type="module" src="{% static 'js/bs5/filters.js' %}"></script>{% endif %}
+{% endblock %}

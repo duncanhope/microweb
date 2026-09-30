@@ -126,18 +126,22 @@ class BrowserTestCase(StaticLiveServerTestCase):
         context.route('**/*', browser.sync_handler(router))
         return context.new_page()
 
-    def open_bs5(self, path, host=manifest.LFGSS, width=1280, signed_in=False, color_mode=None, status=200):
-        """Open a page with ?bs=5, and fail the check on any script error."""
+    def open_bs5(self, path, host=manifest.LFGSS, width=1280, signed_in=False, color_mode=None, status=200,
+                 by_cookie=False):
+        """Open a page with ?bs=5, or the bs cookie when by_cookie, and fail the
+        check on any script error."""
         page = self.new_page(width=width, signed_in=signed_in)
-        if color_mode:
-            page.context.add_cookies([{'name': COLOR_MODE_COOKIE, 'value': color_mode, 'url': 'https://%s/' % host}])
+        cookies = [{'name': name, 'value': value, 'url': 'https://%s/' % host}
+                   for name, value in ((COLOR_MODE_COOKIE, color_mode), ('bs', '5' if by_cookie else None)) if value]
+        if cookies:
+            page.context.add_cookies(cookies)
         errors = []
         page.on('pageerror', lambda exc: errors.append(str(exc)))
         # Off-site requests the recording lacks are aborted by design; only
         # script errors count.
         page.on('console', lambda msg: errors.append(msg.text)
                 if msg.type == 'error' and not msg.text.startswith('Failed to load resource') else None)
-        response = page.goto('https://%s%s' % (host, bs5(path)), wait_until='load')
+        response = page.goto('https://%s%s' % (host, path if by_cookie else bs5(path)), wait_until='load')
         self.assertEqual(response.status, status)
         page.wait_for_function('() => window.bootstrap')
         self.addCleanup(lambda: self.assertEqual(errors, [], 'script errors on the page'))

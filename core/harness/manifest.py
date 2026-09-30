@@ -103,6 +103,21 @@ PAGES = [
          rows=LIST_ROWS),
     Page('profiles', 'csgrupetto.microcosm.app', '/profiles/?top=true', 'csgrupetto-profiles',
          'people list under a background image (cover)', rows=LIST_ROWS),
+    # The rest of the activity family (BS5-10). Search always carries
+    # defaults=true or inTitle: a bare ?q= on a common word is a 500 from the
+    # API ("Too many results"). The watchers page has no URL (updates/urls.py),
+    # so it is rendered by the unit tests only.
+    Page('activity', LFGSS, '/trending/', 'trending', 'the 25 hottest items', rows=LIST_ROWS),
+    Page('activity', LFGSS, '/today/', 'today-signedin', 'today signed in: the Following filter, messages',
+         signed_in=True, rows=LIST_ROWS),
+    Page('activity', LFGSS, '/search/?type=event&eventAfter=0&sort=oldest', 'search-events',
+         'event search: Popular Searches, event filters, the no-results state'),
+    Page('activity', LFGSS, '/search/?q=bike&defaults=true', 'search-signedin',
+         'search results signed in: the Messages and Following filters', signed_in=True, rows=LIST_ROWS),
+    Page('activity', 'forum.islington.cc', '/today/', 'islington-today',
+         'Today on a quiet Site: link #185945 on surround #bfc3c5'),
+    Page('activity', 'forum.islington.cc', '/search/?q=ride&defaults=true', 'islington-search',
+         'search results under Islington CC branding', rows=LIST_ROWS),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in
@@ -125,6 +140,10 @@ CHECK_URLS = [
     'https://%s/microcosms/509/?offset=50' % LFGSS,
     # The people list filtered by Online now, as filters.js asks for it (BS5-09).
     'https://%s/profiles/?online=true&top=true' % LFGSS,
+    # Search filters as js/bs5/search.js asks for them (BS5-10): conversations
+    # only, then the same with the navbar's new words kept on the search page.
+    'https://%s/search/?q=bike&type=conversation&inTitle=true&sort=date' % LFGSS,
+    'https://%s/search/?q=wheel&inTitle=true&sort=date' % LFGSS,
 ]
 
 FAMILIES = sorted({p.family for p in PAGES})

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% comment %}
+Search results (search/views.py single, BS5-10). Rows come from the
+block_*.html includes; a comment is block_list_comments.html.
+
+The metabar's options are one GET form, marked data-mw-filters, holding the
+words searched for (q) and every filter as its own query parameter.
+js/bs5/search.js loads filters.js, which reloads the results on any change,
+and keeps the filters when a new search is typed into the navbar. The API
+answers a bare ?q= on a common word with a 500 ("Too many results"), so the
+navbar elsewhere sends defaults=true (title matches, newest first) and this
+form carries inTitle and sort explicitly.
+Styles: _lists.scss and _activity.scss.
+{% endcomment %}
+{% load static humanize icon microcosm profile conversation event list_comment huddle %}
+{% block title %}Search for {{ content.query.searched }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block description %}Search results for {{ content.query.searched|striptags }} {% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+{% if not content.results %}
+<h1 class="mw-list-title">No valid search terms supplied.</h1>
+<p class="mw-empty">Please enter some search terms.</p>
+{% elif content.results.items|length == 0 %}
+<h1 class="mw-list-title">We couldn't find any items that matched your search.</h1>
+<div class="mw-empty">
+	<h2 class="mw-module-title">Suggestions:</h2>
+	<ul class="mb-0">
+		<li>Make sure that all words are spelled correctly.</li>
+		<li>Try different or more general keywords.</li>
+	</ul>
+</div>
+{% else %}
+<div class="mw-list-header">
+	<div>
+		<h1 class="mw-list-title">Search results for: {{ content.query.q }}</h1>
+		<p class="mw-search-stats">{{ content.results.total|default:0|intcomma }} matches. Search took {{ content.time_elapsed }} seconds.</p>
+	</div>
+	{% include 'pagination.html' %}
+</div>
+<ul class="list-unstyled mw-rows">
+	{% for result in content.results.items %}
+		{% if result.item_type == 'conversation' %}{% conversation result unread=result.unread showForum=True %}
+		{% elif result.item_type == 'event' %}{% event result unread=result.unread showForum=True %}
+		{% elif result.item_type == 'microcosm' %}{% microcosm result unread=result.unread showForum=True %}
+		{% elif result.item_type == 'profile' %}{% profile result send_message=True %}
+		{% elif result.item_type == 'comment' %}{% list_comment result %}
+		{% elif result.item_type == 'huddle' %}{% huddle result unread=result.unread %}
+		{% endif %}
+	{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	{% if content.type|length == 1 and 'event' in content.type %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Popular Searches</h2>
+		<div class="btn-group-vertical w-100 mw-module-actions">
+			<a href="/search?type=event&amp;eventAfter=0&amp;sort=oldest" class="btn mw-btn">{% icon "calendar-event" %} All Upcoming Events</a>
+			<a href="/search?type=event&amp;eventBefore=0&amp;sort=newest" class="btn mw-btn">{% icon "calendar-event" %} All Past Events</a>
+		</div>
+	</section>
+	{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Search Options</h2>
+		<form action="{% url 'single-search' %}" method="GET" class="mw-filters mw-options" data-mw-filters>
+			<input type="hidden" name="q" value="{{ content.query.q|default:'' }}">
+
+			<h3 class="mw-module-title">Types to Display</h3>
+			{% if not content.query.forumId %}
+			<div class="form-check"><input class="form-check-input" id="filter-microcosm" type="checkbox" name="type" value="microcosm"{% if 'microcosm' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-microcosm">Forums</label></div>
+			{% endif %}
+			<div class="form-check"><input class="form-check-input" id="filter-conversation" type="checkbox" name="type" value="conversation"{% if 'conversation' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-conversation">Conversations</label></div>
+			<div class="form-check"><input class="form-check-input" id="filter-events" type="checkbox" name="type" value="event"{% if 'event' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-events">Events</label></div>
+			{% if not content.query.forumId %}
+			<div class="form-check"><input class="form-check-input" id="filter-profiles" type="checkbox" name="type" value="profile"{% if 'profile' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-profiles">Profile</label></div>
+			{% if user %}
+			<div class="form-check"><input class="form-check-input" id="filter-huddles" type="checkbox" name="type" value="huddle"{% if 'huddle' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-huddles">Messages</label></div>
+			{% endif %}
+			<div class="form-check"><input class="form-check-input" id="filter-comments" type="checkbox" name="type" value="comment"{% if 'comment' in content.type %} checked{% endif %}><label class="form-check-label" for="filter-comments">Comments</label></div>
+			{% endif %}
+
+			{% if content.query.q or user %}
+			<h3 class="mw-module-title mt-2">Filters</h3>
+			{# Most specific first, most general last. #}
+			{% if content.type|length == 1 and 'event' in content.type %}
+			{% if content.query.eventAfter %}
+			<div class="form-check"><input class="form-check-input" id="filter-eventAfter" type="checkbox" name="eventAfter" value="{{ content.query.eventAfter }}" checked><label class="form-check-label" for="filter-eventAfter">eventAfter = {{ content.query.eventAfter }}</label></div>
+			{% endif %}
+			{% if content.query.eventBefore %}
+			<div class="form-check"><input class="form-check-input" id="filter-eventBefore" type="checkbox" name="eventBefore" value="{{ content.query.eventBefore }}" checked><label class="form-check-label" for="filter-eventBefore">eventBefore = {{ content.query.eventBefore }}</label></div>
+			{% endif %}
+			<div class="form-check"><input class="form-check-input" id="filter-attendee" type="checkbox" name="attendee" value="true"{% if content.query.attendee %} checked{% endif %}><label class="form-check-label" for="filter-attendee">Attended/Attending</label></div>
+			{% endif %}
+			{% if content.query.authorId %}
+			<div class="form-check"><input class="form-check-input" id="filter-authorId" type="checkbox" name="authorId" value="{{ content.query.authorId }}" checked><label class="form-check-label" for="filter-authorId">authorId = {{ content.query.authorId }}</label></div>
+			{% endif %}
+			{% for itemid in content.query.id %}
+			<div class="form-check"><input class="form-check-input" id="filter-id{{ itemid }}" type="checkbox" name="id" value="{{ itemid }}" checked><label class="form-check-label" for="filter-id{{ itemid }}">id = {{ itemid }}</label></div>
+			{% endfor %}
+			{% for forumid in content.query.forumId %}
+			<div class="form-check"><input class="form-check-input" id="filter-forumId{{ forumid }}" type="checkbox" name="forumId" value="{{ forumid }}" checked><label class="form-check-label" for="filter-forumId{{ forumid }}">forumId = {{ forumid }}</label></div>
+			{% endfor %}
+			{% if content.query.since %}
+			<div class="form-check"><input class="form-check-input" id="filter-since" type="checkbox" name="since" value="{{ content.query.since }}" checked><label class="form-check-label" for="filter-since">since = {{ content.query.since }}</label></div>
+			{% endif %}
+			{% if content.query.until %}
+			<div class="form-check"><input class="form-check-input" id="filter-until" type="checkbox" name="until" value="{{ content.query.until }}" checked><label class="form-check-label" for="filter-until">until = {{ content.query.until }}</label></div>
+			{% endif %}
+			{% if user %}
+			<div class="form-check"><input class="form-check-input" id="filter-following" type="checkbox" name="following" value="true"{% if content.query.following %} checked{% endif %}><label class="form-check-label" for="filter-following">Following</label></div>
+			{% endif %}
+			<div class="form-check"><input class="form-check-input" id="filter-hasattachment" type="checkbox" name="has" value="attachment"{% if 'attachment' in content.query.has %} checked{% endif %}><label class="form-check-label" for="filter-hasattachment">Has attachment</label></div>
+			{% if content.query.q %}
+			<div class="form-check"><input class="form-check-input" id="filter-intitle" type="checkbox" name="inTitle" value="true"{% if content.query.inTitle %} checked{% endif %}><label class="form-check-label" for="filter-intitle">Title matched search terms</label></div>
+			{% endif %}
+			{% endif %}
+
+			{% if content.query.q or content.type|length == 1 and 'event' in content.type %}
+			<h3 class="mw-module-title mt-2">Order By</h3>
+			{% if content.type|length == 1 and 'event' in content.type %}
+			<div class="form-check" title="ascending"><input class="form-check-input" id="filter-oldest" type="radio" name="sort" value="oldest"{% if content.query.sort == 'oldest' %} checked{% endif %}><label class="form-check-label" for="filter-oldest">Event date &#x25B4; (Jan &gt; Dec)</label></div>
+			<div class="form-check" title="descending"><input class="form-check-input" id="filter-newest" type="radio" name="sort" value="newest"{% if content.query.sort == 'newest' %} checked{% endif %}><label class="form-check-label" for="filter-newest">Event date &#x25BE; (Dec &gt; Jan)</label></div>
+			{% endif %}
+			{% if content.query.q %}
+			<div class="form-check"><input class="form-check-input" id="filter-relevancy" type="radio" name="sort" value=""{% if not content.query.sort %} checked{% endif %}><label class="form-check-label" for="filter-relevancy">Relevancy</label></div>
+			{% endif %}
+			<div class="form-check"><input class="form-check-input" id="filter-date" type="radio" name="sort" value="date"{% if content.query.sort == 'date' %} checked{% endif %}><label class="form-check-label" for="filter-date">Recent updates</label></div>
+			{% endif %}
+
+			<noscript><button type="submit" class="btn mw-btn btn-sm mt-2">Apply filters</button></noscript>
+		</form>
+	</section>
+{% endblock %}
+
+{% block js %}
+<script type="module" src="{% static 'js/bs5/search.js' %}"></script>
+{% endblock %}

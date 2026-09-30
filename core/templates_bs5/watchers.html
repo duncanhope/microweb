@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% comment %}
+The items a member follows, to change their email or stop following them
+(updates/views.py WatcherView.list, BS5-10). One form: per watcher its
+watcher_id, send_email_<id> and delete_watcher_<id>, as the view reads them.
+No URL routes to this page today (updates/urls.py); it is rebuilt so the two
+trees stay alike. Styles: _activity.scss.
+{% endcomment %}
+{% block title %}Watchers{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title">Items you're watching</h1>
+	{% include 'pagination.html' %}
+</div>
+{% if not content.watchers.items %}
+<p class="mw-empty">When you post a comment on a conversation or event, you'll start watching it. New comments posted on that item will appear with other items you are <a href="{% url 'list-updates' %}">following</a> or be emailed to you.</p>
+{% else %}
+<form method="POST" action="">
+	{% csrf_token %}
+	<table class="table table-sm align-middle mw-watchers">
+		<thead>
+			<tr>
+				<th scope="col">Item</th>
+				<th scope="col" class="mw-watchers-switch">Send me an email</th>
+				<th scope="col" class="mw-watchers-switch">Stop following</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for watcher in content.watchers.items %}
+			<tr>
+				<td>
+					<input type="hidden" name="watcher_id" value="{{ watcher.id }}">
+					<a href="{{ watcher.item_link }}">{{ watcher.item.title|safe }}</a>
+					<div class="mw-row-meta">Last updated <time datetime="{{ watcher.item.last_comment_created|date:"c" }}"></time></div>
+				</td>
+				<td class="mw-watchers-switch"><input class="form-check-input" name="send_email_{{ watcher.id }}" type="checkbox" aria-label="Send me an email"{% if watcher.send_email %} checked{% endif %}></td>
+				<td class="mw-watchers-switch"><input class="form-check-input" name="delete_watcher_{{ watcher.id }}" type="checkbox" aria-label="Stop following"></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<button type="submit" class="btn mw-btn">Save changes</button>
+</form>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

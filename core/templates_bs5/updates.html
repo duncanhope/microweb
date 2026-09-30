@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% comment %}
+Following (updates/views.py UpdateView.list, BS5-10): what happened on the
+items the member follows, newest first. Rows come from the block_*.html
+includes; a reply or a mention is a comment row (block_list_comments.html)
+naming who wrote it. Styles: _lists.scss and _activity.scss.
+{% endcomment %}
+{% load icon microcosm profile conversation event list_comment huddle %}
+
+{% block title %}Following{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title"><a href="{% url 'list-updates' %}">Following</a></h1>
+	{% include 'pagination.html' %}
+</div>
+
+{% if not user %}
+<p class="mw-empty">Please sign in to view updates on the items that you are following.</p>
+{% elif not content.updates.items %}
+<p class="mw-empty">No updates to show. When your name is mentioned or a new comment is posted on something that you are following, it will show here.</p>
+{% else %}
+<ul class="list-unstyled mw-rows">
+	{% for update in content.updates.items %}
+		{% with unread=update.meta.flags.unread %}
+		{% if update.item_type == 'conversation' %}{% conversation update unread=unread showForum=True %}
+		{% elif update.item_type == 'event' %}{% event update unread=unread showForum=True %}
+		{% elif update.item_type == 'microcosm' %}{% microcosm update unread=unread %}
+		{% elif update.item_type == 'profile' %}{% profile update %}
+		{% elif update.item_type == 'huddle' %}{% huddle update unread=unread %}
+		{% elif update.item_type == 'comment' %}
+			{% if update.update_type == 'new_comment' or update.update_type == 'new_comment_in_huddle' %}
+				{% if update.parent_item_type == 'conversation' %}{% conversation update.parent_item unread=unread showForum=True %}
+				{% elif update.parent_item_type == 'event' %}{% event update.parent_item unread=unread showForum=True %}
+				{% elif update.parent_item_type == 'profile' %}{% profile update.parent_item %}
+				{% elif update.parent_item_type == 'huddle' %}{% huddle update.parent_item unread=unread %}
+				{% endif %}
+			{% else %}{% list_comment update action=update.update_type %}
+			{% endif %}
+		{% endif %}
+		{% endwith %}
+	{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	{% if user %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+			<a href="{% url 'updates-settings' %}" class="btn mw-btn">{% icon "chat" %} Update notification settings</a>
+		</div>
+	</section>
+	{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Following</h3>
+		<div class="mw-module-text">
+			<p>Updates on the items that you are following are shown with the most recent update at the top.</p>
+			<p>Unfollow items by visiting them directly, remember that if you are following a forum you will need to unfollow that.</p>
+			<p class="mb-0">Interactions such as replies and @mentions will always be shown.</p>
+		</div>
+	</section>
+{% endblock %}
