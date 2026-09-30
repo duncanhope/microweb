@@ -1,0 +1,612 @@
+// The conversations and comments family (BS5-08): conversation.html,
+// comment.html, forms/create_comment.html, forms/conversation.html,
+// block_comment_single.html, the comment box (forms/block_comment_box.html)
+// and the mentions list (js/bs5/mentions.js).
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+//
+// Compact on purpose, as today: 64px avatars in their own column from md,
+// comments 20px apart with a hairline between, 16px meta, and Merriweather
+// 15/24 comment text (.mw-prose, _base.scss).
+
+$mw-avatar: 64px;
+$mw-avatar-gap: 20px;
+$mw-avatar-small: 20px;
+$mw-thumb: 80px;
+
+// Room for the small avatar before the first line on phones.
+@mixin mw-avatar-indent {
+  padding-left: $mw-avatar-small + 6px;
+
+  @include media-breakpoint-up(md) {
+    padding-left: 0;
+  }
+}
+
+// The item header: breadcrumbs, title, date and pagination --------------------
+.mw-item-header {
+  margin-bottom: .75rem;
+  padding-bottom: .75rem;
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+
+  @include media-breakpoint-up(lg) {
+    padding-bottom: 1.25rem;
+  }
+}
+
+.mw-item-title {
+  margin: .25rem 0 .5rem;
+  font-size: 1.425rem;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+
+  @include media-breakpoint-up(md) {
+    font-size: 1.9rem;
+  }
+}
+
+.mw-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-alert {
+  font-size: 1rem;
+}
+
+// Comments ---------------------------------------------------------------------
+// The avatar sits beside the comment from md; on phones it shrinks to sit
+// before the author's name.
+.mw-comments {
+  margin: 0;
+}
+
+.mw-comment {
+  position: relative;
+  padding-block: .9375rem;
+
+  @include media-breakpoint-up(md) {
+    padding-block: 1.25rem;
+  }
+
+  .mw-comments > & + & {
+    border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  }
+}
+
+.mw-comments + .mw-comments,
+.mw-comments + .mw-reply,
+.mw-list-footer + .mw-reply {
+  border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-comment-avatar {
+  position: absolute;
+  top: calc(.9375rem + 2px);
+  left: 0;
+
+  img {
+    display: block;
+    width: $mw-avatar-small;
+    height: $mw-avatar-small;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  @include media-breakpoint-up(md) {
+    top: 1.25rem;
+
+    img {
+      width: $mw-avatar;
+      height: $mw-avatar;
+    }
+  }
+}
+
+.mw-comment-main {
+  min-width: 0;
+
+  @include media-breakpoint-up(md) {
+    margin-left: $mw-avatar + $mw-avatar-gap;
+  }
+}
+
+// The permalink keeps the top right; "in reply to" wraps under the name.
+.mw-comment-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 .75rem;
+  margin-bottom: .625rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.mw-comment-author {
+  flex: 1 1 auto;
+  min-width: 0;
+  @include mw-avatar-indent;
+}
+
+.mw-comment-author-name {
+  margin-right: .25rem;
+  color: var(--#{$prefix}body-color);
+}
+
+.mw-comment-reply-to {
+  display: inline-block;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-comment-permalink {
+  flex-shrink: 0;
+  color: var(--#{$prefix}tertiary-color);
+  white-space: nowrap;
+}
+
+.mw-comment-body {
+  margin-bottom: .625rem;
+
+  @include media-breakpoint-up(md) {
+    margin-bottom: 1.25rem;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.mw-comment-attachments {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+
+  img {
+    margin-bottom: 1.5rem;
+  }
+}
+
+// More than five attachments: 80px thumbnails.
+.mw-attachment-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+
+  li {
+    width: $mw-thumb;
+    height: $mw-thumb;
+    overflow: hidden;
+  }
+
+  img {
+    width: $mw-thumb;
+    margin: 0;
+  }
+}
+
+// Reply, Edit and Delete, on the right.
+.mw-comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+
+  .btn {
+    --#{$prefix}btn-padding-x: .625rem;
+    --#{$prefix}btn-padding-y: 0;
+    --#{$prefix}btn-font-size: 1rem;
+    --#{$prefix}btn-font-weight: #{$font-weight-normal};
+    --#{$prefix}btn-color: var(--#{$prefix}secondary-color);
+    --#{$prefix}btn-hover-color: var(--#{$prefix}link-hover-color);
+    --#{$prefix}btn-active-color: var(--#{$prefix}link-hover-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &[aria-expanded="true"] {
+      color: var(--#{$prefix}link-hover-color);
+    }
+  }
+
+  .mw-comment-reply {
+    --#{$prefix}btn-color: var(--#{$prefix}link-color);
+  }
+
+  .bi {
+    vertical-align: -.125em;
+  }
+
+  form {
+    margin: 0;
+  }
+}
+
+// A box opened by Reply or Edit, under its comment.
+.mw-comment-box {
+  padding-top: .625rem;
+}
+
+// The reply box at the foot of the conversation.
+.mw-reply-title {
+  margin-bottom: .625rem;
+  font-size: 1rem;
+  font-weight: $font-weight-bold;
+  line-height: 1.5;
+  @include mw-avatar-indent;
+}
+
+// The single comment page: its thread above in a quieter panel, the comment raised.
+.mw-comments-dull {
+  padding-inline: .9375rem;
+  background-color: var(--#{$prefix}tertiary-bg);
+}
+
+.mw-comments-highlighted {
+  margin-bottom: .5rem;
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  box-shadow: var(--#{$prefix}box-shadow-sm);
+
+  > .mw-comment {
+    padding-inline: .9375rem;
+  }
+
+  .mw-comment-avatar {
+    left: .9375rem;
+  }
+
+  @include media-breakpoint-up(md) {
+    > .mw-comment {
+      padding-inline: 1.25rem;
+    }
+
+    .mw-comment-avatar {
+      left: 1.25rem;
+    }
+  }
+}
+
+// Comment text ------------------------------------------------------------------
+// API HTML with no classes (ticket 07). .mw-prose (_base.scss) sets the type;
+// these are the parts only comments need: headings, spoilers and code.
+.mw-prose {
+  :is(h1, h2, h3, h4, h5, h6) {
+    margin-top: 12px;
+  }
+
+  details {
+    margin-block: 1rem;
+    padding: .4em 1em;
+    background-color: var(--#{$prefix}tertiary-bg);
+    border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+    @include border-radius(var(--#{$prefix}border-radius-lg));
+  }
+
+  summary {
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+  }
+
+  // Code: base.js runs prettify, which marks the tokens. A dark block in both
+  // Color modes, as today's; the token colours are Bootstrap's.
+  pre.prettyprint {
+    padding: 1em;
+    color: var(--#{$prefix}light);
+    white-space: pre-wrap;
+    background-color: var(--#{$prefix}dark);
+    // The edge shows where the block meets the dark body in dark mode.
+    border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+    box-shadow: var(--#{$prefix}box-shadow-sm);
+    @include border-radius(var(--#{$prefix}border-radius));
+
+    code {
+      color: inherit;
+    }
+
+    .str,
+    .atv {
+      color: var(--#{$prefix}yellow);
+    }
+
+    .kwd,
+    .typ {
+      color: var(--#{$prefix}cyan);
+    }
+
+    .com {
+      font-style: italic;
+      color: var(--#{$prefix}gray-500);
+    }
+
+    .lit,
+    .dec {
+      color: var(--#{$prefix}orange);
+    }
+
+    .tag {
+      color: var(--#{$prefix}pink);
+    }
+
+    .atn {
+      color: var(--#{$prefix}teal);
+    }
+
+    .pun,
+    .pln {
+      color: var(--#{$prefix}white);
+    }
+  }
+
+  ol.linenums {
+    margin: 0;
+    color: var(--#{$prefix}gray-500);
+
+    > li {
+      list-style-type: decimal;
+    }
+  }
+}
+
+// The comment box ---------------------------------------------------------------
+.mw-editor {
+  position: relative;
+  background-color: var(--#{$prefix}body-bg);
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  &:focus-within {
+    border-color: var(--#{$prefix}primary-border-subtle);
+    box-shadow: 0 0 0 var(--#{$prefix}focus-ring-width) var(--#{$prefix}focus-ring-color);
+  }
+}
+
+.mw-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-editor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .625rem;
+  font-size: .75rem;
+  line-height: 1.1;
+  color: var(--#{$prefix}secondary-color);
+  background: none;
+  border: 0;
+  border-right: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color-translucent);
+
+  &:hover:not(:disabled),
+  &[aria-pressed="true"] {
+    color: var(--#{$prefix}emphasis-color);
+    background-color: var(--#{$prefix}secondary-bg);
+  }
+
+  &:focus-visible {
+    position: relative;
+    outline: 0;
+    box-shadow: 0 0 0 var(--#{$prefix}focus-ring-width) var(--#{$prefix}focus-ring-color);
+  }
+
+  &.ms-auto {
+    border-right: 0;
+    border-left: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color-translucent);
+  }
+
+  @include media-breakpoint-up(md) {
+    padding: .3125rem .625rem;
+  }
+}
+
+// Labels from md; icons alone on phones. Bold and Italics show as words from md.
+.mw-editor-label {
+  display: none;
+
+  @include media-breakpoint-up(md) {
+    display: inline;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  [data-mw-format="bold"],
+  [data-mw-format="italic"] {
+    .bi {
+      display: none;
+    }
+  }
+}
+
+// .mw-editor raises it above Bootstrap's textarea.form-control height.
+.mw-editor .mw-editor-input {
+  min-height: 150px;
+  padding: .625rem;
+  font-family: $mw-font-family-prose;
+  font-size: 15px;
+  line-height: 24px;
+  border: 0;
+  @include border-radius(0);
+  resize: vertical;
+
+  &:focus,
+  &.is-invalid:focus {
+    box-shadow: none;
+  }
+
+  .mw-item-form & {
+    @include media-breakpoint-up(lg) {
+      min-height: 250px;
+    }
+  }
+}
+
+.mw-editor-preview {
+  padding: 0 .9375rem .625rem;
+  overflow: auto;
+  background-color: var(--#{$prefix}tertiary-bg);
+}
+
+.mw-editor-preview-title {
+  margin: .625rem 0;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+
+  strong {
+    color: var(--#{$prefix}emphasis-color);
+  }
+}
+
+.mw-editor-footer {
+  padding: .3125rem;
+  font-size: 1rem;
+  background-color: var(--#{$prefix}tertiary-bg);
+  border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  @include border-bottom-radius(var(--#{$prefix}border-radius));
+}
+
+.mw-editor-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.mw-editor-help {
+  --#{$prefix}btn-font-size: .875rem;
+  --#{$prefix}btn-padding-x: .25rem;
+  --#{$prefix}btn-font-weight: #{$font-weight-normal};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.mw-editor-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background-color: var(--#{$prefix}tertiary-bg);
+}
+
+// Attachments: a dashed drop area with the files picked so far.
+.mw-attachments {
+  margin-bottom: .3125rem;
+  padding: 0 .625rem;
+  font-size: .875rem;
+  line-height: 1.5rem;
+  color: var(--#{$prefix}secondary-color);
+  border: var(--#{$prefix}border-width) dashed var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  &.mw-dragover {
+    border-color: var(--#{$prefix}primary);
+  }
+}
+
+.mw-attachments-label {
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+
+  &:focus-within {
+    outline: 0;
+    box-shadow: 0 0 0 var(--#{$prefix}focus-ring-width) var(--#{$prefix}focus-ring-color);
+  }
+}
+
+.mw-attachments-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3125rem .625rem;
+  margin: 0;
+
+  &:not(:empty) {
+    padding-block: .3125rem;
+  }
+
+  li {
+    position: relative;
+  }
+
+  .btn-close {
+    position: absolute;
+    top: -.25rem;
+    right: -.5rem;
+    padding: .375rem;
+    font-size: .625rem;
+    background-color: var(--#{$prefix}body-bg);
+    border-radius: 50%;
+    box-shadow: var(--#{$prefix}box-shadow-sm);
+    opacity: 1;
+  }
+}
+
+.mw-attachment-image {
+  width: $mw-thumb;
+  height: $mw-thumb;
+  padding: .625rem;
+  text-align: center;
+  background-color: var(--#{$prefix}body-bg);
+  box-shadow: var(--#{$prefix}box-shadow-sm);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  img {
+    max-width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.mw-attachment-file {
+  flex: 0 0 100%;
+  padding-right: 1.5rem;
+  color: var(--#{$prefix}body-color);
+
+  .btn-close {
+    top: .25rem;
+    right: 0;
+    box-shadow: none;
+  }
+
+  @include media-breakpoint-up(lg) {
+    flex-basis: calc(50% - .625rem);
+  }
+}
+
+// The mentions list, under the caret -----------------------------------------------
+.mw-mentions {
+  --#{$prefix}dropdown-font-size: 1rem;
+  --#{$prefix}dropdown-padding-y: 0;
+  --#{$prefix}dropdown-min-width: 12rem;
+  max-width: 100%;
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    cursor: pointer;
+  }
+
+  img {
+    flex-shrink: 0;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+}
+
+// The conversation form ----------------------------------------------------------
+.mw-item-form {
+  .form-label {
+    font-size: 1rem;
+    font-weight: $font-weight-semibold;
+  }
+}

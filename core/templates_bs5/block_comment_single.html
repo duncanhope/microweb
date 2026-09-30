@@ -1,0 +1,59 @@
+{% load get_attachment is_image icon %}{% comment %}
+One comment (BS5-08), for conversations, events and huddles. The body is API
+HTML with no classes, styled by .mw-prose (ticket 07). The Reply and Edit
+buttons carry data-mw-reply for js/bs5/comments.js, which opens a comment box
+under the comment. Styles: _conversations.scss.
+{% endcomment %}<li id="comment{{ comment.id }}" class="mw-comment" itemscope itemtype="http://schema.org/Comment">
+	<a id="{{ comment.id }}"></a>
+	{% if comment.meta.created_by.id %}<a href="{% url 'single-profile' comment.meta.created_by.id %}" class="mw-comment-avatar" tabindex="-1" aria-hidden="true"><img src="{% if 'gravatar' in comment.meta.created_by.avatar %}{{ comment.meta.created_by.avatar }}{% elif 'files' in comment.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ comment.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="64" height="64" itemprop="image"></a>{% endif %}
+	<div class="mw-comment-main">
+		<div class="mw-comment-header">
+			<div class="mw-comment-author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+				{% if comment.meta.created_by.id %}<a href="{% url 'single-profile' comment.meta.created_by.id %}" class="mw-comment-author-name" itemprop="url"><strong itemprop="name">{{ comment.meta.created_by.profile_name|safe|truncatechars:25 }}</strong></a>{% endif %}
+				{% if comment.in_reply_to %}
+				<span class="mw-comment-reply-to" itemprop="mentions" itemscope itemtype="http://schema.org/Comment">
+					{% icon "arrow-right" %} <a href="{% url 'incontext-comment' comment.in_reply_to %}" itemprop="url">in reply to</a> <a href="{{ comment.meta.links.inReplyToAuthor.href|safe }}">@{{ comment.meta.links.inReplyToAuthor.title|safe }}</a>
+				</span>
+				{% endif %}
+			</div>
+			<div class="mw-comment-permalink">
+				<time datetime="{{ comment.meta.created|date:"c" }}" itemprop="dateCreated"></time>
+				<span aria-hidden="true">&middot;</span>
+				{% if hide_permalink %}<a href="{% url 'single-comment' comment.id %}" itemprop="discussionUrl">{% icon "link-45deg" label="Link to this comment" %}</a>
+				{% else %}<a href="{% url 'single-comment' comment.id %}" itemprop="discussionUrl">#{{ forloop.counter|add:pagination.offset }}</a>{% endif %}
+			</div>
+		</div>
+		<div class="mw-prose mw-comment-body" itemprop="text">
+			{{ comment.html|safe }}
+			{% if attachments %}{% get_attachment comment.id as comment_attachments %}{% if comment_attachments %}
+			<div class="mw-comment-attachments">
+				<p><strong>{% if comment_attachments.total > 25 %}25{% else %}{{ comment_attachments.total }}{% endif %} Attachment{{ comment_attachments.total|pluralize }}</strong></p>
+				<ul class="list-unstyled{% if comment_attachments.total > 5 %} mw-attachment-thumbs{% endif %}">
+				{% for attachment in comment_attachments.items %}{% if not attachment.file_ext|is_image %}
+					<li><a href="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.meta.links.0.href }}" title="{{ attachment.file_name }}">{{ attachment.file_name }}</a></li>
+				{% endif %}{% endfor %}
+				{% for attachment in comment_attachments.items %}{% if attachment.file_ext|is_image %}
+					<li>{% if comment_attachments.total > 5 %}<a href="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.meta.links.0.href }}">{% endif %}<img src="https://{{ site.subdomain_key }}.microcosm.app{{ attachment.meta.links.0.href }}" alt="{{ attachment.file_name }}" title="{{ attachment.file_name }}">{% if comment_attachments.total > 5 %}</a>{% endif %}</li>
+				{% endif %}{% endfor %}
+				</ul>
+			</div>
+			{% endif %}{% endif %}
+		</div>
+		{% if user %}
+		<div class="mw-comment-actions">
+			{% if not comment.meta.created_by.id == user.id %}{% if content.meta.flags.open and item_type == 'conversation' or content.meta.flags.open and item_type == 'event' or item_type == 'huddle' %}
+			<button type="button" class="btn btn-link mw-comment-reply" data-mw-reply data-action="{% url 'create-comment' %}" data-ref="{{ comment.id }}" aria-expanded="false">{% icon "reply" %} Reply</button>
+			{% endif %}{% endif %}
+			{% if content.meta.permissions.siteOwner or comment.meta.permissions.update or comment.meta.created_by.id == user.id %}
+			<button type="button" class="btn btn-link" data-mw-reply data-action="{% url 'edit-comment' comment.id %}" data-source="{% url 'single-comment' comment.id %}" data-comment-id="{{ comment.id }}" data-num-attachments="{{ comment.attachments|default:'0' }}" aria-expanded="false">{% icon "pencil" %} Edit</button>
+			{% endif %}
+			{% if content.meta.permissions.siteOwner or comment.meta.permissions.delete %}
+			<form action="{% url 'delete-comment' comment.id %}" method="POST">
+				{% csrf_token %}
+				<button type="submit" class="btn btn-link">Delete</button>
+			</form>
+			{% endif %}
+		</div>
+		{% endif %}
+	</div>
+</li>

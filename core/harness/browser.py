@@ -14,18 +14,25 @@ so the browser never loads a live Site. Every request is routed:
   (YouTube, Instagram, maps tiles in frames) cannot make shots flaky.
 - Everything else is aborted.
 
+Playwright routes only the first request of a redirect chain, so a redirect
+from the local server never reaches the browser as one: the browser would
+fetch the next address from the network, which for a Site host is the live
+Site. A page load gets a stand-in page that goes to the new address itself,
+as a fresh routed request; any other request is followed here.
+
 The request-resolving code is synchronous and API-agnostic; `async_handler`
 and `sync_handler` adapt it to Playwright's async and sync APIs.
 """
 import asyncio
 import base64
+import html
 import http.client
 import json
 import os
 import re
 import tempfile
 import threading
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 import requests
 
@@ -199,6 +206,19 @@ def forward_to_server(port, host, method, path, headers, body=None):
         conn.close()
 
 
+REDIRECTS = (301, 302, 303, 307, 308)
+MAX_REDIRECTS = 5
+# Stands in for a redirect answering a page load: the browser goes on by itself,
+# keeping the fragment as it would across a real redirect.
+REDIRECT_PAGE = ('<!doctype html><meta name="harness-redirect" content="%s"><title>Redirecting</title>'
+                 '<script>const u = new URL(%s, location.href); u.hash ||= location.hash; location.replace(u)</script>')
+
+
+def _local_path(url):
+    parts = urlsplit(url)
+    return (parts.path or '/') + ('?' + parts.query if parts.query else '')
+
+
 class Router(object):
     """Decides how each browser request is answered.
 
@@ -209,16 +229,13 @@ class Router(object):
         self.servers = servers
         self.store = store
 
-    def resolve(self, method, url, headers, body, is_subframe_navigation, from_subframe):
+    def resolve(self, method, url, headers, body, is_subframe_navigation, from_subframe, is_navigation=False):
         """Return ('fulfill', status, headers, body) or ('abort',)."""
         parts = urlsplit(url)
         host = parts.hostname or ''
-        path = parts.path or '/'
-        if parts.query:
-            path += '?' + parts.query
         port = self.servers.get(host)
         if port and not parts.path.startswith('/api/'):
-            return ('fulfill',) + forward_to_server(port, host, method, path, headers, body)
+            return ('fulfill',) + self.local(method, url, headers, body, is_navigation)
         if is_subframe_navigation:
             return ('fulfill', 200, {'content-type': 'text/html'}, (PLACEHOLDER % host).encode('utf-8'))
         if from_subframe or method != 'GET':
@@ -229,24 +246,48 @@ class Router(object):
         status, out, body = found
         return ('fulfill', status, out, first_gif_frame(body))
 
+    def local(self, method, url, headers, body, is_navigation):
+        """A Site request, answered by its local server without handing the
+        browser a redirect (see the module docstring)."""
+        for _ in range(MAX_REDIRECTS):
+            host = urlsplit(url).hostname or ''
+            status, out, data = forward_to_server(self.servers[host], host, method, _local_path(url), headers, body)
+            location = next((v for k, v in out.items() if k.lower() == 'location'), None)
+            if status not in REDIRECTS or not location:
+                return status, out, data
+            target = urljoin(url, location)
+            if is_navigation:
+                kept = {k: v for k, v in out.items() if k.lower() == 'set-cookie'}
+                kept['content-type'] = 'text/html; charset=utf-8'
+                script = json.dumps(target).replace('</', '<\\/')
+                return 200, kept, (REDIRECT_PAGE % (html.escape(target), script)).encode('utf-8')
+            if urlsplit(target).hostname not in self.servers:
+                return 502, {'content-type': 'text/plain'}, b'harness: redirect off the Site'
+            url = target
+            if status in (301, 302, 303):
+                method, body = 'GET', None
+        return 508, {'content-type': 'text/plain'}, b'harness: too many redirects'
+
 
 def _frame_facts(request):
+    """(a subframe's page load, from a subframe, the top frame's page load)"""
     try:
         frame = request.frame
     except Exception:  # service worker requests have no frame
-        return False, True
+        return False, True, False
     subframe = frame.parent_frame is not None
-    return subframe and request.is_navigation_request(), subframe
+    navigation = request.is_navigation_request()
+    return subframe and navigation, subframe, navigation and not subframe
 
 
 def async_handler(router):
     async def handle(route):
         request = route.request
-        is_nav, from_subframe = _frame_facts(request)
+        is_nav, from_subframe, top_nav = _frame_facts(request)
         headers = await request.all_headers()
         outcome = await asyncio.to_thread(
             router.resolve, request.method, request.url, headers,
-            request.post_data_buffer, is_nav, from_subframe)
+            request.post_data_buffer, is_nav, from_subframe, top_nav)
         if outcome[0] == 'abort':
             await route.abort()
         else:
@@ -258,9 +299,9 @@ def async_handler(router):
 def sync_handler(router):
     def handle(route):
         request = route.request
-        is_nav, from_subframe = _frame_facts(request)
+        is_nav, from_subframe, top_nav = _frame_facts(request)
         outcome = router.resolve(request.method, request.url, request.all_headers(),
-                                 request.post_data_buffer, is_nav, from_subframe)
+                                 request.post_data_buffer, is_nav, from_subframe, top_nav)
         if outcome[0] == 'abort':
             route.abort()
         else:

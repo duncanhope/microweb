@@ -1,0 +1,63 @@
+{% load icon %}{% comment %}
+The comment box (BS5-08), rendered by {% commentBox %}: a formatting toolbar,
+the Markdown textarea, attachments and the Post reply button. js/bs5/simpleEditor.js
+drives it through data-mw-editor, and js/bs5/comments.js clones it for Reply and
+Edit. as_component drops the form and its buttons, for pages that wrap the box
+in their own form; no_attachments drops the upload. The Formatting help modal
+is included once by the page (modal_formatting_help.html), not here, because
+the box is cloned. Styles: _conversations.scss.
+{% endcomment %}<div class="mw-editor" data-mw-editor data-num-attachments="{{ comment_form.attachments.value|default:'0' }}">
+	{# A guest's toolbar is shown, disabled, as today. #}
+	<fieldset class="mw-editor-toolbar" role="toolbar" aria-label="Formatting"{% if not user %} disabled{% endif %}>
+		<button type="button" class="mw-editor-btn" data-mw-format="bold" title="Bold (Ctrl+B)">{% icon "type-bold" %}<span class="mw-editor-label fw-bold">Bold</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="italic" title="Italics (Ctrl+I)">{% icon "type-italic" %}<span class="mw-editor-label fst-italic">Italics</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="link" title="Link (Ctrl+L)">{% icon "link-45deg" %}<span class="mw-editor-label">Link</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="image" title="Image (Ctrl+G)">{% icon "image" %}<span class="mw-editor-label">Image</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="list" title="Numbered list (Ctrl+O)">{% icon "list-ol" %}<span class="mw-editor-label">List</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="quote" title="Quote (Ctrl+Q)">{% icon "quote" %}<span class="mw-editor-label">Quote</span></button>
+		<button type="button" class="mw-editor-btn" data-mw-format="code" title="Code (Ctrl+K)">{% icon "code" %}<span class="mw-editor-label">Code</span></button>
+		<button type="button" class="mw-editor-btn ms-auto" data-mw-preview aria-pressed="false">{% icon "eye" %}<span class="mw-editor-label">Preview</span></button>
+	</fieldset>
+{% if user %}
+	{% if not as_component %}
+	<form action="{% url 'create-comment' %}" method="POST" enctype="multipart/form-data" novalidate>
+		{% csrf_token %}
+		<input type="hidden" name="id" value="{{ comment_form.id.value|default_if_none:'' }}">
+		<input type="hidden" name="inReplyTo" value="{{ comment_form.inReplyTo.value|default_if_none:'' }}">
+		<input type="hidden" name="itemId" value="{{ comment_form.itemId.value|default_if_none:'' }}">
+		<input type="hidden" name="itemType" value="{{ comment_form.itemType.value|default_if_none:'' }}">
+	{% endif %}
+		<textarea class="form-control mw-editor-input" placeholder="Enter your text here..."
+			{% if not as_component %}aria-label="Your comment" name="{{ comment_form.markdown.name }}" maxlength="{{ comment_form.fields.markdown.max_length }}" required{% else %}id="mw-editor-{{ name|default:'markdown' }}" name="{{ name|default:'markdown' }}" maxlength="{{ max_length|default:'5000' }}"{% endif %}>{{ value|default:'' }}</textarea>
+		{% if not as_component %}<div class="invalid-feedback px-2">Cannot be empty.</div>{% endif %}
+		<div class="mw-editor-preview" hidden>
+			<p class="mw-editor-preview-title"><strong>Preview</strong> &middot; click the preview button again to close</p>
+			<div class="mw-prose" data-mw-preview-body></div>
+		</div>
+		{% if not no_attachments or not as_component %}
+		<div class="mw-editor-footer">
+			{% if not no_attachments %}
+			<div class="mw-attachments" data-mw-attachments>
+				<ul class="mw-attachments-gallery list-unstyled" data-mw-gallery></ul>
+				<label class="mw-attachments-label"><span class="link-primary text-decoration-underline">Upload a file</span><input type="file" name="attachments" multiple class="visually-hidden"></label>
+				<span>(max 30 MB per file, 5 files total)</span>
+			</div>
+			{% endif %}
+			{% if not as_component %}
+			<div class="mw-editor-buttons">
+				<button type="reset" class="btn mw-btn">Cancel</button>
+				<button type="button" class="btn btn-link mw-editor-help" data-bs-toggle="modal" data-bs-target="#formatting-help-modal">{% icon "question-circle" %} <span class="mw-editor-label">Formatting help</span></button>
+				<button type="submit" class="btn mw-btn ms-auto" data-mw-submit>Post reply</button>
+			</div>
+			{% endif %}
+		</div>
+		{% endif %}
+	{% if not as_component %}
+	</form>
+	{% endif %}
+{% else %}
+	<div class="mw-editor-signin">
+		<button type="button" class="btn mw-btn" onclick="authSignin();">Sign in to post a reply</button>
+	</div>
+{% endif %}
+</div>

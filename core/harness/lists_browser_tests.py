@@ -23,7 +23,6 @@ from django.test import override_settings
 from core import colors
 from core.harness import manifest, recorder
 from core.harness.browser_tests import BrowserTestCase
-from core.middleware.context import COLOR_MODE_COOKIE
 
 LFGSS = manifest.LFGSS
 ESPRUINO = 'forum.espruino.com'
@@ -32,28 +31,8 @@ MARK_READ_FORUM = '/microcosms/%d/' % manifest.HARNESS_MARK_READ_MICROCOSM_ID
 NEW_BADGES = 'ul.mw-rows .badge.text-bg-warning'
 
 
-def bs5(path):
-    return path + ('&' if '?' in path else '?') + 'bs=5'
-
-
 class ListsTestCase(BrowserTestCase):
-    """Opens a lists page on Bootstrap 5 and fails the check on a script error."""
-
-    def open(self, path, host=LFGSS, width=1280, signed_in=False, color_mode=None):
-        page = self.new_page(width=width, signed_in=signed_in)
-        if color_mode:
-            page.context.add_cookies([{'name': COLOR_MODE_COOKIE, 'value': color_mode, 'url': 'https://%s/' % host}])
-        errors = []
-        page.on('pageerror', lambda exc: errors.append(str(exc)))
-        # Off-site requests the recording lacks are aborted by design; only
-        # script errors count.
-        page.on('console', lambda msg: errors.append(msg.text)
-                if msg.type == 'error' and not msg.text.startswith('Failed to load resource') else None)
-        response = page.goto('https://%s%s' % (host, bs5(path)), wait_until='load')
-        self.assertEqual(response.status, 200)
-        page.wait_for_function('() => window.bootstrap')
-        self.addCleanup(lambda: self.assertEqual(errors, [], 'script errors on the page'))
-        return page
+    """Lists pages open with BrowserTestCase.open_bs5; this checks they are Bootstrap 5 lists."""
 
     def assert_on_bs5(self, page):
         self.assertTrue(page.evaluate('!!document.querySelector("link[href*=\'bs5.min.css\']")'), 'not the Bootstrap 5 base')
@@ -65,7 +44,7 @@ class Bs5ListPagesTests(ListsTestCase):
     def test_every_lists_page_renders_on_bootstrap_5(self):
         for p in manifest.pages_for('lists'):
             with self.subTest(page=p.label):
-                page = self.open(p.path, host=p.host, signed_in=p.signed_in)
+                page = self.open_bs5(p.path, host=p.host, signed_in=p.signed_in)
                 self.assert_on_bs5(page)
                 page.context.close()
 
@@ -73,7 +52,7 @@ class Bs5ListPagesTests(ListsTestCase):
 class PageJumpTests(ListsTestCase):
 
     def test_typing_a_page_and_pressing_enter_jumps_there(self):
-        page = self.open(FORUM)
+        page = self.open_bs5(FORUM)
         self.assert_on_bs5(page)
         form = page.locator('.mw-list-header form[name=paginationByOffset]')
         self.assertEqual(form.get_attribute('data-limit'), '25')
@@ -90,7 +69,7 @@ class PageJumpTests(ListsTestCase):
         self.snap(page, 'lists-page-jump')
 
     def test_the_current_page_or_nonsense_does_not_navigate(self):
-        page = self.open(FORUM)
+        page = self.open_bs5(FORUM)
         field = page.locator('.mw-list-header .mw-page-jump input[inputmode=numeric]')
         for value in ('1', 'x', '0', '100000'):
             with self.subTest(value=value):
@@ -118,17 +97,13 @@ class OverlayRecording(object):
         # A new session makes record mode fetch every key again.
         self.rec.session = '%s/%s' % (self.rec.session, self.name)
         if self.rec.mode == recorder.REPLAY:
-            base_dir, overlay_load = self.base_dir, self.rec.load
+            overlay_load = self.rec.load
 
+            # The live server loads keys from several threads at once, so the
+            # fallback reads the main recording's folder, never switching rec.dir.
             def load(key):
                 found = overlay_load(key)
-                if found is None:
-                    self.rec.dir = base_dir
-                    try:
-                        found = overlay_load(key)
-                    finally:
-                        self.rec.dir = self.dir
-                return found
+                return found if found is not None else recorder.load_from(self.base_dir, key)
             self.rec.load = load
         return self
 
@@ -148,7 +123,7 @@ class MarkReadTests(ListsTestCase):
             self.skipTest('No Mark everything read recording in %s. Record it once (it marks lfgss Social read '
                           'for the harness user): HARNESS_MODE=record python manage.py test --tag browser '
                           'core.harness.lists_browser_tests.MarkReadTests' % overlay.dir)
-        page = self.open(MARK_READ_FORUM, signed_in=True)
+        page = self.open_bs5(MARK_READ_FORUM, signed_in=True)
         before = page.locator(NEW_BADGES).count()
         self.assertGreater(before, 0, 'the recording has no NEW badges to clear')
         self.snap(page, 'lists-mark-read-before')
@@ -158,8 +133,8 @@ class MarkReadTests(ListsTestCase):
         self.assertEqual(form.locator('input[name=item_id]').input_value(),
                          str(manifest.HARNESS_MARK_READ_MICROCOSM_ID))
         with overlay:
-            with page.expect_navigation(wait_until='load'):
-                form.get_by_role('button', name='Mark everything read').click()
+            self.submit(page, form.get_by_role('button', name='Mark everything read').click,
+                        form.get_attribute('action'))
             self.assertEqual(urlsplit(page.url).path, MARK_READ_FORUM)
             page.reload(wait_until='load')
             self.assert_on_bs5(page)
@@ -170,7 +145,7 @@ class MarkReadTests(ListsTestCase):
 class SignedInControlsTests(ListsTestCase):
 
     def test_home_signed_in(self):
-        page = self.open('/', signed_in=True)
+        page = self.open_bs5('/', signed_in=True)
         self.assert_on_bs5(page)
         self.assertTrue(page.locator('.mw-account #profile').is_visible())
         actions = page.locator('.mw-module', has=page.get_by_role('heading', name='Actions'))
@@ -184,7 +159,7 @@ class SignedInControlsTests(ListsTestCase):
         self.snap(page, 'lists-signed-in')
 
     def test_forum_signed_in(self):
-        page = self.open(MARK_READ_FORUM, signed_in=True)
+        page = self.open_bs5(MARK_READ_FORUM, signed_in=True)
         forum = str(manifest.HARNESS_MARK_READ_MICROCOSM_ID)
         self.assertEqual(page.locator('#create_conversation').get_attribute('href'),
                          '/microcosms/%s/create/conversation/' % forum)
@@ -231,7 +206,7 @@ class SignedInControlsTests(ListsTestCase):
         self.assertEqual((query['q'], query['forumId'], query['defaults']), (['beers'], [forum], ['true']))
 
     def test_guest_post_buttons_open_the_signin_modal(self):
-        page = self.open(FORUM)
+        page = self.open_bs5(FORUM)
         page.get_by_role('button', name='Post a conversation').click()
         page.locator('#modal-signin.show').wait_for()
         self.snap(page, 'lists-guest-post')
@@ -260,7 +235,7 @@ class EspruinoBrandingTests(ListsTestCase):
         site_link = colors.parse_hex('#4898AC')
         for mode in ('light', 'dark'):
             with self.subTest(mode=mode):
-                page = self.open('/', host=ESPRUINO, color_mode=mode)
+                page = self.open_bs5('/', host=ESPRUINO, color_mode=mode)
                 facts = page.evaluate(COLOR_FACTS_JS)
                 self.assertEqual(facts['theme'], mode)
                 self.assertIn('url(', facts['image'], 'the Site background image')

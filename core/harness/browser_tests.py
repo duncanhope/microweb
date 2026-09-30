@@ -18,10 +18,16 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import override_settings, tag
 
 from core.harness import browser, manifest, recorder
+from core.middleware.context import COLOR_MODE_COOKIE
 
 REPO_ROOT = os.path.dirname(settings.PROJECT_ROOT)
 HARNESS_DIR = os.path.join(REPO_ROOT, '.harness')
 CHECKS_PATH = os.path.join(HARNESS_DIR, 'checks.json')
+
+
+def bs5(path):
+    """path, asking for Bootstrap 5."""
+    return path + ('&' if '?' in path else '?') + 'bs=5'
 
 
 @tag('browser')
@@ -119,6 +125,33 @@ class BrowserTestCase(StaticLiveServerTestCase):
         router = browser.Router({h: self.server_thread.port for h in manifest.site_hosts()}, self.store)
         context.route('**/*', browser.sync_handler(router))
         return context.new_page()
+
+    def open_bs5(self, path, host=manifest.LFGSS, width=1280, signed_in=False, color_mode=None, status=200):
+        """Open a page with ?bs=5, and fail the check on any script error."""
+        page = self.new_page(width=width, signed_in=signed_in)
+        if color_mode:
+            page.context.add_cookies([{'name': COLOR_MODE_COOKIE, 'value': color_mode, 'url': 'https://%s/' % host}])
+        errors = []
+        page.on('pageerror', lambda exc: errors.append(str(exc)))
+        # Off-site requests the recording lacks are aborted by design; only
+        # script errors count.
+        page.on('console', lambda msg: errors.append(msg.text)
+                if msg.type == 'error' and not msg.text.startswith('Failed to load resource') else None)
+        response = page.goto('https://%s%s' % (host, bs5(path)), wait_until='load')
+        self.assertEqual(response.status, status)
+        page.wait_for_function('() => window.bootstrap')
+        self.addCleanup(lambda: self.assertEqual(errors, [], 'script errors on the page'))
+        return page
+
+    def submit(self, page, click, action):
+        """Run click, which posts a form to the path `action`, and wait for the
+        page its redirect lands on. The harness answers a redirect with a
+        stand-in page at `action` that moves on by itself (core/harness/browser.py)."""
+        with page.expect_navigation(url=lambda url: urlsplit(url).path == action, wait_until='commit'):
+            click()
+        # A redirect can take more than one stand-in page (Django's added slash).
+        page.wait_for_function('() => document.readyState === "complete"'
+                               ' && !document.querySelector("meta[name=harness-redirect]")')
 
     def snap(self, page, name):
         """Keep a screenshot of the check in .harness/checks/ for review."""

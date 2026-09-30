@@ -1,0 +1,28 @@
+{# Bulk moderation of the items on a page, for moderators (BS5-08). Today it has no handler: the form posts back to the page. #}
+{% if content.meta.permissions.moderator %}
+<form class="d-flex align-items-center gap-2 mt-2 mw-content-moderation" action="" method="post">
+	<label for="content-body-admin-actions" class="small text-body-secondary">With selected:</label>
+	<select id="content-body-admin-actions" class="form-select form-select-sm w-auto" name="action">
+	{% if content.comments %}
+		<option>Move selected comments</option>
+		<option>Delete selected comments</option>
+		<option>Undelete selected comments</option>
+		<option>Approve selected comments</option>
+		<option>Unapprove selected comments</option>
+	{% elif content.items %}
+		<option>Move selected items</option>
+		<option>Delete selected items</option>
+		<option>Undelete selected items</option>
+		<option>Approve selected items</option>
+		<option>Unapprove selected items</option>
+		<option>Pin selected items</option>
+		<option>Unpin selected items</option>
+	{% else %}
+		<option>Delete selected microcosms</option>
+		<option>Pin selected microcosms</option>
+		<option>Unpin selected microcosms</option>
+	{% endif %}
+	</select>
+	<button type="submit" class="btn mw-btn btn-sm">Go</button>
+</form>
+{% endif %}

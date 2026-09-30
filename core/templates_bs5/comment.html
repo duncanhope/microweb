@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% comment %}
+A single comment with its parents and replies (comments/views.py single,
+BS5-08). For members, js/bs5/comments.js opens the highlighted comment's
+Reply or Edit box on load, cloned from the template below.
+forms/create_comment.html extends it. Styles: _conversations.scss.
+{% endcomment %}
+{% load static commentBox comments %}
+
+{% block title %}{{ content.meta.links.up.title|safe }} (Comment {{ content.id }}){% endblock title %}
+
+{% block description %}{{ content.html|striptags }}{% endblock description %}
+
+{% block content %}
+<div{% if user %} data-mw-comments data-mw-open-highlighted{% endif %}>
+	{% block item_header %}
+	{% include 'breadcrumbs.html' with skipself=True skipparents=True %}
+	<div class="mw-item-header">
+		<h1 class="mw-item-title"><a href="{{ content.meta.links.up.href }}">{{ content.meta.links.up.title|safe }}</a></h1>
+	</div>
+	<div class="alert alert-warning mw-alert">
+		You are reading a single comment{% if content.meta.created_by.id %} by <a href="{% url 'single-profile' content.meta.created_by.id %}">@{{ content.meta.created_by.profile_name|safe }}</a>{% endif %} and its replies.
+		<a href="{{ content.meta.links.commentPage.href }}#{{ content.id }}">Click here to read the full conversation.</a>
+	</div>
+	{% endblock item_header %}
+
+	{% if content.meta.parents %}
+	<ul class="list-unstyled mw-comments mw-comments-dull">
+		{% comments content.meta.parents hide_permalink=True %}
+	</ul>
+	{% endif %}
+
+	<ul class="list-unstyled mw-comments mw-comments-highlighted">
+		{% comments content hide_permalink=True %}
+	</ul>
+
+	{% if content.meta.children %}
+	<ul class="list-unstyled mw-comments">
+		{% comments content.meta.children hide_permalink=True %}
+	</ul>
+	{% endif %}
+
+	{% if user %}<template data-mw-reply-template>{% commentBox %}</template>{% endif %}
+</div>
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		{% if content.title %}<h3 class="mw-module-title">{{ content.title|safe }}</h3>{% endif %}
+		<div class="mw-module-text">
+			{% if content.description %}<p>{{ content.description|safe }}</p>{% endif %}
+			{% if content.meta.created_by.id %}
+			<p class="mw-module-author mb-0">
+				<a href="{% url 'single-profile' content.meta.created_by.id %}"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in content.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name|safe }}" width="20" height="20" class="rounded object-fit-cover"> @{{ content.meta.created_by.profile_name|safe|truncatechars:25 }}</a>
+				started <time datetime="{{ content.meta.created|date:"c" }}"></time>
+			</p>
+			{% endif %}
+		</div>
+	</section>
+{% endblock %}
+
+{% block js %}
+{% if user %}
+{% include 'modal_formatting_help.html' %}
+{% include 'comments_scripts.html' %}
+{% endif %}
+{% endblock %}

@@ -15,6 +15,11 @@ HARNESS_PROFILE_ID = 54446
 # The harness user's huddle with only itself. Never shoot another huddle:
 # the account holds real private messages.
 HARNESS_HUDDLE_ID = 3310071
+# A comment with a parent and a reply, for the single comment page (BS5-08).
+SINGLE_COMMENT_ID = 16297820
+# The conversation the comment checks post, edit and delete in, answered from
+# a made-up recording: nothing reaches the API (BS5-08).
+STUB_WRITE_CONVERSATION_ID = 141600
 # The forum whose Mark everything read the lists checks click as the harness
 # user (BS5-07): lfgss Social, quiet and without subforums. Never click it on
 # another forum or on the home page, which would mark the whole Site read.
@@ -68,6 +73,15 @@ PAGES = [
     Page('conversations', 'outliers.microcosm.app', '/conversations/313928/', 'outliers-conv', 'conversation on a dark surround'),
     # Signed in as the harness user.
     Page('conversations', LFGSS, '/conversations/141600/', 'conv-signedin', 'conversation with the reply box', signed_in=True),
+    # The rest of the family (BS5-08). Only GETs: the forms render, nothing is posted.
+    Page('conversations', LFGSS, '/comments/%d/' % SINGLE_COMMENT_ID, 'comment-single',
+         'a single comment with its parent and reply'),
+    Page('conversations', LFGSS, '/comments/%d/' % SINGLE_COMMENT_ID, 'comment-signedin',
+         'a single comment signed in: its Reply box opens on load', signed_in=True),
+    Page('conversations', LFGSS, '/microcosms/%d/create/conversation/' % HARNESS_MARK_READ_MICROCOSM_ID,
+         'conv-create', 'the Post a conversation form', signed_in=True),
+    Page('conversations', LFGSS, '/conversations/141600/edit/', 'conv-edit', 'the Edit conversation form',
+         signed_in=True),
     Page('huddles', LFGSS, '/huddles/', 'huddles', 'messages list', signed_in=True, rows=LIST_ROWS),
     Page('huddles', LFGSS, '/huddles/%d/' % HARNESS_HUDDLE_ID, 'huddle-self', 'the harness user\'s huddle with itself', signed_in=True),
     Page('profiles', LFGSS, '/profiles/%d/edit/' % HARNESS_PROFILE_ID, 'profile-edit', 'profile edit form', signed_in=True),

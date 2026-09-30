@@ -59,6 +59,15 @@ def fixture_name(key):
     return hashlib.sha256(key.encode('utf-8')).hexdigest()[:24] + '.json'
 
 
+def load_from(folder, key):
+    """The fixture for key in folder (a recording's api/ folder), or None."""
+    try:
+        with open(os.path.join(folder, fixture_name(key)), encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
+
 class Recorder(object):
 
     def __init__(self, fixtures_dir, mode=REPLAY, session=''):
@@ -75,11 +84,7 @@ class Recorder(object):
         return os.path.join(self.dir, fixture_name(key))
 
     def load(self, key):
-        try:
-            with open(self.path_for(key), encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return None
+        return load_from(self.dir, key)
 
     def save(self, key, response):
         body = response.content

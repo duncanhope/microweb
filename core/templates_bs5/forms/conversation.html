@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% comment %}
+Post or edit a conversation (conversations/views.py create and edit, BS5-08).
+A new conversation's first comment uses the comment box without its own form
+(as_component). js/bs5/comments.js wires the box (simpleEditor.js) and checks the form
+before it is sent (data-mw-validate). Styles: _conversations.scss.
+{% endcomment %}
+{% load static commentBox %}
+{% block title %}{% if state_edit %}Edit conversation{% else %}Post a conversation{% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<h1 class="mw-item-title mb-3">{% if state_edit %}Edit conversation{% else %}Post a conversation{% endif %}</h1>
+
+<form action="" method="POST" id="conversationForm" class="mw-item-form" enctype="multipart/form-data" novalidate data-mw-validate>
+	{% csrf_token %}
+	{{ form.microcosmId }}
+	{{ form.id }}
+	{{ form.sticky }}
+	{{ form.moderated }}
+	{{ form.visible }}
+	{{ form.deleted }}
+
+	<div class="mb-3">
+		<label class="form-label" for="title">{{ form.title.label }}</label>
+		<input type="text" class="form-control{% if form.errors.title %} is-invalid{% endif %}" id="title" name="{{ form.title.name }}" placeholder="Title of conversation" maxlength="{{ form.fields.title.max_length }}" required value="{{ form.title.value|default:'' }}">
+		<div class="invalid-feedback">{% if form.errors.title %}{{ form.errors.title|join:' ' }}{% else %}{{ form.fields.title.error_messages.required }}{% endif %}</div>
+	</div>
+
+	{% if state_edit %}
+	<div class="mb-3">
+		<label class="form-label" for="editReason">{{ form.editReason.label }}</label>
+		<input type="text" class="form-control{% if form.errors.editReason %} is-invalid{% endif %}" id="editReason" name="{{ form.editReason.name }}" placeholder="Reason for editing" maxlength="150" required>
+		<div class="invalid-feedback">{% if form.errors.editReason %}{{ form.errors.editReason|join:' ' }}{% else %}Please give a reason for editing.{% endif %}</div>
+	</div>
+	{% else %}
+	<div class="mb-3">
+		<label class="form-label" for="mw-editor-firstcomment">What is it you want to say?</label>
+		{% commentBox as_component=True name="firstcomment" %}
+	</div>
+	{% endif %}
+
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button id="submit" type="submit" class="btn mw-btn btn-lg">{% if state_edit %}Edit conversation{% else %}Post conversation{% endif %}</button>
+		<button type="button" class="btn mw-btn btn-lg" onclick="history.back()">Cancel</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block js %}
+{% include 'comments_scripts.html' %}
+{% endblock %}

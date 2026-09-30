@@ -1,0 +1,18 @@
+{% extends 'comment.html' %}
+{% comment %}
+The comment form's fallback page (comments/views.py create and edit, BS5-08):
+shown when a comment fails validation or an upload is too large, with the
+error and the comment in its thread. Comments are normally posted and edited
+from the box under a comment. The single comment page with another header.
+{% endcomment %}
+
+{% block description %}{% endblock description %}
+
+{% block item_header %}
+	{% include 'breadcrumbs.html' %}
+	<div class="mw-item-header">
+		<h1 class="mw-item-title">{{ content.meta.links.up.title|safe }}</h1>
+		{% include "forms/content-moderation.html" %}
+	</div>
+	<div class="alert alert-warning mw-alert">{{ error }}</div>
+{% endblock item_header %}

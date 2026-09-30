@@ -405,7 +405,13 @@ class Command(BaseCommand):
                     await page.evaluate(SETTLE_JS)
                     await page.wait_for_timeout(opts['settle'])
                     if page_def.action == 'modal-signin':
-                        await page.locator('[data-target="#modal-signin"], [data-bs-target="#modal-signin"]').first.click()
+                        triggers = page.locator('[data-target="#modal-signin"], [data-bs-target="#modal-signin"]')
+                        visible = triggers.locator('visible=true').first
+                        # On Bootstrap 5 phones and tablets Post a reply sits in the metabar drawer.
+                        if not await visible.count():
+                            await page.locator('#mw-metabar-btn').click()
+                            await page.locator('#mw-metabar.show').wait_for()
+                        await visible.click()
                         await page.wait_for_timeout(800)
                     shot.update(await page.evaluate(METRICS_JS, page_def.rows or None))
                     rel = os.path.join('shots', page_def.label, '%d-%s-%s.png' % (width, mode, name))
