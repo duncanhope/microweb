@@ -182,6 +182,38 @@ def csv(request, event_id):
     )
 
 
+def invited_ids(invite):
+    """
+    The profile ids in the event form's invite field, which both template
+    trees post as a comma-separated list, in order and without repeats.
+    """
+
+    ids = []
+    for part in (invite or '').split(','):
+        part = part.strip()
+        if part.isdigit() and int(part) not in ids:
+            ids.append(int(part))
+    return ids
+
+
+def send_invites(request, event_id, user_id, profile_ids):
+    """
+    Invite each profile to an event: an RSVP of maybe. Returns the error
+    response when the API refuses, or None.
+    """
+
+    if not profile_ids:
+        return None
+    attendees = [{'rsvp': 'maybe', 'profileId': profile_id} for profile_id in profile_ids]
+    try:
+        response = Event.rsvp_api(request.get_host(), event_id, user_id, attendees, access_token=request.access_token)
+    except APIException as exc:
+        return respond_with_error(request, exc)
+    if response.status_code != requests.codes.ok:
+        return HttpResponseBadRequest()
+    return None
+
+
 @require_authentication
 @require_http_methods(['GET', 'POST',])
 @cache_control(must_revalidate=True, max_age=0)
@@ -209,25 +241,9 @@ def create(request, microcosm_id):
                 event_response = event_request.create(request.get_host(), request.access_token)
             except APIException as exc:
                 return respond_with_error(request, exc)
-            # invite attendees
-            invites = request.POST.get('invite')
-            if len(invites.strip()) > 0:
-                invited_list = invites.split(",")
-                attendees = []
-                if len(invited_list) > 0:
-                    for userid in invited_list:
-                        if userid != "":
-                            attendees.append({
-                                'rsvp': 'maybe',
-                                'profileId': int(userid)
-                            })
-                    if len(attendees) > 0:
-                        try:
-                            response = Event.rsvp_api(request.get_host(), event_response.id, user.id, attendees, access_token=request.access_token)
-                        except APIException as exc:
-                            return respond_with_error(request, exc)
-                        if response.status_code != requests.codes.ok:
-                            return HttpResponseBadRequest()
+            failed = send_invites(request, event_response.id, user.id, invited_ids(form.cleaned_data['invite']))
+            if failed:
+                return failed
 
             # create comment
             if request.POST.get('firstcomment') and len(request.POST.get('firstcomment')) > 0:
@@ -305,6 +321,23 @@ def edit(request, event_id):
                 event_response = event_request.update(request.get_host(), request.access_token)
             except APIException as exc:
                 return respond_with_error(request, exc)
+
+            # The invite box lists everyone with an RSVP as well as the people
+            # added, so invite only those without one: inviting the rest again
+            # would turn a yes or a no back into maybe.
+            invited = invited_ids(form.cleaned_data['invite'])
+            if invited:
+                try:
+                    attendees = Event.get_attendees(host=request.get_host(), id=event_response.id,
+                        access_token=request.access_token)
+                except APIException as exc:
+                    return respond_with_error(request, exc)
+                have_rsvp = {attendee.profile_id for attendee in attendees.items.items}
+                failed = send_invites(request, event_response.id, view_data['user'].id,
+                    [profile_id for profile_id in invited if profile_id not in have_rsvp])
+                if failed:
+                    return failed
+
             return HttpResponseRedirect(reverse('single-event', args=(event_response.id,)))
         else:
             view_data['form'] = form

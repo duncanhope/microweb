@@ -353,13 +353,29 @@ class EditEventTests(EventFormTestCase):
         page.locator('#mw-event-start-date').fill('2026-12-05')
         page.locator('#mw-event-start-time').fill('08:00')
         page.locator('#mw-event-end-time').fill('08:00')
+        # Invite someone new: the member search is the mentions check's recording.
+        invite = page.get_by_role('combobox', name='Optional. Do you wish to invite others to your event?')
+        invite.press_sequentially('du', delay=30)
+        options = page.get_by_role('listbox', name='Members').get_by_role('option')
+        options.first.wait_for()
+        invite.press('Enter')
+        added = json.loads(page.locator('input[name=inviteObject]').input_value())[-1]
+        self.assertNotIn(added['id'], [a['profileId'] for a in going])
+        # The box posts everyone listed: those with an RSVP, and the one added.
+        self.assertEqual(page.locator('input[name=invite]').input_value(),
+                         ','.join(str(a['profileId']) for a in going) + ',%d' % added['id'])
+
         # The reason is needed.
         page.get_by_role('button', name='Edit event').click()
         self.assertEqual(sent, [])
         page.get_by_label('Reason for editing').fill('Moved a day')
         self.snap(page, 'BS5-12-signed-in')
 
+        profile = {'id': added['id'], 'siteId': 1, 'userId': 1, 'profileName': added['profileName'],
+                   'visible': True, 'avatar': added['avatar'], 'meta': {'flags': {}, 'links': []}}
         with self.stub('after', [_fixture('POST %s?method=PUT auth' % event_url, 200, after),
+                                 _fixture('PUT %s/attendees auth' % event_url, 200,
+                                          [self.attendee(profile, 'maybe')]),
                                  _fixture(get_event, 200, after),
                                  _fixture(get_attendees, 200, self.attendees(going))]):
             self.submit(page, page.get_by_role('button', name='Edit event').click, '/events/%d/' % EDIT_EVENT_ID)
@@ -370,7 +386,10 @@ class EditEventTests(EventFormTestCase):
                          ('2026-12-05T08:00:00Z', str(2 * 24 * 60), 'Australia/Sydney'))
         self.assertEqual((fields['lat'], fields['north']), ('-33.8688', '-33.85'))
         self.assertEqual(fields['editReason'], 'Moved a day')
-        self.assertEqual(len(self.api_writes), 1)
+        # The event, then an invite for the one added only: the others keep their RSVP.
+        self.assertEqual([(m, urlsplit(u).path) for m, u, _ in self.api_writes], [
+            ('POST', '/api/v1/events/%d' % EDIT_EVENT_ID), ('PUT', '/api/v1/events/%d/attendees' % EDIT_EVENT_ID)])
+        self.assertEqual(json.loads(self.api_writes[1][2]), [{'rsvp': 'maybe', 'profileId': added['id']}])
         method, url, body = self.api_writes[0]
         self.assertEqual((method, urlsplit(url).path, parse_qs(urlsplit(url).query)),
                          ('POST', '/api/v1/events/%d' % EDIT_EVENT_ID, {'method': ['PUT']}))
@@ -380,6 +399,35 @@ class EditEventTests(EventFormTestCase):
                          (EDIT_EVENT_ID, 'Test event - edited', 2 * 24 * 60, {'editReason': 'Moved a day'}))
         self.assertEqual(page.locator('main h1').inner_text(), 'Test event - edited')
         self.snap(page, 'BS5-12-signed-in-after')
+
+    def test_bootstrap_3_keeps_the_invite_list_after_an_error(self):
+        """The Bootstrap 3 form sent back with an error lists the same people,
+        and still posts their ids. Its script once printed the list as a
+        broken string, which stopped the whole form script."""
+        path = '/events/%d/edit/' % EDIT_EVENT_ID
+        event_url = '%s/events/%d' % (LFGSS_API, EDIT_EVENT_ID)
+        going = [self.attendee(dict(self.author(), id=self.me['id'] + n, profileName='rider%d' % n), 'yes')
+                 for n in (1, 2, 3)]
+        ids = ','.join(str(a['profileId']) for a in going)
+        page = self.new_page(signed_in=True)
+        errors = []
+        page.on('pageerror', lambda exc: errors.append(str(exc)))
+        posts = site_posts(page)
+        with self.stub('before-bs3', [_fixture('GET %s auth' % event_url, 200, self.event(EDIT_EVENT_ID)),
+                                      _fixture('GET %s/attendees?limit=250 auth' % event_url, 200,
+                                               self.attendees(going))]):
+            page.goto('https://%s%s' % (LFGSS, path), wait_until='load')
+        self.assertEqual(page.locator('input[name=invite]').input_value(), ids)
+
+        # No reason for the edit: the view sends the form back, and nothing reaches the API.
+        with page.expect_navigation(wait_until='load'):
+            page.locator('#submit').click()
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(self.api_writes, [])
+        self.assertTrue(page.get_by_text('This field is required.').is_visible())
+        self.assertEqual(errors, [])
+        self.assertEqual(page.locator('input[name=invite]').input_value(), ids)
+        self.assertEqual(page.locator('.list-participants li').count(), 3)
 
 
 # ---------------------------------------------------------------------------
