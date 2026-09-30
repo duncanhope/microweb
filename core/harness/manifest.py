@@ -27,6 +27,9 @@ HARNESS_MARK_READ_MICROCOSM_ID = 558
 # lfgss's "Test event - do not attend" (BS5-11). The RSVP check answers from a
 # made-up recording built on it: nothing is written (operator's decision).
 RSVP_EVENT_ID = 9667
+# lfgss's forum of mostly events, where the event form checks post (BS5-12),
+# answered from made-up fixtures: nothing is written (operator's decision).
+EVENT_FORUM_ID = 573
 
 
 @dataclass(frozen=True)
@@ -134,6 +137,13 @@ PAGES = [
          'the test event signed in: the base of the made-up RSVP', signed_in=True),
     Page('events', 'forum.espruino.com', '/events/613/', 'espruino-event',
          'a three-day event with a map under a background image, link #4898AC'),
+    # The event form (BS5-12). Only GETs: the harness user has no event of its
+    # own, and the edit form renders any event it can read. Posting either form
+    # is answered from made-up fixtures (core/harness/event_form_browser_tests.py).
+    Page('event_form', LFGSS, '/microcosms/%d/create/event/' % EVENT_FORUM_ID, 'event-create',
+         'the Post an event form: dates, time zone, map, RSVP limit, invites, first comment', signed_in=True),
+    Page('event_form', LFGSS, '/events/4488/edit/', 'event-edit',
+         'the Edit event form: a place on the map and 26 people with an RSVP', signed_in=True),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in

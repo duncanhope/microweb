@@ -238,6 +238,9 @@ class RsvpTests(EventsTestCase):
         # Upcoming: a month after the recording, so the RSVP controls show.
         data['when'] = (self.frozen + timedelta(days=31)).strftime('%Y-%m-%dT09:00:00Z')
         data['meta']['flags']['attending'] = attending
+        # The recorded test event is closed, and a closed event takes no RSVP
+        # (Event.rsvp_open, since BS5-11 merged): open it.
+        data['meta']['flags']['open'] = True
         data['rsvpAttend'] = self.event['rsvpAttend'] + (1 if attending else 0)
         return data
 

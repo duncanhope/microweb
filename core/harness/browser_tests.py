@@ -109,11 +109,12 @@ class BrowserTestCase(StaticLiveServerTestCase):
         type(self).results[self.id()] = outcome
         return result
 
-    def new_page(self, width=1280, height=900, color_scheme='light', signed_in=False):
-        """A page in a fresh context: Site hosts routed here, clock frozen."""
+    def new_page(self, width=1280, height=900, color_scheme='light', signed_in=False, timezone_id=None):
+        """A page in a fresh context: Site hosts routed here, clock frozen. timezone_id
+        sets the browser's own time zone (Chromium's default is the machine's)."""
         context = self.chromium.new_context(
             viewport={'width': width, 'height': height}, device_scale_factor=1, color_scheme=color_scheme,
-            reduced_motion='reduce', user_agent=browser.user_agent(self.chromium.version))
+            reduced_motion='reduce', user_agent=browser.user_agent(self.chromium.version), timezone_id=timezone_id)
         self.addCleanup(context.close)
         context.clock.set_fixed_time(self.frozen)
         if signed_in:
@@ -127,10 +128,10 @@ class BrowserTestCase(StaticLiveServerTestCase):
         return context.new_page()
 
     def open_bs5(self, path, host=manifest.LFGSS, width=1280, signed_in=False, color_mode=None, status=200,
-                 by_cookie=False):
+                 by_cookie=False, timezone_id=None):
         """Open a page with ?bs=5, or the bs cookie when by_cookie, and fail the
         check on any script error."""
-        page = self.new_page(width=width, signed_in=signed_in)
+        page = self.new_page(width=width, signed_in=signed_in, timezone_id=timezone_id)
         cookies = [{'name': name, 'value': value, 'url': 'https://%s/' % host}
                    for name, value in ((COLOR_MODE_COOKIE, color_mode), ('bs', '5' if by_cookie else None)) if value]
         if cookies:

@@ -60,8 +60,8 @@ class Bs5EventsTests(SimpleTestCase):
 
     def setUp(self):
         self.event = load('event_with_comment.json')
-        # Upcoming, two hours, with a place on the map.
-        start = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(days=10)
+        # Upcoming, two hours at noon (so it never runs past midnight), with a place on the map.
+        start = datetime.now(timezone.utc).replace(hour=12, minute=0, second=0, microsecond=0) + timedelta(days=10)
         self.event.update(when=stamp(start), duration=120, where='IKEA Croydon', lat=51.38, lon=-0.12,
                           north=51.39, west=-0.13, south=51.37, east=-0.11, rsvpLimit=0)
         self.event.pop('rsvpSpaces', None)

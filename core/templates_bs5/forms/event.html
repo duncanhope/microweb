@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% comment %}
+Post or edit an event (events/views.py create and edit, BS5-12). The form
+posts the same fields as on Bootstrap 3, so core/forms/forms.py is
+unchanged: js/bs5/eventForm.js fills the hidden when, duration, lat, lon,
+north, east, south, west, invite and inviteObject from the controls. when
+is the event's wall-clock start with a Z, as today ("2026-10-10T19:00:00Z"),
+and tz says where it is. Native date and time inputs replace the
+datepicker; the time zone list comes from Intl. A new event's first
+comment uses the comment box without its own form (as_component), and
+data-mw-validate checks the form before it is sent (js/bs5/simpleEditor.js).
+Styles: _event_form.scss, and .mw-item-form in _conversations.scss.
+{% endcomment %}
+{% load static icon commentBox %}
+{% block title %}{% if state_edit %}Edit event{% else %}Post an event{% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static '3rd/leaflet/0.7.7/leaflet.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<h1 class="mw-item-title mb-3">{% if state_edit %}Edit event{% else %}Post an event{% endif %}</h1>
+
+<form id="eventForm" class="mw-item-form mw-event-form" action="" method="POST" enctype="multipart/form-data" novalidate data-mw-validate data-mw-event-form{% if state_edit %} data-edit{% endif %}>
+	{% csrf_token %}
+	{{ form.microcosmId }}
+	{{ form.id }}
+	{{ form.sticky }}
+	{{ form.moderated }}
+	{{ form.visible }}
+	{{ form.deleted }}
+	<input type="hidden" name="when" value="{% firstof form.when.value|date:'Y-m-d\TH:i:s\Z' form.when.value %}">
+	<input type="hidden" name="duration" value="{{ form.duration.value|default_if_none:'' }}">
+	<input type="hidden" name="lat" value="{{ form.lat.value|default_if_none:'' }}">
+	<input type="hidden" name="lon" value="{{ form.lon.value|default_if_none:'' }}">
+	<input type="hidden" name="north" value="{{ form.north.value|default_if_none:'' }}">
+	<input type="hidden" name="east" value="{{ form.east.value|default_if_none:'' }}">
+	<input type="hidden" name="south" value="{{ form.south.value|default_if_none:'' }}">
+	<input type="hidden" name="west" value="{{ form.west.value|default_if_none:'' }}">
+
+	<div class="mb-3">
+		<label class="form-label" for="title">{{ form.title.label }}</label>
+		<input type="text" class="form-control{% if form.errors.title %} is-invalid{% endif %}" id="title" name="{{ form.title.name }}" placeholder="Title of event" maxlength="{{ form.fields.title.max_length }}" required value="{{ form.title.value|default:'' }}">
+		<div class="invalid-feedback">{% if form.errors.title %}{{ form.errors.title|join:' ' }}{% else %}{{ form.fields.title.error_messages.required }}{% endif %}</div>
+	</div>
+
+	<fieldset class="mb-3" data-mw-event-dates>
+		<legend class="form-label">When does your event begin?</legend>
+		<div class="mb-2">
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="date-type" id="date-type-single" value="1" checked>
+				<label class="form-check-label" for="date-type-single">Single day</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="date-type" id="date-type-multiple" value="2">
+				<label class="form-check-label" for="date-type-multiple">Multiple days</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="date-type" id="date-type-tbd" value="0">
+				<label class="form-check-label" for="date-type-tbd"><abbr title="To be determined - select this option if you have not yet set a date">TBD</abbr></label>
+			</div>
+		</div>
+		{% if form.errors.when %}<div class="invalid-feedback d-block mb-2">{{ form.errors.when|join:' ' }}</div>{% endif %}
+		<div class="row g-3" data-mw-when>
+			<div class="col-sm-6 col-xl-5">
+				<label class="form-label mw-event-form-sublabel" for="mw-event-start-date">Start</label>
+				<div class="input-group">
+					<input type="date" class="form-control" id="mw-event-start-date" required>
+					<input type="time" class="form-control" id="mw-event-start-time" aria-label="Start time" required>
+				</div>
+			</div>
+			<div class="col-sm-6 col-xl-5">
+				<label class="form-label mw-event-form-sublabel" for="mw-event-end-time">Finish</label>
+				<div class="input-group">
+					<input type="date" class="form-control" id="mw-event-end-date" aria-label="Finish date" required hidden>
+					<input type="time" class="form-control" id="mw-event-end-time" required>
+				</div>
+			</div>
+			<div class="col-sm-6 col-xl-5">
+				<label class="form-label mw-event-form-sublabel" for="tz">Timezone</label>
+				<select id="tz" name="{{ form.tz.name }}" class="form-select{% if form.errors.tz %} is-invalid{% endif %}" required data-mw-tz>
+					{% if form.tz.value %}<option value="{{ form.tz.value }}" selected>{{ form.tz.value }}</option>{% endif %}
+				</select>
+				<div class="invalid-feedback">{% if form.errors.tz %}{{ form.errors.tz|join:' ' }}{% else %}{{ form.fields.tz.error_messages.required }}{% endif %}</div>
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset class="mb-3" data-mw-event-place>
+		<legend class="form-label">Where is your event being held?</legend>
+		<div class="mb-2">
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="location-type" id="location-type-place" value="1" checked>
+				<label class="form-check-label" for="location-type-place">Enter a location</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="location-type" id="location-type-tbd" value="0">
+				<label class="form-check-label" for="location-type-tbd"><abbr title="To be determined - select this option if you have not yet set a location">TBD</abbr></label>
+			</div>
+		</div>
+		{% if form.errors.where %}<div class="invalid-feedback d-block mb-2">{{ form.errors.where|join:' ' }}</div>{% endif %}
+		<div class="row g-3" data-mw-where>
+			<div class="col-md-6">
+				<textarea id="location" class="form-control mw-event-form-where" name="{{ form.where.name }}" placeholder="Eg. Street, station, landmark, country..." maxlength="150" aria-label="Location">{{ form.where.value|default:'' }}</textarea>
+				<div class="d-flex align-items-start gap-2 mt-2">
+					<p class="form-text mt-0 me-auto" role="status" data-mw-locate-status></p>
+					<button type="button" id="locate" class="btn mw-btn">Show on map</button>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div id="map-canvas" class="mw-event-form-map" data-mw-event-form-map data-thunderforest-key="{{ thunderforest_api_key }}"></div>
+			</div>
+		</div>
+	</fieldset>
+
+	<fieldset class="mb-3" data-mw-rsvp-limit>
+		<legend class="form-label">{{ form.rsvpLimit.label }}</legend>
+		{% if form.errors.rsvpLimit %}<div class="invalid-feedback d-block mb-2">{{ form.errors.rsvpLimit|join:' ' }}</div>{% endif %}
+		<div class="d-flex flex-wrap align-items-center column-gap-4 row-gap-2">
+			<div class="form-check mb-0">
+				<input class="form-check-input" type="radio" name="attendee-limit-option" id="attendee-limit-none" value="0"{% if not form.rsvpLimit.value %} checked{% endif %}>
+				<label class="form-check-label" for="attendee-limit-none">No limit</label>
+			</div>
+			<div class="d-flex flex-wrap align-items-center gap-2">
+				<div class="form-check mb-0">
+					<input class="form-check-input" type="radio" name="attendee-limit-option" id="attendee-limit-max" value="1"{% if form.rsvpLimit.value %} checked{% endif %}>
+					<label class="form-check-label" for="attendee-limit-max">Max number of attendees is</label>
+				</div>
+				<input type="number" class="form-control mw-event-form-limit" name="{{ form.rsvpLimit.name }}" min="1" max="999" inputmode="numeric" aria-label="Max number of attendees" value="{{ form.rsvpLimit.value|default:'0' }}"{% if not form.rsvpLimit.value %} disabled{% endif %}>
+				<div class="invalid-feedback w-100 mt-0">From 1 to 999, please.</div>
+			</div>
+		</div>
+	</fieldset>
+
+	<div class="mb-3" data-mw-invite data-mw-invited="{% firstof attendees_json form.inviteObject.value %}">
+		<label class="form-label" for="invite"><span class="text-body-secondary">Optional.</span> Do you wish to invite others to your event?</label>
+		<input type="hidden" name="invite" value="">
+		<input type="hidden" name="inviteObject" value="">
+		<ul class="list-unstyled mw-event-form-invited" aria-label="Invited" hidden></ul>
+		<div class="mw-event-form-picker">
+			<div class="input-group">
+				<span class="input-group-text">{% icon "search" %}</span>
+				<input type="text" id="invite" class="form-control" placeholder="Type in a user's name" autocomplete="off">
+			</div>
+		</div>
+	</div>
+
+	{% if state_edit %}
+	<div class="mb-3">
+		<label class="form-label" for="editReason">{{ form.editReason.label }}</label>
+		<input type="text" class="form-control{% if form.errors.editReason %} is-invalid{% endif %}" id="editReason" name="{{ form.editReason.name }}" placeholder="Reason for editing" maxlength="150" required>
+		<div class="invalid-feedback">{% if form.errors.editReason %}{{ form.errors.editReason|join:' ' }}{% else %}Please give a reason for editing.{% endif %}</div>
+	</div>
+	{% else %}
+	<div class="mb-3">
+		<label class="form-label" for="mw-editor-firstcomment">What is it you want to say?</label>
+		{% commentBox as_component=True name="firstcomment" %}
+	</div>
+	{% endif %}
+
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button id="submit" type="submit" class="btn mw-btn btn-lg">{% if state_edit %}Edit event{% else %}Post event{% endif %}</button>
+		<button type="button" class="btn mw-btn btn-lg" onclick="history.back()">Cancel</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block js %}
+<script src="{% static '3rd/leaflet/0.7.7/leaflet.js' %}"></script>
+{% include 'google_maps_loader.html' %}
+<link rel="modulepreload" href="{% static 'js/bs5/eventFormClasses.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/eventMap.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/leafletGoogle.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/simpleEditor.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/mentions.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/attachments.js' %}">
+<script type="module" src="{% static 'js/bs5/eventForm.js' %}"></script>
+{% endblock %}

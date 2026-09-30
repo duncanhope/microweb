@@ -39,8 +39,8 @@ export function tileLayers(thunderforestKey) {
 
 // Google's road map is the default once its API loads. If it cannot load
 // (blocked or offline), or Google refuses the key on this domain, the first
-// tile layer stands in.
-async function addBaseLayers(map, thunderforestKey) {
+// tile layer stands in. The event form's map uses it too (eventFormClasses.js).
+export async function addBaseLayers(map, thunderforestKey) {
   const layers = tileLayers(thunderforestKey);
   const fallback = Object.values(layers)[0];
   const control = L.control.layers(layers).addTo(map);

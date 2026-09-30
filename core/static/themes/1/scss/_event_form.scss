@@ -1,0 +1,84 @@
+// The event form (BS5-12): forms/event.html. Its labels, buttons and first
+// comment box are the conversation form's (.mw-item-form and the comment box
+// in _conversations.scss). Token rule: colours come only from Bootstrap's
+// --bs-* variables, so every rule here follows the Color mode. No colour
+// literals.
+
+.mw-event-form {
+  legend.form-label {
+    margin-bottom: .5rem;
+  }
+
+  // The choices under each question, at the labels' size rather than the 20px body.
+  .form-check {
+    font-size: 1rem;
+  }
+
+  // Start, Finish and Timezone sit under their question, a step smaller.
+  .mw-event-form-sublabel {
+    margin-bottom: .25rem;
+    font-weight: $font-weight-normal;
+    color: var(--#{$prefix}secondary-color);
+  }
+}
+
+// Where: the location beside the map from md, as today --------------------------
+.mw-event-form-where {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+// Leaflet's own light UI: .leaflet-container stays color-scheme: light (_base.scss).
+.mw-event-form-map {
+  height: 250px;
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+}
+
+.mw-event-form-limit {
+  width: 6rem;
+}
+
+// Invite people: the people chosen, then the member search --------------------------
+.mw-event-form-invited {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.mw-event-form-person {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .25rem .5rem;
+  font-size: $font-size-sm;
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  img {
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  .btn-close {
+    --#{$prefix}btn-close-opacity: .6;
+    font-size: .625rem;
+  }
+}
+
+.mw-event-form-picker {
+  position: relative;
+
+  @include media-breakpoint-up(sm) {
+    max-width: 50%;
+  }
+}
+
+// The member list is the mentions list (.mw-mentions, _conversations.scss),
+// under the search box.
+.mw-event-form-results {
+  top: 100%;
+  left: 0;
+  width: 100%;
+}
