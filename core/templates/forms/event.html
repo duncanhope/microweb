@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load commentBox %}
-{% block title %}{% if form.id > 0 %}Edit event{% else %}Post an event{% endif %} | {{ site.title | safe }}{% endblock title %}
+{% block title %}{% if state_edit %}Edit event{% else %}Post an event{% endif %} | {{ site.title | safe }}{% endblock title %}
 
 {% block css %}
 <!-- Leaflet -->
@@ -15,7 +15,7 @@
 			{% include 'breadcrumbs.html' %}
 		</div>
 	</div>
-	<h1>{% if form.id > 0 %}Edit event{% else %}Post an event{% endif %}</h1>
+	<h1>{% if state_edit %}Edit event{% else %}Post an event{% endif %}</h1>
 </div>
 
 <div class="content-body">
@@ -546,7 +546,7 @@
 		{
 			rules : {
 				'{{ form.title.name }}'      : ['not_empty','maxlength']
-				{% if form.id > 0 %},'editReason':['not_empty']{% endif %}
+				{% if state_edit %},'editReason':['not_empty']{% endif %}
 			},
 			tests : {
 				'maxlength' : function(field){ var $field = $(field); return $field.val().length < parseInt($field.attr('maxlength'),10); }
@@ -554,7 +554,7 @@
 			error_messages : {
 				'{{ form.title.name }}:not_empty' : "* {{ form.fields.title.error_messages.required }}",
 				'{{ form.title.name }}:maxlength' : "* {{ form.fields.title.error_messages.max_length }}"
-				{% if form.id > 0 %},'editReason:not_empty' : "* This is a required field"{% endif %}
+				{% if state_edit %},'editReason:not_empty' : "* This is a required field"{% endif %}
 			}
 		}
 	);

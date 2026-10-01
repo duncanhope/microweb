@@ -441,9 +441,15 @@ class EditEventTests(EventFormTestCase):
             page.goto('https://%s%s' % (LFGSS, path), wait_until='load')
         self.assertEqual(page.locator('input[name=invite]').input_value(), ids)
 
-        # No reason for the edit: the view sends the form back, and nothing reaches the API.
+        # No reason for the edit: the form's own check stops it before it is sent.
+        page.locator('#submit').click()
+        self.assertTrue(page.get_by_text('* This is a required field').is_visible())
+        self.assertEqual(posts, [])
+
+        # Past that check (submit() skips it; the button named submit hides
+        # form.submit), the view sends the form back, and nothing reaches the API.
         with page.expect_navigation(wait_until='load'):
-            page.locator('#submit').click()
+            page.locator('#eventForm').evaluate('(form) => HTMLFormElement.prototype.submit.call(form)')
         self.assertEqual(len(posts), 1)
         self.assertEqual(self.api_writes, [])
         self.assertTrue(page.get_by_text('This field is required.').is_visible())

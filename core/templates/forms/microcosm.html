@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if form.id > 0 %}Edit this forum{% else %}Create a forum{% endif %} | {{ site.title | safe }}{% endblock title %}
+{% block title %}{% if state_edit %}Edit this forum{% else %}Create a forum{% endif %} | {{ site.title | safe }}{% endblock title %}
 
 {% block css %}
 <style type="text/css">
@@ -22,7 +22,7 @@
 			</div>
 		</div>
 		<h1>
-			{% if form.id > 0 %}
+			{% if state_edit %}
 			Edit a forum
 			{% else %}
 			Create a forum
@@ -87,12 +87,12 @@
 
 						{# logo #}
 						{{ form.logoUrl }}
-						{% if form.id > 0 %}
+						{% if state_edit %}
 							<div class="form-group">
 								<div class="row">
 									<label class="col-sm-12">Display a logo for the forum?</label>
 									<div class="col-sm-12 form-file-upload">
-										<label for="input_logo" class="active"{% if form.logoUrl.value %} style="background-image:url('{{ form.logoUrl.value|default:"" }}'){% endif %}">{% if form.logoUrl.value == "" %}Click here{% endif %}</label>
+										<label for="input_logo"{% if form.logoUrl.value %} class="active" style="background-image:url('{{ form.logoUrl.value }}')"{% endif %}>{% if not form.logoUrl.value %}Click here{% endif %}</label>
 										<input type="file" name="logo" id="input_logo" accept="image/*" capture="camera">
 										<div class="form-file-upload-text">
 											<p>The logo will be displayed as a square no larger than 64px x 64px.</p>
@@ -138,7 +138,7 @@
 						{{ form.visibility }}
 
 						{# reason #}
-						{% if form.id > 0 %}
+						{% if state_edit %}
 						<div class="form-group">
 							<div class="row">
 								<label class="col-sm-12" for="editReason">

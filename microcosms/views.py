@@ -155,6 +155,7 @@ def edit_microcosm(request, microcosm_id):
     view_data = {
         'user': Profile(responses[request.whoami_url], summary=False),
         'site': Site(responses[request.site_url]),
+        'state_edit': True,
     }
 
     if request.method == 'POST':
