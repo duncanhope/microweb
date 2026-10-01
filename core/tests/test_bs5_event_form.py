@@ -107,7 +107,7 @@ class Bs5EventFormTests(SimpleTestCase):
     def assert_bootstrap_5_only(self, html):
         for old in ('data-toggle=', 'data-target=', 'data-dismiss=', 'sprite-', 'glyphicon', '$(',
                     'moment', 'jstz', 'timezones.min.js', 'eventFormClasses.js?', 'js/eventForm.js',
-                    'peopleWidget.js', 'formValidator.js', 'datepicker'):
+                    'js/peopleWidget.js', 'formValidator.js', 'datepicker'):
             self.assertNotIn(old, html)
 
     # The family ---------------------------------------------------------------------
@@ -172,8 +172,8 @@ class Bs5EventFormTests(SimpleTestCase):
                       html)
         self.assertIn('name="rsvpLimit" min="1" max="999"', html)
         self.assertIn('value="0" disabled>', html)
-        self.assertIn('data-mw-invite data-mw-invited="">', html)
-        self.assertIn('<input type="hidden" name="invite" value="">', html)
+        self.assertIn('data-mw-people data-mw-invited="">', html)
+        self.assertIn('<input type="hidden" name="invite" value="" data-mw-people-ids>', html)
         self.assertIn('<label class="form-label" for="mw-editor-firstcomment">What is it you want to say?</label>',
                       html)
         self.assertIn('name="firstcomment"', html)

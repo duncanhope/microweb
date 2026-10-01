@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% comment %}
+Messages (huddles/views.py list, BS5-13): the member's huddles, newest
+first. Each row is the message row from {% huddle %} (block_huddle.html,
+BS5-10), as on Following, Today and search. The Unread filter is a GET
+form that js/bs5/filters.js submits on change, so the URL carries it
+(?unread=true). Styles: _lists.scss, _activity.scss and _huddles.scss.
+{% endcomment %}
+{% load static icon huddle %}
+{% block title %}Messages{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=True %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title"><a href="{{ content.meta.links.self.href }}">Messages</a></h1>
+	{% include 'pagination.html' %}
+</div>
+
+{% if not user %}
+<p class="mw-empty">Sign-in to read your messages.</p>
+{% elif not content.huddles.items %}
+<p class="mw-empty">You currently have no messages.</p>
+{% else %}
+<ul class="list-unstyled mw-rows">
+	{% for item in content.huddles.items %}{% huddle item %}{% endfor %}
+</ul>
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+			<a href="{% url 'create-huddle' %}" class="btn mw-btn">{% icon "envelope" %} Send a Message</a>
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Messages</h3>
+		<div class="mw-module-text">
+			<p>Messages are discreet conversations shared with a small group of people.</p>
+			<p class="mb-0">When every person with access to a message has deleted it, the shared conversation and all comments will be physically deleted from the server.</p>
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Filters</h2>
+		<h3 class="mw-module-title">Show me ...</h3>
+		<form action="{% url 'list-huddle' %}" method="GET" class="mw-filters mw-options" data-mw-filters>
+			<div class="form-check">
+				<input class="form-check-input" id="filter-unread" type="checkbox" name="unread" value="true"{% if unread %} checked{% endif %}>
+				<label class="form-check-label" for="filter-unread">Unread</label>
+			</div>
+			<noscript><button type="submit" class="btn mw-btn btn-sm mt-2">Apply filters</button></noscript>
+		</form>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		<form role="search" action="{% url 'single-search' %}">
+			<div class="input-group input-group-sm">
+				<input type="search" id="mw-huddles-search-input" class="form-control" name="q" placeholder="Search messages" aria-label="Search messages">
+				<input type="hidden" name="type" value="huddle">
+				<input type="hidden" name="defaults" value="true">
+				<button class="btn mw-btn" type="submit">{% icon "search" label="Search" %}</button>
+			</div>
+		</form>
+	</section>
+{% endblock %}
+
+{% block js %}
+<script type="module" src="{% static 'js/bs5/filters.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% comment %}
+A message and its comments (huddles/views.py single, BS5-13). Under the
+title: up to seven participants, Share Message (modal_huddle_invite.html,
+unless the message is confidential) and Delete Message
+(modal_huddle_leave.html). The comments and the reply box are the
+conversation page's (BS5-08): block_comment_single.html,
+forms/block_comment_box.html and js/bs5/comments.js. The Share modal's
+people widget is js/bs5/peopleWidget.js. The Follow control is
+forms/subscribe.html with a huddle's update type, 4.
+Styles: _conversations.scss, _lists.scss and _huddles.scss.
+{% endcomment %}
+{% load static icon commentBox comments %}
+
+{% block title %}{{ content.title|safe }}{% if pagination and pagination.page > 1 %} (page {{ pagination.page }}){% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<div data-mw-comments>
+	{% include 'breadcrumbs.html' with skipself=True %}
+	<div class="mw-item-header mw-huddle-header">
+		<h1 class="mw-item-title"><a id="title" href="{{ content.meta.links.self.href }}">{{ content.title|safe }}</a></h1>
+		{% if pagination and pagination.total_pages > 1 %}<div class="mw-item-meta">{% include 'pagination.html' %}</div>{% endif %}
+	</div>
+
+	<div class="mw-huddle-meta">
+		<ul class="list-unstyled mw-huddle-people" aria-label="People who can see this message">
+			{% for profile in content.participants|slice:":7" %}
+			<li><a href="{% url 'single-profile' profile.id %}" data-bs-toggle="tooltip" title="@{{ profile.profile_name|safe }}"><img src="{% if 'gravatar' in profile.avatar %}{{ profile.avatar }}{% elif 'files' in profile.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ profile.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ profile.profile_name|safe }}" width="32" height="32"></a></li>
+			{% endfor %}
+			{% if content.participants|length > 7 %}
+			<li>{% if not content.isConfidential %}<button type="button" class="btn mw-btn btn-sm" data-bs-toggle="modal" data-bs-target="#modal-huddle-invite" aria-label="Everyone who can see this message">+{{ content.participants|length|add:"-7" }}</button>{% else %}+{{ content.participants|length|add:"-7" }}{% endif %}</li>
+			{% endif %}
+		</ul>
+		<div class="btn-group mw-huddle-actions">
+			{% if not content.isConfidential %}
+			<button type="button" class="btn mw-btn btn-sm" data-bs-toggle="modal" data-bs-target="#modal-huddle-invite">Share Message</button>
+			{% endif %}
+			<button type="button" class="btn mw-btn btn-sm" data-bs-toggle="modal" data-bs-target="#modal-huddle-leave">Delete Message</button>
+		</div>
+	</div>
+
+	<ul class="list-unstyled mw-comments">
+		{% comments content.comments.items %}
+	</ul>
+
+	{% if pagination and pagination.total_pages > 1 %}
+	<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+	{% endif %}
+
+	<section id="reply" class="mw-comment mw-reply" data-mw-reply-default aria-labelledby="mw-reply-title">
+		<span class="mw-comment-avatar"><img src="{% if 'gravatar' in user.avatar %}{{ user.avatar }}{% elif 'files' in user.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ user.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="64" height="64"></span>
+		<div class="mw-comment-main">
+			<h2 id="mw-reply-title" class="mw-reply-title">Post a reply</h2>
+			{% commentBox %}
+		</div>
+	</section>
+</div>
+{% endblock content %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">{{ content.title|safe }}</h3>
+		<div class="mw-module-text">
+			<p class="mw-module-author mb-0">
+				Started by <a href="{% url 'single-profile' content.meta.created_by.id %}" id="created_by"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in content.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ content.meta.created_by.profile_name|safe }}" width="20" height="20" class="rounded object-fit-cover"> @{{ content.meta.created_by.profile_name|safe|truncatechars:25 }}</a>
+				<time datetime="{{ content.meta.created|date:"c" }}"></time>
+			</p>
+		</div>
+	</section>
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">Actions</h2>
+		<form class="mb-2" role="search" action="{% url 'single-search' %}">
+			<div class="input-group input-group-sm">
+				<input type="search" id="mw-huddle-search-input" class="form-control" name="q" placeholder="Search message" aria-label="Search this message">
+				<input type="hidden" name="type" value="huddle">
+				<input type="hidden" name="type" value="comment">
+				<input type="hidden" name="id" value="{{ content.id }}">
+				<input type="hidden" name="sort" value="date">
+				<button class="btn mw-btn" type="submit">{% icon "search" label="Search" %}</button>
+			</div>
+		</form>
+		{% include 'forms/subscribe.html' with update_type=4 %}
+	</section>
+{% endblock %}
+
+{% block js %}
+{% if not content.isConfidential %}{% include 'modal_huddle_invite.html' %}{% endif %}
+{% include 'modal_huddle_leave.html' %}
+{% include 'modal_formatting_help.html' %}
+{% include 'comments_scripts.html' %}
+{% if not content.isConfidential %}<script type="module" src="{% static 'js/bs5/peopleWidget.js' %}"></script>{% endif %}
+{% endblock js %}

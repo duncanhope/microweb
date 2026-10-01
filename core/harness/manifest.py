@@ -90,6 +90,16 @@ PAGES = [
          signed_in=True),
     Page('huddles', LFGSS, '/huddles/', 'huddles', 'messages list', signed_in=True, rows=LIST_ROWS),
     Page('huddles', LFGSS, '/huddles/%d/' % HARNESS_HUDDLE_ID, 'huddle-self', 'the harness user\'s huddle with itself', signed_in=True),
+    # The rest of the huddles family (BS5-13). Only GETs: sharing, leaving and
+    # sending a message are answered from made-up fixtures
+    # (core/harness/huddles_browser_tests.py), and the one reply is recorded
+    # once in the self-huddle. ?to= fills the form with the harness user.
+    Page('huddles', LFGSS, '/huddles/create/?to=%d' % HARNESS_PROFILE_ID, 'huddle-create',
+         'the New message form, one person chosen from ?to=', signed_in=True),
+    # A guest only: a signed-in request to another Site makes the harness user
+    # a profile there. The signed-in branding check answers from made-up fixtures.
+    Page('huddles', 'forum.islington.cc', '/huddles/', 'islington-huddles',
+         'Messages as a guest under Islington CC branding: link #185945 on surround #bfc3c5'),
     Page('profiles', LFGSS, '/profiles/%d/edit/' % HARNESS_PROFILE_ID, 'profile-edit', 'profile edit form', signed_in=True),
     Page('activity', LFGSS, '/updates/', 'updates', 'following, signed in', signed_in=True, rows=LIST_ROWS),
     Page('forum-lists', LFGSS, '/', 'home-signedin', 'home signed in: NEW badges, Actions', signed_in=True,

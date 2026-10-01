@@ -3,13 +3,15 @@
 Post or edit an event (events/views.py create and edit, BS5-12). The form
 posts the same fields as on Bootstrap 3, so core/forms/forms.py is
 unchanged: js/bs5/eventForm.js fills the hidden when, duration, lat, lon,
-north, east, south, west, invite and inviteObject from the controls. when
+north, east, south, west, invite and inviteObject from the controls (the
+invites through js/bs5/peopleWidget.js, BS5-13). when
 is the event's wall-clock start with a Z, as today ("2026-10-10T19:00:00Z"),
 and tz says where it is. Native date and time inputs replace the
 datepicker; the time zone list comes from Intl. A new event's first
 comment uses the comment box without its own form (as_component), and
 data-mw-validate checks the form before it is sent (js/bs5/simpleEditor.js).
-Styles: _event_form.scss, and .mw-item-form in _conversations.scss.
+Styles: _event_form.scss, .mw-item-form in _conversations.scss, and the
+invite chips in _huddles.scss.
 {% endcomment %}
 {% load static icon commentBox %}
 {% block title %}{% if state_edit %}Edit event{% else %}Post an event{% endif %} | {{ site.title|safe }}{% endblock title %}
@@ -133,12 +135,12 @@ Styles: _event_form.scss, and .mw-item-form in _conversations.scss.
 		</div>
 	</fieldset>
 
-	<div class="mb-3" data-mw-invite data-mw-invited="{% firstof attendees_json form.inviteObject.value %}">
+	<div class="mb-3" data-mw-people data-mw-invited="{% firstof attendees_json form.inviteObject.value %}">
 		<label class="form-label" for="invite"><span class="text-body-secondary">Optional.</span> Do you wish to invite others to your event?</label>
-		<input type="hidden" name="invite" value="">
-		<input type="hidden" name="inviteObject" value="">
-		<ul class="list-unstyled mw-event-form-invited" aria-label="Invited" hidden></ul>
-		<div class="mw-event-form-picker">
+		<input type="hidden" name="invite" value="" data-mw-people-ids>
+		<input type="hidden" name="inviteObject" value="" data-mw-people-json>
+		<ul class="list-unstyled mw-people-chosen" aria-label="Invited" hidden></ul>
+		<div class="mw-people-picker">
 			<div class="input-group">
 				<span class="input-group-text">{% icon "search" %}</span>
 				<input type="text" id="invite" class="form-control" placeholder="Type in a user's name" autocomplete="off">
@@ -172,6 +174,7 @@ Styles: _event_form.scss, and .mw-item-form in _conversations.scss.
 <script src="{% static '3rd/leaflet/0.7.7/leaflet.js' %}"></script>
 {% include 'google_maps_loader.html' %}
 <link rel="modulepreload" href="{% static 'js/bs5/eventFormClasses.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/peopleWidget.js' %}">
 <link rel="modulepreload" href="{% static 'js/bs5/eventMap.js' %}">
 <link rel="modulepreload" href="{% static 'js/bs5/leafletGoogle.js' %}">
 <link rel="modulepreload" href="{% static 'js/bs5/simpleEditor.js' %}">

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% comment %}
+Send a message (huddles/views.py create, BS5-13). The form posts what it
+posted on Bootstrap 3: the title, is_confidential (always 0), invite (the
+profile ids chosen with js/bs5/peopleWidget.js, comma separated; ?to= fills
+them in) and the first comment from the comment box without its own form
+(as_component). data-mw-validate checks the title before it is sent
+(js/bs5/simpleEditor.js, through comments.js). Styles: .mw-item-form in
+_conversations.scss and the people widget in _huddles.scss.
+{% endcomment %}
+{% load static icon commentBox %}
+{% block title %}New message | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<h1 class="mw-item-title mb-3">Messages</h1>
+
+<form action="" method="POST" id="huddleForm" class="mw-item-form" enctype="multipart/form-data" novalidate data-mw-validate>
+	{% csrf_token %}
+	<input type="hidden" name="{{ form.is_confidential.name }}" value="0">
+
+	<div class="mb-3">
+		<label class="form-label" for="title">{{ form.title.label }}</label>
+		<input type="text" class="form-control{% if form.errors.title %} is-invalid{% endif %}" id="title" name="{{ form.title.name }}" placeholder="Title of message" maxlength="{{ form.fields.title.max_length }}" required value="{{ form.title.value|default:'' }}">
+		<div class="invalid-feedback">{% if form.errors.title %}{{ form.errors.title|join:' ' }}{% else %}{{ form.fields.title.error_messages.required }}{% endif %}</div>
+	</div>
+
+	<div class="mb-3" data-mw-people data-mw-invited="{{ recipients_json|default:'' }}">
+		<label class="form-label" for="invite">Who will be able to see and reply to this message?</label>
+		<input type="hidden" name="invite" value="" data-mw-people-ids>
+		<ul class="list-unstyled mw-people-chosen" aria-label="Invited" hidden></ul>
+		<div class="mw-people-picker">
+			<div class="input-group">
+				<span class="input-group-text">{% icon "search" %}</span>
+				<input type="text" id="invite" class="form-control" placeholder="Type in a user's name" autocomplete="off">
+			</div>
+		</div>
+	</div>
+
+	<div class="mb-3">
+		<label class="form-label" for="mw-editor-firstcomment">What is it you want to say?</label>
+		{% commentBox as_component=True name="firstcomment" %}
+	</div>
+
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button id="submit" type="submit" class="btn mw-btn btn-lg">Send Message</button>
+		<button type="button" class="btn mw-btn btn-lg" onclick="history.back()">Cancel</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Messages</h3>
+		<div class="mw-module-text">
+			<p>Messages are discreet conversations shared with a small group of people.</p>
+			<p class="mb-0">When every person with access to a message has deleted it, the shared conversation and all comments will be physically deleted.</p>
+		</div>
+	</section>
+{% endblock %}
+
+{% block js %}
+{% include 'comments_scripts.html' %}
+<script type="module" src="{% static 'js/bs5/peopleWidget.js' %}"></script>
+{% endblock %}

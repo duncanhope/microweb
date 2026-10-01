@@ -1,0 +1,130 @@
+// The huddles family (BS5-13): huddles.html (Messages), huddle.html, its
+// Share and Delete modals, forms/huddle.html (New message), and the people
+// widget (js/bs5/peopleWidget.js) that the event form shares. Rows come from
+// _lists.scss and _activity.scss, comments and the reply box from
+// _conversations.scss, the modals' people list from _events.scss.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+
+// The title sits straight on the participants' row, which has its own rule.
+.mw-huddle-header {
+  margin-bottom: 0;
+
+  @include media-breakpoint-up(lg) {
+    padding-bottom: .75rem;
+  }
+}
+
+// Under the title: who can see the message, and Share and Delete. -------------
+.mw-huddle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding-block: .625rem;
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-huddle-people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+
+  img {
+    display: block;
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  .btn {
+    --#{$prefix}btn-font-size: .875rem;
+    --#{$prefix}btn-padding-y: .25rem;
+  }
+}
+
+.mw-huddle-actions .btn {
+  --#{$prefix}btn-font-size: .875rem;
+  --#{$prefix}btn-font-weight: #{$font-weight-semibold};
+}
+
+// The modals: text at 16px rather than the 20px body, as before. -------------
+.mw-huddle-modal {
+  font-size: 1rem;
+}
+
+.mw-huddle-summary {
+  padding-bottom: .9375rem;
+  font-size: .875rem;
+  color: var(--#{$prefix}secondary-color);
+  border-bottom: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+}
+
+.mw-huddle-icon {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--#{$prefix}secondary-color);
+}
+
+.mw-huddle-summary-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: $font-weight-semibold;
+  color: var(--#{$prefix}emphasis-color);
+  overflow-wrap: anywhere;
+}
+
+// Share: the question in the weight of the form labels.
+.mw-huddle-share .form-label {
+  font-weight: $font-weight-semibold;
+}
+
+// The people widget: the people chosen as chips, then the member search. ------
+.mw-people-chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.mw-people-chip {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .25rem .5rem;
+  font-size: $font-size-sm;
+  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  img {
+    object-fit: cover;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+
+  .btn-close {
+    --#{$prefix}btn-close-opacity: .6;
+    font-size: .625rem;
+  }
+}
+
+.mw-people-picker {
+  position: relative;
+
+  .mw-item-form & {
+    @include media-breakpoint-up(sm) {
+      max-width: 50%;
+    }
+  }
+}
+
+// The member list is the mentions list (.mw-mentions, _conversations.scss),
+// under the search box.
+.mw-people-results {
+  top: 100%;
+  left: 0;
+  width: 100%;
+}

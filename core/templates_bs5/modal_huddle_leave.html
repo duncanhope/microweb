@@ -1,0 +1,33 @@
+{% load icon %}{% comment %}
+Delete Message (BS5-13): a Bootstrap 5 modal on huddle.html. Its form posts
+to huddles/views.py delete, which takes the member out of the message and
+back to Messages; the others keep it. Styles: _huddles.scss.
+{% endcomment %}
+<div id="modal-huddle-leave" class="modal fade" tabindex="-1" aria-labelledby="modal-huddle-leave-title" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header justify-content-center position-relative mw-surround">
+				<img src="{{ site.logo_url }}" alt="{{ site.title|safe }} - Powered by Microcosm" class="mw-logo-sm">
+				<button type="button" class="btn-close position-absolute top-0 end-0 m-2" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body mw-huddle-modal">
+				<div class="d-flex gap-3 mw-huddle-summary">
+					<span class="mw-huddle-icon">{% icon "envelope" %}</span>
+					<div class="mw-min-w-0">
+						<p class="mw-huddle-summary-title">{{ content.title|safe }}</p>
+						<p class="mb-0"><a href="{% url 'single-profile' content.meta.created_by.id %}"><img src="{% if 'gravatar' in content.meta.created_by.avatar %}{{ content.meta.created_by.avatar }}{% elif 'files' in content.meta.created_by.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ content.meta.created_by.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="" width="20" height="20" class="rounded object-fit-cover"> @{{ content.meta.created_by.profile_name|safe|truncatechars:25 }}</a> started <time datetime="{{ content.meta.created|date:"c" }}"></time></p>
+					</div>
+				</div>
+				<h2 class="h5 mt-3" id="modal-huddle-leave-title">Delete Message</h2>
+				<p><strong>Warning!</strong> You will no longer be able to view any past or future messages in this shared conversation.</p>
+				<form action="{% url 'delete-huddle' content.id %}" method="POST">
+					{% csrf_token %}
+					<button type="submit" class="btn btn-danger">Delete Message</button>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn mw-btn btn-sm" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>

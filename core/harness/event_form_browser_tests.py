@@ -151,9 +151,9 @@ class Bs5EventFormPagesTests(EventFormTestCase):
         self.assertEqual(page.locator('#location').input_value(), 'IKEA Croydon')
         self.assertEqual(page.locator('.leaflet-marker-icon').count(), 1)
         # Everyone with an RSVP is listed, and stays: none has a remove button.
-        people = page.locator('.mw-event-form-person')
+        people = page.locator('.mw-people-chip')
         self.assertEqual(people.count(), 26)
-        self.assertEqual(page.locator('.mw-event-form-invited .btn-close').count(), 0)
+        self.assertEqual(page.locator('.mw-people-chosen .btn-close').count(), 0)
         self.assertTrue(page.locator('#attendee-limit-none').is_checked())
         self.assertTrue(page.locator('input[name=rsvpLimit]').is_disabled())
 
@@ -206,7 +206,7 @@ class CreateEventTests(EventFormTestCase):
         options.first.wait_for()
         name = options.first.inner_text().strip()
         invite.press('Enter')
-        self.assertEqual(page.locator('.mw-event-form-person').inner_text().strip(), name)
+        self.assertEqual(page.locator('.mw-people-chip').inner_text().strip(), name)
         invited = json.loads(page.locator('input[name=inviteObject]').input_value())
         self.assertEqual(page.locator('input[name=invite]').input_value(), str(invited[0]['id']))
 
@@ -366,8 +366,8 @@ class EditEventTests(EventFormTestCase):
         self.assertEqual(page.locator('#tz').input_value(), 'Australia/Sydney')
         self.assertEqual(page.locator('#location').input_value(), 'Sydney, Australia')
         self.assertEqual(page.locator('input[name=rsvpLimit]').input_value(), '20')
-        self.assertEqual(page.locator('.mw-event-form-person').all_inner_texts(), ['rider1', 'rider2', 'rider3'])
-        self.assertEqual(page.locator('.mw-event-form-invited .btn-close').count(), 0)
+        self.assertEqual(page.locator('.mw-people-chip').all_inner_texts(), ['rider1', 'rider2', 'rider3'])
+        self.assertEqual(page.locator('.mw-people-chosen .btn-close').count(), 0)
         self.assertTrue(page.locator('.leaflet-marker-icon').is_visible())
         self.assertEqual(page.locator('#mw-editor-firstcomment').count(), 0)
 

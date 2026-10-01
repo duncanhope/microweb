@@ -615,10 +615,11 @@ class HuddleCommentTests(ConversationsTestCase):
     """Lane 9, live once: post, edit and delete a comment in the harness user's
     huddle with itself, the one place the operator allowed a write.
 
-    The huddle page (huddle.html) stays on Bootstrap 3 until BS5-13, so the
-    comment is posted from its Bootstrap 3 reply box and every redirect back
-    lands on Bootstrap 3. Edit runs from the single comment page, comment.html
-    on Bootstrap 5, whose Edit box is this family's comment box.
+    The comment is posted from the huddle page's reply box, which is this
+    family's comment box on Bootstrap 5 since BS5-13 (it was the Bootstrap 3
+    box when this was recorded; the recording only holds API answers). Edit
+    runs from the single comment page, comment.html, whose Edit box is the
+    same comment box.
 
     The API refuses to delete a huddle comment, even for its author, so a
     recording leaves its comment behind in the huddle. Record it only once.
@@ -651,17 +652,17 @@ class HuddleCommentTests(ConversationsTestCase):
 
         with self.step('0-before'):
             page.goto('https://%s%s' % (LFGSS, HUDDLE), wait_until='load')
-            self.assertFalse(page.evaluate('!!document.querySelector("link[href*=\'bs5.min.css\']")'),
-                             'the huddle page is Bootstrap 3 until BS5-13')
+            self.assertTrue(page.evaluate('!!document.querySelector("link[href*=\'bs5.min.css\']")'))
+            self.wait_for_scripts(page)
             self.before = self.huddle_comments(page)
 
-        # Post, from the huddle's Bootstrap 3 reply box.
+        # Post, from the huddle's reply box.
         with self.step('1-posted'):
-            form = page.locator('.reply-container form')
+            form = page.locator('[data-mw-reply-default] form')
             self.assertEqual(form.locator('input[name=itemType]').input_value(), 'huddle')
             self.assertEqual(form.locator('input[name=itemId]').input_value(), str(manifest.HARNESS_HUDDLE_ID))
             form.locator('textarea').fill('%s (%s).' % (HUDDLE_MARKER, stamp))
-            self.submit(page, form.locator('input[type=submit]').click, '/comments/create/')
+            self.submit(page, form.get_by_role('button', name='Post reply').click, '/comments/create/')
             self.assertEqual(urlsplit(sent[-1][0]).path, '/comments/create/')
             fragment = urlsplit(page.url).fragment
             self.assertRegex(fragment, r'^comment\d+$')

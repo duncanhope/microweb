@@ -4,14 +4,16 @@
 // - the time zone list and the start and finish (EventDates);
 // - the location: "Enter a location" or to be decided, the location search
 //   (Show on map) and the map (EventFormMap);
-// - the RSVP limit, and the people invited (InvitePeople).
+// - the RSVP limit.
+// The people invited are peopleWidget.js's, wired when it is imported.
 // The first comment's box and the check before posting are the comment
 // box's (simpleEditor.js initEditors).
 
-import { API_BASE, initEditors } from './simpleEditor.js';
+import { initEditors } from './simpleEditor.js';
 import {
-  EventDates, EventFormMap, InvitePeople, attendeeLimit, fillTimeZones, geocode,
+  EventDates, EventFormMap, attendeeLimit, fillTimeZones, geocode,
 } from './eventFormClasses.js';
+import './peopleWidget.js';
 
 // "Enter a location" or to be decided. To be decided hides the location and
 // the map and clears them, as before.
@@ -55,7 +57,6 @@ if (form) {
   const map = mapEl && window.L ? new EventFormMap(mapEl, form) : null;
   wherePart(form.querySelector('[data-mw-event-place]'), map);
   attendeeLimit(form.querySelector('[data-mw-rsvp-limit]'));
-  new InvitePeople(form.querySelector('[data-mw-invite]'), { apiBase: API_BASE });
   form.dataset.mwReady = '';
 }
 initEditors();

@@ -39,46 +39,4 @@
   width: 6rem;
 }
 
-// Invite people: the people chosen, then the member search --------------------------
-.mw-event-form-invited {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-  margin-bottom: .5rem;
-}
-
-.mw-event-form-person {
-  display: flex;
-  align-items: center;
-  gap: .375rem;
-  padding: .25rem .5rem;
-  font-size: $font-size-sm;
-  border: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
-  @include border-radius(var(--#{$prefix}border-radius));
-
-  img {
-    object-fit: cover;
-    @include border-radius(var(--#{$prefix}border-radius-sm));
-  }
-
-  .btn-close {
-    --#{$prefix}btn-close-opacity: .6;
-    font-size: .625rem;
-  }
-}
-
-.mw-event-form-picker {
-  position: relative;
-
-  @include media-breakpoint-up(sm) {
-    max-width: 50%;
-  }
-}
-
-// The member list is the mentions list (.mw-mentions, _conversations.scss),
-// under the search box.
-.mw-event-form-results {
-  top: 100%;
-  left: 0;
-  width: 100%;
-}
+// Invite people: the people widget, styled with the huddles (_huddles.scss).
