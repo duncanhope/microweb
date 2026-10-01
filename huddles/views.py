@@ -38,6 +38,7 @@ logger = logging.getLogger('huddles.views')
 create_form = HuddleCreate
 edit_form = HuddleEdit
 form_template = 'forms/huddle.html'
+comment_form_template = 'forms/create_comment.html'
 single_template = 'huddle.html'
 list_template = 'huddles.html'
 
@@ -172,23 +173,20 @@ def create(request):
                 try:
                     process_attachments(request, comment)
                 except ValidationError:
-                    responses = response_list_to_dict(fetch.map(request.view_requests))
-                    comment_form = CommentForm(
+                    # The message and its first comment are already sent, so
+                    # show the comment with the error (as comments/views.py
+                    # does), not a new message form that would send it twice.
+                    view_data['comment_form'] = CommentForm(
                         initial={
                             'itemId': comment.item_id,
                             'itemType': comment.item_type,
                             'comment_id': comment.id,
-                            'markdown': request.POST['markdown'],
+                            'markdown': request.POST.get('firstcomment'),
                         }
                     )
-                    view_data = {
-                        'user': Profile(responses[request.whoami_url], summary=False),
-                        'site': Site(responses[request.site_url]),
-                        'content': comment,
-                        'comment_form': comment_form,
-                        'error': 'Sorry, one of your files was over 3MB. Please try again.',
-                    }
-                    return render(request, form_template, view_data)
+                    view_data['content'] = comment
+                    view_data['error'] = 'Sorry, one of your files was over 30 MB. Please try again.'
+                    return render(request, comment_form_template, view_data)
 
             return HttpResponseRedirect(reverse('single-huddle', args=(hud_response.id,)))
         else:
