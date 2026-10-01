@@ -1514,8 +1514,8 @@ class Huddle(APIResource):
             huddle.last_comment_created_by = Profile(data['lastCommentCreatedBy'])
         if data.get('lastCommentCreated'):
             huddle.last_comment_created = parse_timestamp(data['lastCommentCreated'])
-        if data.get('totalComments'):
-            huddle.total_comments = data['totalComments']
+        # The API leaves totalComments out when it is zero.
+        huddle.total_comments = data.get('totalComments') or 0
         huddle.meta = Meta(data['meta'])
         huddle.participants = []
         for p in data['participants']:
@@ -1656,7 +1656,7 @@ class Event(APIResource):
             event.last_comment_created = parse_timestamp(data['lastComment']['created'])
 
         # RSVP attend / spaces are only returned if non-zero
-        if data.get('rsvpAttend'): event.rsvp_attend = data['rsvpAttend']
+        event.rsvp_attend = data.get('rsvpAttend') or 0
         if data.get('rsvpSpaces'): event.rsvp_spaces = data['rsvpSpaces']
 
         # RSVP limit is always returned, even if zero
