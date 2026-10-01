@@ -222,11 +222,13 @@ def invite(request, huddle_id):
     Invite participants to a huddle.
     """
 
-    ids = [int(x) for x in request.POST.get('invite_profile_id').split()]
-    try:
-        Huddle.invite(request.get_host(), huddle_id, ids, request.access_token)
-    except APIException as exc:
-        return respond_with_error(request, exc)
+    # Space separated profile ids; with none, there is no one to invite.
+    ids = [int(x) for x in request.POST.get('invite_profile_id', '').split()]
+    if ids:
+        try:
+            Huddle.invite(request.get_host(), huddle_id, ids, request.access_token)
+        except APIException as exc:
+            return respond_with_error(request, exc)
 
     return HttpResponseRedirect(reverse('single-huddle', args=(huddle_id,)))
 
