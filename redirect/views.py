@@ -30,8 +30,8 @@ def redirect_or_404(request):
     # Get site subdomain key based on host.
     try:
         microcosm_host = Site.resolve_cname(host)
-    except APIException:
-        logger.error(str(APIException))
+    except APIException as exc:
+        logger.error(str(exc))
 
     # Reverse the effect of APPEND_SLASH on the path.
     url_parts = urlsplit(request.build_absolute_uri())

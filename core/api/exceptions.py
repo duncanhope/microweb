@@ -10,4 +10,6 @@ class APIException(Exception):
         super(APIException, self).__init__(error_message)
 
     def __str__(self):
+        if self.status_code is None:
+            return str(self.message)
         return 'HTTP status: %d: %s' % (self.status_code, self.message)
