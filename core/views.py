@@ -38,6 +38,7 @@ from django.views.generic.base import TemplateView
 
 from core.api.exceptions import APIException
 from core.api.resources import api_url_to_gui_url
+from core.api.resources import APIResource
 from core.api.resources import Attachment
 from core.api.resources import Comment
 from core.api.resources import FileMetadata
@@ -151,6 +152,18 @@ def respond_with_error(request, exception):
         return ErrorView.requires_login(request)
     else:
         return ErrorView.server_error(request, exception)
+
+def respond_with_refusal(request, response):
+    """
+    An API answer read straight from requests that refused the call, shown
+    as the error page its status calls for rather than an empty 400.
+    """
+
+    try:
+        APIResource.process_response(response.url, response)
+    except APIException as exc:
+        return respond_with_error(request, exc)
+    return respond_with_error(request, APIException('Refused: %s' % response.url, response.status_code))
 
 
 def respond_with_pagination_error(request, exception):

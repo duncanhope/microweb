@@ -21,6 +21,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.http import require_safe
 
 from core.views import respond_with_error
+from core.views import respond_with_refusal
 from core.views import respond_with_pagination_error
 from core.views import require_authentication
 from core.views import process_attachments
@@ -385,7 +386,7 @@ def rsvp(request, event_id):
     except APIException as exc:
         return respond_with_error(request, exc)
     if response.status_code != requests.codes.ok:
-        return HttpResponseBadRequest() 
+        return respond_with_refusal(request, response)
 
     return HttpResponseRedirect(reverse('single-event', args=(event_id,)))
 
