@@ -2,16 +2,15 @@
 // Ported from js/simpleEditor.js and the parts of Markdown.Editor.js it used,
 // without jQuery: the formatting toolbar and its Ctrl shortcuts, Preview,
 // Ctrl+Enter to post, @mentions (mentions.js), attachments (attachments.js)
-// and the check before posting, which replaces formValidator.js with the
-// Constraint Validation API and Bootstrap's .is-invalid.
+// and the check before posting (validate.js), which replaces formValidator.js
+// with the Constraint Validation API and Bootstrap's .is-invalid.
 //
 // comments.js, the family's page script, calls initEditors(): every comment
-// box on the page and every form marked data-mw-validate.
+// box on the page. The check before posting is validate.js's.
 
 import { Attachments } from './attachments.js';
-import { attachMentions, replaceText } from './mentions.js';
-
-export const API_BASE = document.querySelector('meta[name="subdomain"]')?.content || '';
+import { API_BASE, attachMentions, replaceText } from './mentions.js';
+import { validateOnSubmit } from './validate.js';
 
 // ---------------------------------------------------------------------------
 // Quoting
@@ -28,33 +27,6 @@ export function quoteText(text) {
 
 // The newlines that make text end in a blank line ('' for no text).
 const blankLineAfter = (text) => (text ? '\n\n'.slice(/\n{0,2}$/.exec(text)[0].length) : '');
-
-// ---------------------------------------------------------------------------
-// The check before posting
-
-// Required fields must hold more than spaces; the first invalid field gets focus.
-export function validateOnSubmit(form) {
-  form.addEventListener('submit', (event) => {
-    const fields = [...form.elements].filter((field) => field.willValidate);
-    for (const field of fields) {
-      if (field.required && 'value' in field) field.setCustomValidity(field.value.trim() ? '' : 'empty');
-      field.classList.toggle('is-invalid', !field.validity.valid);
-    }
-    const invalid = fields.find((field) => !field.validity.valid);
-    if (invalid) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      invalid.focus();
-    }
-  });
-  form.addEventListener('input', (event) => {
-    const field = event.target;
-    if (field.classList.contains('is-invalid') && field.value.trim()) {
-      field.setCustomValidity('');
-      field.classList.remove('is-invalid');
-    }
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Preview: Markdown.Converter.js (Pagedown) loads on first use.
@@ -271,10 +243,10 @@ export class SimpleEditor {
 
 // ---------------------------------------------------------------------------
 
-// Wire the page's comment boxes (those not already wired) and checked forms.
+// Wire the page's comment boxes (those not already wired). validate.js has
+// wired the checked forms (data-mw-validate) on import.
 export function initEditors() {
   for (const root of document.querySelectorAll('[data-mw-editor]')) {
     if (!root.mwEditor) new SimpleEditor(root);
   }
-  for (const form of document.querySelectorAll('form[data-mw-validate]')) validateOnSubmit(form);
 }

@@ -21,8 +21,7 @@
 //
 // Importing this module wires every [data-mw-people] on the page.
 
-import { API_BASE } from './simpleEditor.js';
-import { ProfileSearch } from './mentions.js';
+import { API_BASE, ProfileSearch } from './mentions.js';
 
 const DEBOUNCE_MS = 150;
 

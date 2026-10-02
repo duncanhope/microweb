@@ -6,7 +6,7 @@ the event form said "Post an event" when editing and never checked the
 reason before posting. The views now say so with state_edit, as the
 conversation and event forms already did elsewhere.
 
-The forum form is Bootstrap 3 only for now: ?bs=5 falls back to it."""
+The Bootstrap 5 forum form (BS5-14) is checked in test_bs5_admin.py."""
 import re
 from unittest import mock
 
@@ -57,11 +57,9 @@ class ForumFormTests(SimpleTestCase):
         self.assertIn('<input type="file" name="logo" id="input_logo"', html)
 
     def test_the_create_form(self):
-        for bs in (3, 5):
-            with self.subTest(bs=bs):
-                html = self.create(bs)
-                self.assert_create(html)
-                self.assertIn('<input type="hidden" name="parentId" value="0"', html)
+        html = self.create()
+        self.assert_create(html)
+        self.assertIn('<input type="hidden" name="parentId" value="0"', html)
 
     def test_the_create_form_sent_back(self):
         html = self.create(method='post', data=dict(FORUM, title=''))
@@ -78,16 +76,14 @@ class ForumFormTests(SimpleTestCase):
         self.assertEqual((sent['title'], sent['parentId'], sent['itemTypes']), ('A made-up forum', 0, FORUM['itemTypes']))
 
     def test_the_edit_form(self):
-        for bs in (3, 5):
-            with self.subTest(bs=bs):
-                html = self.edit(bs)
-                self.assert_edit(html)
-                self.assertNotIn(REQUIRED, html)
-                self.assertIn('value="Generated"', html)
-                self.assertIn('<input type="hidden" name="id" value="1"', html)
-                # No logo yet: the upload box says what to do.
-                self.assertIn('<label for="input_logo">Click here</label>', html)
-                self.assertNotIn('Remove existing logo?', html)
+        html = self.edit()
+        self.assert_edit(html)
+        self.assertNotIn(REQUIRED, html)
+        self.assertIn('value="Generated"', html)
+        self.assertIn('<input type="hidden" name="id" value="1"', html)
+        # No logo yet: the upload box says what to do.
+        self.assertIn('<label for="input_logo">Click here</label>', html)
+        self.assertNotIn('Remove existing logo?', html)
 
     def test_the_edit_form_with_a_logo(self):
         data = load('microcosm.json')

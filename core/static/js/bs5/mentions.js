@@ -10,6 +10,9 @@
 // aria-activedescendant, the APG combobox pattern adapted to a textarea. A
 // visually hidden status line announces how many members were found.
 
+// The Site's API, which member searches ask: <meta name="subdomain"> in the base.
+export const API_BASE = document.querySelector('meta[name="subdomain"]')?.content || '';
+
 const TRIGGER = /(?:^|[^\w])([@+])([^\s@+]{0,25})$/;
 const LIMIT = 5;
 const DEBOUNCE_MS = 150;

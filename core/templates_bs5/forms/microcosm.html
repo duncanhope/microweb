@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% comment %}
+Create or edit a forum (microcosms/views.py create_microcosm and
+edit_microcosm, BS5-14). The form posts the same fields as on Bootstrap 3, so
+core/forms/forms.py is unchanged; state_edit, from edit_microcosm, adds the
+logo and the reason for editing. The logo box is the profile form's avatar
+picker (js/bs5/profilePicture.js), which shows the chosen image before the
+form is saved. data-mw-validate checks the form before it is sent
+(js/bs5/validate.js). Styles: .mw-item-form in _conversations.scss, the logo
+box in _profiles.scss, and _admin.scss.
+{% endcomment %}
+{% load static %}
+{% block title %}{% if state_edit %}Edit this forum{% else %}Create a forum{% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<h1 class="mw-item-title mb-3">{% if state_edit %}Edit a forum{% else %}Create a forum{% endif %}</h1>
+
+<form action="" method="POST" id="microcosmForm" class="mw-item-form mw-forum-form" enctype="multipart/form-data" novalidate data-mw-validate>
+	{% csrf_token %}
+	{# MicrocosmCreate has no siteId: this prints nothing, as on Bootstrap 3. #}
+	{{ form.siteId.value }}
+	{{ form.id }}
+	{{ form.parentId }}
+	{{ form.visibility }}
+	{{ form.logoUrl }}
+
+	<div class="mb-3">
+		<label class="form-label" for="title">{{ form.title.label }}</label>
+		<input type="text" class="form-control{% if form.errors.title %} is-invalid{% endif %}" id="title" name="{{ form.title.name }}" placeholder="Title of forum" maxlength="{{ form.fields.title.max_length }}" required value="{{ form.title.value|default:'' }}">
+		<div class="invalid-feedback">{% if form.errors.title %}{{ form.errors.title|join:' ' }}{% else %}{{ form.fields.title.error_messages.required }}{% endif %}</div>
+	</div>
+
+	<div class="mb-3">
+		<label class="form-label" for="description">{{ form.description.label }}</label>
+		<input type="text" class="form-control{% if form.errors.description %} is-invalid{% endif %}" id="description" name="{{ form.description.name }}" placeholder="Description of forum" maxlength="{{ form.fields.description.max_length }}" required value="{{ form.description.value|default:'' }}">
+		<div class="invalid-feedback">{% if form.errors.description %}{{ form.errors.description|join:' ' }}{% else %}{{ form.fields.description.error_messages.required }}{% endif %}</div>
+	</div>
+
+	{% if state_edit %}
+	<div class="mb-3">
+		<label class="form-label" for="input_logo">Display a logo for the forum?</label>
+		<div class="mw-avatar-picker" data-mw-avatar>
+			<label class="mw-avatar-drop mw-logo-drop{% if form.logoUrl.value %} has-image{% endif %}" data-mw-avatar-drop>
+				<img{% if form.logoUrl.value %} src="{{ form.logoUrl.value }}"{% else %} hidden{% endif %} alt="The forum's logo">
+				<span>Click here</span>
+				<input type="file" name="logo" id="input_logo" accept="image/*" class="visually-hidden">
+			</label>
+			<div class="mw-avatar-help">
+				<p class="mw-avatar-help-title">The logo will be displayed as a square no larger than 64px x 64px.</p>
+				<p class="mb-0">Your file should be an .svg, .jpg, .png, or .gif file.</p>
+				{% if form.errors.logoUrl %}<p class="text-danger mb-0">{{ form.errors.logoUrl|join:' ' }}</p>{% endif %}
+			</div>
+		</div>
+		{% if form.logoUrl.value %}
+		<div class="form-check mt-2">
+			<input class="form-check-input" type="checkbox" id="input_remove_logo" name="remove_logo" value="true">
+			<label class="form-check-label" for="input_remove_logo">Remove existing logo</label>
+		</div>
+		{% endif %}
+	</div>
+	{% endif %}
+
+	<fieldset class="mb-3">
+		<legend class="form-label">{{ form.itemTypes.label }}</legend>
+		{% for choice in form.itemTypes %}
+		<div class="form-check">
+			<input class="form-check-input{% if form.errors.itemTypes %} is-invalid{% endif %}" type="checkbox" name="{{ form.itemTypes.html_name }}" id="{{ choice.id_for_label }}" value="{{ choice.data.value }}"{% if choice.data.selected %} checked{% endif %}>
+			<label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+		</div>
+		{% endfor %}
+		{% if form.errors.itemTypes %}<div class="invalid-feedback d-block">{{ form.errors.itemTypes|join:' ' }}</div>{% endif %}
+	</fieldset>
+
+	{% if state_edit %}
+	<div class="mb-3">
+		<label class="form-label" for="editReason">{{ form.editReason.label }}</label>
+		<input type="text" class="form-control{% if form.errors.editReason %} is-invalid{% endif %}" id="editReason" name="{{ form.editReason.name }}" placeholder="Reason for editing" maxlength="150" required>
+		<div class="invalid-feedback">{% if form.errors.editReason %}{{ form.errors.editReason|join:' ' }}{% else %}Please give a reason for editing.{% endif %}</div>
+	</div>
+	{% endif %}
+
+	<div class="d-flex gap-2 mw-item-form-buttons">
+		<button id="submit" type="submit" class="btn mw-btn btn-lg">Save forum</button>
+		<button type="button" class="btn mw-btn btn-lg" onclick="history.back()">Cancel</button>
+	</div>
+</form>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block js %}
+<script type="module" src="{% static 'js/bs5/validate.js' %}"></script>
+{% if state_edit %}<script type="module" src="{% static 'js/bs5/profilePicture.js' %}"></script>{% endif %}
+{% endblock %}

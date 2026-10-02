@@ -1,0 +1,10 @@
+{# One Yes/No answer on the membership group form (BS5-14): name is the radio pair's name, on its answer, text the question (may hold markup). #}
+<li class="mw-toggle">
+	<span id="toggle-{{ name }}">{{ text }}</span>
+	<div class="btn-group btn-group-sm mw-yesno" role="radiogroup" aria-labelledby="toggle-{{ name }}">
+		<input type="radio" class="btn-check" name="{{ name }}" id="{{ name }}-1" value="1" autocomplete="off"{% if on %} checked{% endif %}>
+		<label class="btn" for="{{ name }}-1">Yes</label>
+		<input type="radio" class="btn-check" name="{{ name }}" id="{{ name }}-0" value="0" autocomplete="off"{% if not on %} checked{% endif %}>
+		<label class="btn" for="{{ name }}-0">No</label>
+	</div>
+</li>

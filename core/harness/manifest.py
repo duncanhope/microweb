@@ -30,6 +30,12 @@ RSVP_EVENT_ID = 9667
 # lfgss's forum of mostly events, where the event form checks post (BS5-12),
 # answered from made-up fixtures: nothing is written (operator's decision).
 EVENT_FORUM_ID = 573
+# The forum whose admin pages the harness shoots (BS5-14): lfgss Social. The
+# harness user is no admin there, so its forms render but nothing could be
+# saved; every save is answered from made-up fixtures.
+ADMIN_FORUM_ID = 558
+# Islington CC's root forum, for its membership groups as a guest (BS5-14).
+ISLINGTON_FORUM_ID = 802
 
 
 @dataclass(frozen=True)
@@ -154,6 +160,20 @@ PAGES = [
          'the Post an event form: dates, time zone, map, RSVP limit, invites, first comment', signed_in=True),
     Page('event_form', LFGSS, '/events/4488/edit/', 'event-edit',
          'the Edit event form: a place on the map and 26 people with an RSVP', signed_in=True),
+    # The forum admin family (BS5-14). Only GETs: saving a forum, a membership
+    # group or a moderation action is answered from made-up fixtures
+    # (core/harness/admin_browser_tests.py). Islington CC is a guest only: a
+    # signed-in request to another Site makes the harness user a profile there.
+    Page('admin', LFGSS, '/microcosms/%d/memberships/' % ADMIN_FORUM_ID, 'memberships',
+         'a forum\'s membership groups and what each may do', rows=LIST_ROWS),
+    Page('admin', LFGSS, '/microcosms/%d/memberships/create/' % ADMIN_FORUM_ID, 'membership-create',
+         'the Create membership group form: toggles, criteria, individuals', signed_in=True),
+    Page('admin', LFGSS, '/microcosms/%d/edit/' % ADMIN_FORUM_ID, 'forum-edit',
+         'the Edit a forum form: logo upload, content types, reason', signed_in=True),
+    Page('admin', LFGSS, '/microcosms/create/', 'forum-create', 'the Create a forum form', signed_in=True),
+    Page('admin', 'forum.islington.cc', '/microcosms/%d/memberships/' % ISLINGTON_FORUM_ID, 'islington-memberships',
+         'membership groups as a guest under Islington CC branding: link #185945 on surround #bfc3c5',
+         rows=LIST_ROWS),
     # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
     # Bootstrap 3 on both sides; a local scratch copy of legal.html in
     # core/templates_bs5/ puts the new base under them. The browser checks in

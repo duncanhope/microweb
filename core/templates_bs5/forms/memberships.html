@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% comment %}
+Create or edit a membership group (microcosms/views.py create_members and
+edit_members, BS5-14). Nothing is posted as a form: js/bs5/membership_form.js
+sends the group as JSON to members_api, as on Bootstrap 3, then goes back to
+the list. The Yes/No answers render checked from the role; the criteria
+render as data-* items the script reads; the individuals are the people
+widget (js/bs5/peopleWidget.js), filled from the role's profiles.
+Styles: .mw-item-form in _conversations.scss, the people widget in
+_huddles.scss, and _admin.scss.
+{% endcomment %}
+{% load static icon %}
+{% block title %}{% if state_edit %}Edit{% else %}Create{% endif %} membership group | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=False %}
+<h1 class="mw-item-title mb-3">{% if state_edit %}Edit{% else %}Create{% endif %} Membership Group</h1>
+
+<form id="createForm" class="mw-item-form mw-membership-form" action="{% url 'api-memberships' content.id %}" method="POST" novalidate data-mw-membership-form data-role-id="{{ role.id|default:0 }}" data-done-url="{% url 'list-memberships' content.id %}">
+	{% csrf_token %}
+
+	<section class="mw-membership-section">
+		<h2 class="mw-membership-heading">What is the name of this membership group?</h2>
+		<label class="form-label" for="name">Please enter a name for the group:</label>
+		<p class="mw-tip" id="name-tip">Tip: A good name describes the role people within the group, i.e. "guests", "members", "banned", "moderators", "committee members", etc.</p>
+		<input type="text" class="form-control" id="name" name="name" placeholder="Name of group" value="{{ role.title }}" required aria-describedby="name-tip">
+		<div class="invalid-feedback">The membership group must have a name.</div>
+	</section>
+
+	<section class="mw-membership-section">
+		<h2 class="mw-membership-heading">Who is in this group?</h2>
+
+		<h3 class="form-label">Include people automatically:</h3>
+		<ul class="list-unstyled mw-toggles">
+			{% include 'forms/membership_toggle.html' with name='include_registered' on=role.include_users text='All signed-in users' %}
+			{% include 'forms/membership_toggle.html' with name='include_unregistered' on=role.include_guests text='All unregistered / guests users' %}
+		</ul>
+
+		<h3 class="form-label" id="criteria-label">Include people that match the following criteria:</h3>
+		<p class="mw-tip">Tip: Use criteria to manage a large number of people. This allows you to re-use these criteria on other subforums and makes it easy to manage permissions for a large number of people across many subforums.</p>
+		<div class="mw-criteria" data-mw-criteria role="group" aria-labelledby="criteria-label">
+			<p class="mb-0" data-mw-criteria-empty>No criteria is defined for this group. <button type="button" class="btn btn-link p-0 align-baseline" data-mw-criteria-toggle>Add criteria for users to join this group</button></p>
+			<div data-mw-criteria-list hidden>
+				<p class="mb-1">Members join this group if:</p>
+				<ul class="list-unstyled mb-1" data-mw-criteria-items>
+					{% for crit in criteria.criteria.items %}
+					<li data-andor="{{ crit.andor }}" data-key="{% firstof crit.profile_column crit.attr_key %}" data-predicate="{{ crit.predicate }}" data-value="{% if crit.isBool %}{{ crit.value|yesno:'true,false' }}{% else %}{{ crit.value }}{% endif %}"></li>
+					{% endfor %}
+				</ul>
+				<button type="button" class="btn btn-link p-0" data-mw-criteria-toggle>Add criteria</button>
+			</div>
+			<div class="mw-criteria-form" data-mw-criteria-form hidden>
+				<span class="fw-semibold">Add criteria</span>
+				<div class="btn-group btn-group-sm mw-yesno" role="group" aria-label="Join on this and the others, or on this or the others">
+					<input type="radio" class="btn-check" name="switch" id="criteria-and" value="and" autocomplete="off" checked>
+					<label class="btn" for="criteria-and">And</label>
+					<input type="radio" class="btn-check" name="switch" id="criteria-or" value="or" autocomplete="off">
+					<label class="btn" for="criteria-or">Or</label>
+				</div>
+				<select name="condition" class="form-select form-select-sm w-auto" aria-label="Condition">
+					<option value="email">Email Address</option>
+					<option value="commentCount">Comment Count</option>
+					<option value="created">Join Date</option>
+					<option value="profileName">Profile Name</option>
+					<option value="">Custom Attribute</option>
+				</select>
+				<span>is</span>
+				<select name="predicate" class="form-select form-select-sm w-auto" aria-label="Comparison">
+					<option value="gt">Greater than</option>
+					<option value="ge">Greater than or equals</option>
+					<option value="eq">Equals</option>
+					<option value="le">Less than or equals</option>
+					<option value="lt">Less than</option>
+					<option value="neq">Not equal to</option>
+					<option value="substr">Contains</option>
+					<option value="nsubstr">Does not contain</option>
+				</select>
+				<div class="mw-criteria-value">
+					<input type="text" class="form-control form-control-sm" name="value" placeholder="Value" aria-label="Value">
+					<div class="invalid-feedback">A value must be specified.</div>
+				</div>
+				<button type="button" class="btn mw-btn btn-sm" data-mw-criteria-add>Add</button>
+			</div>
+		</div>
+
+		<div class="mt-3" data-mw-people data-mw-invited="[{% for p in profiles.profiles.items %}{&quot;id&quot;: {{ p.id }}, &quot;profileName&quot;: &quot;{{ p.profile_name|escapejs }}&quot;, &quot;avatar&quot;: &quot;{{ p.avatar|escapejs }}&quot;}{% if not forloop.last %}, {% endif %}{% endfor %}]">
+			<label class="form-label" for="invite">Include these individuals:</label>
+			<p class="mw-tip">Tip: Use this method to add named individuals to specific subforums, this works best on small groups for one-off permissions such as a subforum for an organising committee.</p>
+			<input type="hidden" name="invite" value="" data-mw-people-ids>
+			<ul class="list-unstyled mw-people-chosen" aria-label="Individuals in this group" hidden></ul>
+			<div class="mw-people-picker">
+				<div class="input-group">
+					<span class="input-group-text">{% icon "search" %}</span>
+					<input type="text" id="invite" class="form-control" placeholder="Type in a user's name" autocomplete="off">
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="mw-membership-section">
+		<h2 class="mw-membership-heading">What are these people able to do?</h2>
+
+		<h3 class="form-label">Special permissions:</h3>
+		<ul class="list-unstyled mw-toggles">
+			{% include 'forms/membership_toggle.html' with name='is_moderator' on=role.moderator text='People in this group are <strong class="mw-can">responsible for moderating</strong> this forum' %}
+			{% include 'forms/membership_toggle.html' with name='is_banned' on=role.banned text='People in this group are <strong class="mw-cannot">banned</strong> and cannot see this forum or interact with it' %}
+		</ul>
+
+		<h3 class="form-label">Specific permissions:</h3>
+		<ul class="list-unstyled mw-toggles">
+			{% include 'forms/membership_toggle.html' with name='can_read' on=role.read text='User can access and read this forum' %}
+			{% include 'forms/membership_toggle.html' with name='can_create' on=role.create text='User can create, edit and delete their own conversations, events and comments' %}
+			{% include 'forms/membership_toggle.html' with name='can_close_own' on=role.close text='User can close their own conversations and events' %}
+			{% include 'forms/membership_toggle.html' with name='can_open_own' on=role.open text='User can open their own conversations and events' %}
+			{% include 'forms/membership_toggle.html' with name='can_edit_others' on=role.update text='User can edit conversations, events and comments of others' %}
+			{% include 'forms/membership_toggle.html' with name='can_delete_others' on=role.delete text='User can delete conversations, events and comments of others' %}
+		</ul>
+	</section>
+
+	<div class="alert alert-danger py-2" role="alert" data-mw-membership-error hidden></div>
+
+	<div class="d-flex justify-content-end gap-2 mw-item-form-buttons">
+		<a href="{% url 'list-memberships' content.id %}" class="btn mw-btn btn-lg">Cancel</a>
+		<button type="submit" class="btn mw-btn btn-lg" id="submit">{% if state_edit %}Save{% else %}Create{% endif %} group</button>
+	</div>
+</form>
+{% endblock content %}
+
+{% block sidebar %}
+	{% if state_edit and user %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+			<button type="button" id="delete_membership_group" class="btn btn-danger" form="createForm" data-mw-delete-role="{{ role.id }}">{% icon "people" %} Delete membership group</button>
+		</div>
+	</section>
+	{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">{% if state_edit %}Edit{% else %}Create{% endif %} Membership Group</h3>
+		<div class="mw-module-text">
+			<p>A membership group is a group of people that have collectively been granted some permissions.</p>
+			<p>By default a person has no permission to do anything, and permissions are granted through membership of one or more membership groups.</p>
+		</div>
+		<h3 class="mw-module-title">Core concepts</h3>
+		<div class="mw-module-text">
+			<p>The site has default membership groups, all new forums are assigned these. Default groups will be used by forums unless you create new membership groups on the forum that override them.</p>
+			<p>Moderator and banned membership groups are considered special, they will not override the defaults.</p>
+			<p class="p-2 bg-body-tertiary border rounded">The creation of a membership group may supercede the defaults. To return to the defaults, delete all of your custom membership groups.</p>
+		</div>
+		<h3 class="mw-module-title">Common Scenarios</h3>
+		<div class="mw-module-text">
+			<p>To create a <b>semi-private forum</b> (not indexable by Google and not visible to those not signed-in) create at least one membership group that includes signed-in users, but do not create any membership group that contains guests with the "read" permission.</p>
+			<p>To create a <b>truly private forum</b> (not indexable by Google, and visible only to selected signed-in users), create at least one membership group but do not add guests or signed-in users. Add people manually or by criteria.</p>
+			<p>To <b>add moderators</b> add a moderator group and add your moderators to the group.</p>
+			<p class="mb-0">To <b>ban a person from this one forum</b> add a banned membership group and add the person to that group.</p>
+		</div>
+	</section>
+{% endblock %}
+
+{% block js %}
+<link rel="modulepreload" href="{% static 'js/bs5/peopleWidget.js' %}">
+<link rel="modulepreload" href="{% static 'js/bs5/mentions.js' %}">
+<script type="module" src="{% static 'js/bs5/membership_form.js' %}"></script>
+{% endblock %}

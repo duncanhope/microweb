@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% comment %}
+Confirm a moderation action (moderation/views.py confirm, BS5-14): the
+metabar's moderation control (forms/metabar-moderation.html) posts here, and
+this form posts the action to do/ (moderation/views.py moderate). Move picks
+the forum to move to; every other action is one button.
+{% endcomment %}
+{% block title %}{{ action|capfirst }} {{ content.title|safe }} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<h1 class="mw-item-title mb-3">
+	{% if action == 'move' %}Move {{ content.title }} to:
+	{% elif action == 'delete' %}Do you wish to delete "{{ content.title }}"?
+	{% elif action == 'undelete' %}Do you wish to undelete "{{ content.title }}"?
+	{% elif action == 'approve' %}Do you wish to approve "{{ content.title }}"?
+	{% elif action == 'open' %}Do you wish to open "{{ content.title }}"?
+	{% elif action == 'close' %}Do you wish to close "{{ content.title }}"?
+	{% elif action == 'pin' %}Do you wish to pin "{{ content.title }}"?
+	{% elif action == 'unpin' %}Do you wish to unpin "{{ content.title }}"?
+	{% endif %}
+</h1>
+
+<form class="d-flex flex-wrap align-items-center gap-2 mb-3 mw-moderation-confirm" action="do/" method="POST">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="{{ action }}">
+	<input type="hidden" name="item_type" value="{{ item_type }}">
+	<input type="hidden" name="item_id" value="{{ content.id }}">
+	{% if action == 'move' %}
+	<select name="microcosm_id" class="form-select w-auto mw-min-w-0" aria-label="The forum to move it to">
+		{% for m in microcosms.microcosms %}<option value="{{ m.id }}">{{ m.title|safe }}</option>{% endfor %}
+	</select>
+	<button type="submit" class="btn mw-btn">Go</button>
+	{% else %}
+	<input type="hidden" name="microcosm_id" value="{% firstof content.microcosm_id content.id %}">
+	<button type="submit" class="btn mw-btn">{% if action == 'delete' %}Delete{% elif action == 'undelete' %}Undelete{% elif action == 'approve' %}Approve{% elif action == 'open' %}Open{% elif action == 'close' %}Close{% elif action == 'pin' %}Pin{% elif action == 'unpin' %}Unpin{% endif %}</button>
+	{% endif %}
+</form>
+
+<p class="mb-0">Or, <a href="{% url 'single-microcosm' content.microcosm_id|default:content.id %}">cancel and go back</a>.</p>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

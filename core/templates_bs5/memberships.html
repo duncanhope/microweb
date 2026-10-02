@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% comment %}
+A forum's membership groups (microcosms/views.py list_members, BS5-14): who
+is in each group and what it may do. A group the forum owns has Edit Group
+for its owners, admins and moderators; one from a parent forum or the Site
+says Inherited Group. Styles: _lists.scss (rows, metabar) and _admin.scss.
+{% endcomment %}
+{% load humanize icon %}
+
+{% block title %}Membership groups{% endblock title %}
+
+{% block description %}Membership groups allow site members to be granted access and permissions to the content within a forum. This page lists all of the groups that exist for the current forum and their permissions.{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+<div class="mw-list-header">
+	<h1 class="mw-list-title">Membership Groups</h1>
+	{% include 'pagination.html' %}
+</div>
+
+<ul class="list-unstyled mw-rows">
+{% for membership in memberships.items.items %}
+	<li class="mw-row mw-membership">
+		<div class="d-md-flex gap-3">
+			<div class="flex-grow-1 mw-min-w-0">
+				<h2 class="mw-row-title">{{ membership.title }}</h2>
+				<div class="mw-row-meta">
+					{% if membership.members.total > 0 %}
+					<p class="mb-0">{{ membership.members.total|default:0|intcomma }} profile{{ membership.members.total|pluralize }}, including:
+						<span class="mw-membership-people">{% for member in membership.members.items %}<a href="{% url 'single-profile' member.id %}" title="@{{ member.profile_name|safe }}"><img src="{% if 'gravatar' in member.avatar %}{{ member.avatar }}{% elif 'files' in member.avatar %}https://{{ site.subdomain_key }}.microcosm.app{{ member.avatar }}{% else %}/static/img/avatar.gif{% endif %}" alt="Avatar for {{ member.profile_name|safe }}" width="20" height="20"></a>{% endfor %}</span>
+					</p>
+					{% endif %}
+					{% if membership.include_users %}<p class="mb-0">This group includes <strong class="mw-can">anyone who is signed in</strong>.</p>{% endif %}
+					{% if membership.include_guests %}<p class="mb-0">This group includes <strong class="mw-can">people who are not signed in</strong>.</p>{% endif %}
+				</div>
+				<p class="mw-membership-rules">
+				{% if membership.moderator %}
+					As a moderator, they <strong class="mw-can">can read, create, update and delete</strong> their own content, and <strong class="mw-can">can read, update and delete</strong> the conversations, events and comments of others.
+				{% elif membership.banned %}
+					As a member of a banned group, they <strong class="mw-cannot">cannot read, create, update or delete</strong> any content in this forum.
+				{% else %}
+					<strong>{{ membership.title }}</strong> {% if membership.read %}<strong class="mw-can">can read</strong>{% else %}<strong class="mw-cannot">cannot read</strong>{% endif %} this forum.<br>
+					They {% if membership.create %}<strong class="mw-can">can create and edit</strong>{% else %}<strong class="mw-cannot">cannot create and edit</strong>{% endif %} their own conversations, events and comments.<br>
+					{% if membership.close or membership.open %}
+					They <strong class="mw-can">{% if membership.close and membership.open %}can open and close{% elif membership.close %}can close{% else %}can open{% endif %}</strong> their own conversations and events.<br>
+					{% endif %}
+					They {% if membership.update %}<strong class="mw-can">can update</strong>{% else %}<strong class="mw-cannot">cannot update</strong>{% endif %} items created by others.<br>
+					They {% if membership.delete %}<strong class="mw-can">can delete</strong>{% else %}<strong class="mw-cannot">cannot delete</strong>{% endif %} items created by others.
+				{% endif %}
+				</p>
+			</div>
+			{% if membership.microcosm_id == content.id %}
+				{% if content.meta.permissions.owner or content.meta.permissions.admin or content.meta.permissions.moderator %}
+			<div class="mw-row-side flex-shrink-0">
+				<a href="{% url 'edit-memberships' content.id membership.id %}" class="btn mw-btn btn-sm">Edit Group</a>
+			</div>
+				{% endif %}
+			{% else %}
+			<div class="mw-row-side flex-shrink-0">Inherited Group</div>
+			{% endif %}
+		</div>
+	</li>
+{% endfor %}
+</ul>
+
+{% if pagination and pagination.total_pages > 1 %}
+<div class="mw-list-footer">{% include 'pagination.html' %}</div>
+{% endif %}
+{% endblock content %}
+
+{% block sidebar %}
+	{% if user %}{% if content.meta.permissions.owner or content.meta.permissions.admin or content.meta.permissions.moderator %}
+	<section class="mw-module">
+		<div class="btn-group-vertical w-100 mw-module-actions">
+			<a id="create_membership_group" href="{% url 'create-memberships' content.id %}" class="btn mw-btn">{% icon "people" %} Create a membership group</a>
+		</div>
+	</section>
+	{% endif %}{% endif %}
+
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+		<h3 class="mw-module-title">Membership groups</h3>
+		<div class="mw-module-text">
+			<p>Membership groups control access and permissions within a forum.</p>
+			<p>People start with no permission to do anything, and are granted permission by being a member of a membership group.</p>
+			<p>The vast majority of people are either guests (not signed-in) or members (signed-in).</p>
+			<p class="mb-0">The <b>default groups</b> are site-wide, and all new forums have these groups. If a forum has it's own custom membership groups, then these may override the defaults and allow for private forums.</p>
+		</div>
+	</section>
+{% endblock sidebar %}

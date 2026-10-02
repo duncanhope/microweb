@@ -141,7 +141,8 @@ class Bs5HuddlesTests(SimpleTestCase):
     def test_one_member_search_is_shared(self):
         """The people widget searches through mentions.js's ProfileSearch, and
         the event form's invites are the people widget: no third search."""
-        self.assertIn("import { ProfileSearch } from './mentions.js';", (SCRIPTS / 'peopleWidget.js').read_text())
+        self.assertRegex((SCRIPTS / 'peopleWidget.js').read_text(),
+                         r"import \{[^}]*\bProfileSearch\b[^}]*\} from './mentions.js';")
         for name in ('eventForm.js', 'eventFormClasses.js'):
             with self.subTest(script=name):
                 source = (SCRIPTS / name).read_text()

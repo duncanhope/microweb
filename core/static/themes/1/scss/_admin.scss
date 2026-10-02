@@ -1,0 +1,168 @@
+// The forum admin family (BS5-14): memberships.html, forms/memberships.html,
+// forms/microcosm.html and forms/moderation_item.html. Rows and the metabar
+// are _lists.scss's, the forms .mw-item-form (_conversations.scss), the
+// people widget _huddles.scss's and the forum logo box the avatar picker
+// (_profiles.scss). Token rule: colours come only from Bootstrap's --bs-*
+// variables, so every rule here follows the Color mode. No colour literals.
+
+// What a group can and cannot do: green and red, as today. Dark mode takes
+// Bootstrap's lighter text shades, which stay readable on the dark body.
+.mw-can,
+.mw-cannot {
+  font-weight: $font-weight-semibold;
+}
+
+.mw-can {
+  color: var(--#{$prefix}success);
+}
+
+.mw-cannot {
+  color: var(--#{$prefix}danger);
+}
+
+@include color-mode(dark) {
+  .mw-can {
+    color: var(--#{$prefix}success-text-emphasis);
+  }
+
+  .mw-cannot {
+    color: var(--#{$prefix}danger-text-emphasis);
+  }
+}
+
+// The membership groups list --------------------------------------------------
+.mw-membership {
+  padding-block: .75rem;
+}
+
+.mw-membership-people {
+  img {
+    margin-left: .25rem;
+    object-fit: cover;
+    vertical-align: -.25em;
+    @include border-radius(var(--#{$prefix}border-radius-sm));
+  }
+}
+
+.mw-membership-rules {
+  margin: .5rem 0 0;
+  font-size: 1rem;
+}
+
+// The membership group form -----------------------------------------------------
+.mw-membership-section + .mw-membership-section {
+  margin-top: 1.5rem;
+}
+
+.mw-membership-heading {
+  margin-bottom: .75rem;
+  font-size: 1.25rem;
+}
+
+// A tip under a question, on today's pale yellow.
+.mw-tip {
+  margin-bottom: .5rem;
+  padding: .25rem .5rem;
+  font-size: 1rem;
+  color: var(--#{$prefix}warning-text-emphasis);
+  background-color: var(--#{$prefix}warning-bg-subtle);
+  @include border-radius(var(--#{$prefix}border-radius-sm));
+}
+
+// One question a line, its Yes and No on the right.
+.mw-toggles {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.mw-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: .25rem;
+
+  & + & {
+    border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color-translucent);
+  }
+
+  .mw-yesno {
+    flex-shrink: 0;
+  }
+}
+
+// Yes and No: the chosen answer in the primary blue, as today.
+.mw-yesno .btn {
+  --#{$prefix}btn-color: var(--#{$prefix}body-color);
+  --#{$prefix}btn-bg: var(--#{$prefix}body-bg);
+  --#{$prefix}btn-border-color: var(--#{$prefix}border-color);
+  --#{$prefix}btn-hover-color: var(--#{$prefix}emphasis-color);
+  --#{$prefix}btn-hover-bg: var(--#{$prefix}tertiary-bg);
+  --#{$prefix}btn-hover-border-color: var(--#{$prefix}border-color);
+  --#{$prefix}btn-active-color: var(--#{$prefix}white);
+  --#{$prefix}btn-active-bg: var(--#{$prefix}primary);
+  --#{$prefix}btn-active-border-color: var(--#{$prefix}primary);
+  --#{$prefix}btn-font-size: .875rem;
+  min-width: 2.75rem;
+}
+
+// Criteria: a dashed box, as today, with its inline form on one wrapping line.
+.mw-criteria {
+  padding: .5rem .75rem;
+  font-size: 1rem;
+  border: var(--#{$prefix}border-width) dashed var(--#{$prefix}border-color);
+  @include border-radius(var(--#{$prefix}border-radius));
+
+  .btn-link {
+    font-size: inherit;
+  }
+
+  // Bootstrap's -sm controls scale from the 20px body text; keep them small.
+  .form-select-sm,
+  .form-control-sm {
+    font-size: .875rem;
+  }
+}
+
+// Remove, in today's warning brown.
+.mw-criterion-remove {
+  --#{$prefix}btn-color: var(--#{$prefix}warning-text-emphasis);
+  --#{$prefix}btn-hover-color: var(--#{$prefix}warning-text-emphasis);
+  margin-left: .5rem;
+}
+
+.mw-criteria-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .5rem;
+  padding-top: .5rem;
+  border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color-translucent);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.mw-criteria-value {
+  flex: 1 1 10rem;
+}
+
+// The forum form's choices, at the labels' size rather than the 20px body,
+// as on the event form.
+.mw-forum-form .form-check {
+  font-size: 1rem;
+}
+
+// The forum form's logo: line art, shown whole, on a light chip in dark mode
+// as in the forum lists.
+.mw-logo-drop img {
+  object-fit: contain;
+}
+
+@include color-mode(dark) {
+  .mw-logo-drop.has-image {
+    background-color: var(--#{$prefix}light);
+  }
+}
