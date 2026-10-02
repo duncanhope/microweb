@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% comment %}
+Not permitted, or Logged out when the session has expired (core/views.py
+ErrorView.forbidden and requires_login, handler403, BS5-15). The context is
+best effort: site and user may be missing. Styles: _legal.scss.
+
+Logged out has no user, so the base defines authSignin but not authSignout:
+sign out posts the base's signout form instead.
+{% endcomment %}
+
+{% block title %}{% if logout %}Logged out{% else %}Not permitted{% endif %} | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<div class="mw-error">
+	{% if logout %}
+	<h1 class="mw-list-title">Logged out</h1>
+	<p>Your login session has expired.</p>
+	<p>You can <button type="button" class="btn btn-link" onclick="authSignin();">sign in again to continue</button>, or sign out to <button type="submit" class="btn btn-link" form="signout-form">view the site as a guest</button>.</p>
+	{% else %}
+	<h1 class="mw-list-title">Not permitted</h1>
+	{% if user.meta.permissions.banned %}
+	<p>You have been banned from this site.</p>
+	{% else %}
+	<p>It looks like you don't have permission to do that.</p>
+	<p>This might happen if you're trying to view a private subforum.</p>
+	<p><a href="/">Click here to return to the home page</a>.</p>
+	{% endif %}
+	{% endif %}
+</div>
+{% endblock %}

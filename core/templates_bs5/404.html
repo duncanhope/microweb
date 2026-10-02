@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% comment %}
+Not Found (core/views.py ErrorView.not_found, handler404, BS5-15). The
+context is best effort: site and user may be missing. Styles: _legal.scss.
+{% endcomment %}
+
+{% block title %}Not Found | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<div class="mw-error">
+	<h1 class="mw-list-title">Not Found</h1>
+	<p>Sorry, we couldn't find that. It might have been deleted.</p>
+	<p><a href="/">Click here to go back to the homepage</a>.</p>
+</div>
+{% endblock %}

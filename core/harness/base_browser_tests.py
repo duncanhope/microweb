@@ -1,8 +1,9 @@
 """Interaction checks for the Bootstrap 5 base (BS5-05) and its Color mode toggle (BS5-06).
 
-No family renders on the new base yet, so these render /about/terms/ with a
-stand-in page, core/harness/bs5_pages/legal.html, added to the front of the
-bs5 template engine for the duration of the tests. Run with
+These render /about/terms/ with a stand-in page,
+core/harness/bs5_pages/legal.html, which carries the checks' controls in its
+sidebar, added to the front of the bs5 template engine for the duration of
+the tests. Run with
 `python manage.py test --tag browser` after one `shoot --record`.
 
 Nothing here reaches the API with a write: the Follow check answers the

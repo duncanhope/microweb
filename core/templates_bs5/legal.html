@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% comment %}
+One of the Site's policies (core/views.py LegalView.single, BS5-15): the
+terms of use, the privacy policy or the cookie policy. The document is HTML
+from the API with no classes: headings, lists (some ol[type=a] and
+ol[type=i]) and tables. Styles: .mw-prose (_base.scss) and _legal.scss.
+{% endcomment %}
+
+{% block title %}{% if page_section == 'terms' %}Terms of Use{% elif page_section == 'cookies' %}Cookie Policy{% elif page_section == 'privacy' %}Privacy Policy{% endif %} | About{% endblock title %}
+
+{% block description %}{% if page_section == 'terms' %}This document describes the general terms of use of the forum.{% elif page_section == 'cookies' %}This document describes what data we store on your computer in the form of browser cookies, and how they are used by us to provide the forum service.{% elif page_section == 'privacy' %}This document outlines the data that we hold on you that identifies you or is confidential, and how we use that data to provide the forum service to you. It further describes how we store and secure your data, as well as your rights regarding this data.{% endif %}{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' %}
+{# The document brings its own visible headings, from h2 down. #}
+<h1 class="visually-hidden">{% if page_section == 'terms' %}Terms of Use{% elif page_section == 'cookies' %}Cookie Policy{% elif page_section == 'privacy' %}Privacy Policy{% endif %}</h1>
+<div class="mw-prose mw-legal">
+	{{ content.html|safe }}
+</div>
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		{% if page_section == 'terms' %}
+		<h2 class="mw-module-heading">Terms of Use</h2>
+		<p class="mw-module-text">This document describes the general terms of use of the forum.</p>
+		{% elif page_section == 'cookies' %}
+		<h2 class="mw-module-heading">Cookie Policy</h2>
+		<p class="mw-module-text">This document describes what data we store on your computer in the form of browser cookies, and how they are used by us to provide the forum service.</p>
+		{% elif page_section == 'privacy' %}
+		<h2 class="mw-module-heading">Privacy Policy</h2>
+		<p class="mw-module-text">This document outlines the data that we hold on you that identifies you or is confidential, and how we use that data to provide the forum service to you. It further describes how we store and secure your data, as well as your rights regarding this data.</p>
+		{% endif %}
+	</section>
+{% endblock %}

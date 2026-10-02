@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% comment %}
+About the Site and its policies (core/views.py LegalView.list, BS5-15).
+Styles: .mw-prose (_base.scss) and _legal.scss.
+{% endcomment %}
+
+{% block title %}About{% endblock title %}
+
+{% block description %}Index of site usage policies such as the privacy policy and terms of use.{% endblock description %}
+
+{% block content %}
+{% include 'breadcrumbs.html' with skipself=True %}
+<h1 class="mw-list-title mb-2">About</h1>
+<div class="mw-prose mw-legal">
+	<h2>{{ site.title|safe }}</h2>
+
+	{# The description is HTML, usually paragraphs of its own. #}
+	<div>{{ site.description|safe }}</div>
+
+	<h2>Policies</h2>
+
+	<p>A number of documents describe how we protect the data you provide and the terms under which we offer the forum service.</p>
+
+	<p>We have attempted to make these documents as easy to understand as possible, if you have any trouble understanding them please let us know.</p>
+
+	<ul>
+		<li><a href="{% url 'single-legal' 'terms' %}">Our terms of use</a></li>
+		<li><a href="{% url 'single-legal' 'privacy' %}">Our privacy policy</a></li>
+		<li><a href="{% url 'single-legal' 'cookies' %}">Our use of cookies</a></li>
+	</ul>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+	<section class="mw-module">
+		<h2 class="mw-module-heading">About</h2>
+	</section>
+{% endblock %}

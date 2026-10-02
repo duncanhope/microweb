@@ -1,0 +1,92 @@
+// The legal and error pages (BS5-15): legal.html, legals.html, 403.html,
+// 404.html and 500.html.
+// Token rule: colours come only from Bootstrap's --bs-* variables, so every
+// rule here follows the Color mode. No colour literals.
+//
+// Compact, as today: the documents keep comment text's Merriweather 15/24
+// (.mw-prose, _base.scss), small grey section headings and tight tables.
+
+// A policy document ------------------------------------------------------------
+// API HTML with no classes: h2 and h3 headings, lists, and tables whose cells
+// hold ol[type=a] lists with ol[type=i] inside.
+.mw-legal {
+  :is(h2, h3) {
+    margin-top: 1.25rem;
+  }
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  // Today's section headings: small and grey.
+  h3 {
+    font-size: 1rem;
+    color: var(--#{$prefix}secondary-color);
+  }
+
+  // Nested lists sit tight against their item, as in a table cell.
+  li > :is(ol, ul) {
+    margin-block: .25rem 0;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  :is(th, td) {
+    padding: .5rem;
+    vertical-align: top;
+    border-top: var(--#{$prefix}border-width) solid var(--#{$prefix}border-color);
+    border-bottom: 0;
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+
+    > :is(ol, ul) {
+      padding-left: 1.5rem;
+    }
+  }
+
+  // The header row: the API puts it in the body, so it is the row of th.
+  th {
+    vertical-align: bottom;
+    border-top: 0;
+    border-bottom: calc(var(--#{$prefix}border-width) * 2) solid var(--#{$prefix}border-color);
+  }
+
+  tr:hover > td {
+    background-color: var(--#{$prefix}tertiary-bg);
+  }
+}
+
+// Error pages ------------------------------------------------------------------
+// Today's 16px grey text under the heading.
+.mw-error {
+  font-size: 1rem;
+  color: var(--#{$prefix}secondary-color);
+
+  .mw-list-title {
+    margin-bottom: .75rem;
+    color: var(--#{$prefix}body-color);
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  // Sign in and sign out read as links in the sentence.
+  .btn-link {
+    --#{$prefix}btn-padding-x: 0;
+    --#{$prefix}btn-padding-y: 0;
+    --#{$prefix}btn-font-size: inherit;
+    --#{$prefix}btn-font-weight: inherit;
+    --#{$prefix}btn-line-height: inherit;
+    --#{$prefix}btn-border-width: 0;
+    vertical-align: baseline;
+  }
+}

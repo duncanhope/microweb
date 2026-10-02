@@ -174,9 +174,23 @@ PAGES = [
     Page('admin', 'forum.islington.cc', '/microcosms/%d/memberships/' % ISLINGTON_FORUM_ID, 'islington-memberships',
          'membership groups as a guest under Islington CC branding: link #185945 on surround #bfc3c5',
          rows=LIST_ROWS),
-    # The Bootstrap 5 base (BS5-05). Until a family migrates, these render on
-    # Bootstrap 3 on both sides; a local scratch copy of legal.html in
-    # core/templates_bs5/ puts the new base under them. The browser checks in
+    # The rest of the legal family (BS5-15), all as a guest. Each error page
+    # comes from a real API answer, so nothing is made up here: an address
+    # the API cannot resolve (404), a Site whose forums are closed to guests
+    # (403) and a search the API refuses (500, see the activity family). The
+    # signed-in 403, a huddle the harness user cannot see, is made up in
+    # core/harness/legal_browser_tests.py and never asked of the API.
+    Page('legal', LFGSS, '/about/', 'legal-about', 'the About page: the Site\'s description and its policies'),
+    Page('legal', LFGSS, '/about/privacy/', 'legal-privacy', 'the privacy policy: headings, lists and tables'),
+    Page('legal', LFGSS, '/no-such-page/', 'error-404', 'Not Found: an address the API cannot resolve'),
+    Page('legal', 'lesperitdelbikepacking.microcosm.app', '/', 'error-403',
+         'Not permitted: a Site whose forums are closed to guests, link #51a9ff on a black surround'),
+    Page('legal', LFGSS, '/search/?q=bike', 'error-500',
+         'Server Error with the API\'s reason: a bare ?q= on a common word'),
+    Page('legal', 'csgrupetto.microcosm.app', '/about/terms/', 'csgrupetto-legal',
+         'the terms under a background image (cover), subdomain-only'),
+    # The Bootstrap 5 base (BS5-05), shot on the terms page, which renders on
+    # Bootstrap 5 since BS5-15. The browser checks in
     # core/harness/base_browser_tests.py bring their own page.
     Page('base', LFGSS, '/about/terms/', 'base-guest', 'the base as a guest: header, navbar, footer, drawers'),
     Page('base', LFGSS, '/about/terms/', 'base-member', 'the base signed in: account box, messages badge', signed_in=True),

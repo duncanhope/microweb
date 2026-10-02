@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% comment %}
+Server Error (core/views.py ErrorView.server_error, handler500, BS5-15). It
+must render whatever failed: the context is best effort, so site and user
+may be missing (the API may be down), and the base copes with neither.
+detail is the API's errorDetail, when it gave one. Cloudflare swaps its
+token for its own error box when this page serves as a custom error page.
+Styles: _legal.scss.
+{% endcomment %}
+
+{% block title %}Server Error | {{ site.title|safe }}{% endblock title %}
+
+{% block content %}
+<div class="mw-error">
+	<h1 class="mw-list-title">Server Error</h1>
+	<p>We're sorry, there was a temporary error when we tried to process your request.</p>
+	{% if detail %}
+	<p>The reason was: <em>{{ detail }}</em></p>
+	{% else %}
+	<p>The error has been logged. Please try again later.</p>
+	{% endif %}
+	<div hidden>
+	::CLOUDFLARE_ERROR_500S_BOX::
+	</div>
+	<p><a href="/">Click here to go back to the homepage</a>.</p>
+</div>
+{% endblock %}

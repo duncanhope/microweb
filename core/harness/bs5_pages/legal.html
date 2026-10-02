@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 {% comment %}
 HARNESS ONLY, never served: a stand-in Bootstrap 5 page for checking the base
-before any family migrates (BS5-05). base_browser_tests.py renders
-/about/terms/ with it; to screenshot the base with `manage.py shoot`, copy it
-to core/templates_bs5/legal.html locally and do not commit the copy. The
-legal family's real page replaces it in BS5-15.
+(BS5-05). base_browser_tests.py renders /about/terms/ with it, for the
+checks it carries in its sidebar. `manage.py shoot` shoots the base on the
+legal family's real page, core/templates_bs5/legal.html (BS5-15).
 {% endcomment %}
 
 {% block title %}Terms of Use | About{% endblock title %}
