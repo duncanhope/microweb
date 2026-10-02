@@ -273,7 +273,7 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print('role delete: ' + response.text)
+            logger.error('role delete: %s', response.text)
             return HttpResponseBadRequest()
 
         # Need to return a stub here to allow the callee (AJAX) to be happy
@@ -292,7 +292,7 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.ok:
-                print('role: ' + response.text)
+                logger.error('role: %s', response.text)
                 return HttpResponseBadRequest()
             role = Role.from_summary(response.json()['data'])
         else:
@@ -301,8 +301,7 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.found:
-                print(json.dumps(role.as_dict()))
-                print('role: ' + response.text)
+                logger.error('role: %s (sent %s)', response.text, json.dumps(role.as_dict()))
                 return HttpResponseBadRequest()
 
         # Delete all existing criteria and then add the new ones
@@ -311,7 +310,7 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print('role criteria delete all: ' + response.text)
+            logger.error('role criteria delete all: %s', response.text)
             return HttpResponseBadRequest()
 
         if 'criteria' in data and len(data['criteria']) > 0:
@@ -325,7 +324,7 @@ def members_api(request, microcosm_id):
                     except APIException as exc:
                         return respond_with_error(request, exc)
                     if response.status_code != requests.codes.ok:
-                        print('role criteria: ' + response.text)
+                        logger.error('role criteria: %s', response.text)
                         return HttpResponseBadRequest()
                     crit = RoleCriteria.from_summary(response.json()['data'])
                 else:
@@ -334,7 +333,7 @@ def members_api(request, microcosm_id):
                     except APIException as exc:
                         return respond_with_error(request, exc)
                     if response.status_code != requests.codes.ok:
-                        print('role criteria: ' + response.text)
+                        logger.error('role criteria: %s', response.text)
                         return HttpResponseBadRequest()
                     crit = RoleCriteria.from_summary(response.json()['data'])
 
@@ -344,7 +343,7 @@ def members_api(request, microcosm_id):
         except APIException as exc:
             return respond_with_error(request, exc)
         if response.status_code != requests.codes.ok:
-            print('role profile delete all: ' + response.text)
+            logger.error('role profile delete all: %s', response.text)
             return HttpResponseBadRequest()
 
         if 'profiles' in data and len(data['profiles']) > 0:
@@ -358,7 +357,7 @@ def members_api(request, microcosm_id):
             except APIException as exc:
                 return respond_with_error(request, exc)
             if response.status_code != requests.codes.ok:
-                print('role profiles: ' + response.text)
+                logger.error('role profiles: %s', response.text)
                 return HttpResponseBadRequest()
 
         # Need to return a stub here to allow the callee (AJAX) to be happy
