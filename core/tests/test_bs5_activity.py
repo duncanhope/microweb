@@ -188,7 +188,8 @@ class Bs5ActivityTests(SimpleTestCase):
     def test_today(self):
         content = search([result('conversation', conversation()), result('huddle', huddle())])
         html = self.render('today.html', content=content, path='/today/')
-        self.assertIn('<h1 class="mw-list-title">Today on LFGSS</h1>', html)
+        # A link to the page itself, like the Following and People headings.
+        self.assertIn('<h1 class="mw-list-title"><a href="/today/">Today on LFGSS</a></h1>', html)
         self.assertEqual(html.count('<li class="mw-row'), 2)
         self.assertNotIn('data-mw-filters', html, 'guests get no filters')
         self.assertNotIn('filters.js', html)

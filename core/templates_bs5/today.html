@@ -18,7 +18,7 @@ Styles: _lists.scss and _activity.scss.
 <p class="mw-empty">Be the first to make a post today.</p>
 {% else %}
 <div class="mw-list-header">
-	<h1 class="mw-list-title">Today on {{ site.title }}</h1>
+	<h1 class="mw-list-title"><a href="{% url 'single-today' %}">Today on {{ site.title }}</a></h1>
 	{% include 'pagination.html' %}
 </div>
 <ul class="list-unstyled mw-rows">
