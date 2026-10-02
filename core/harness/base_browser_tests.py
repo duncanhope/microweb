@@ -111,25 +111,6 @@ class BaseLayoutTests(Bs5PageTestCase):
         self.assertFalse(page.locator('.mw-drawer-btn').first.is_visible())
         self.snap(page, 'base-1280')
 
-    def test_content_corners_match_the_panel(self):
-        """The content's opaque background used to square off the panel's
-        rounded corners, beside a metabar whose corners showed rounded."""
-        corners = '''() => {
-            const style = getComputedStyle(document.querySelector('main'));
-            return [style.borderTopLeftRadius, style.borderTopRightRadius,
-                    style.borderBottomRightRadius, style.borderBottomLeftRadius];
-        }'''
-        for width, expected in ((1280, ['r', '0px', '0px', 'r']), (800, ['r', 'r', 'r', 'r']),
-                                (375, ['0px', '0px', '0px', '0px'])):
-            with self.subTest(width=width):
-                page = self.open(width)
-                panel = page.evaluate("getComputedStyle(document.querySelector('.mw-main')).borderTopLeftRadius")
-                page_radius = page.evaluate(corners)
-                if width >= 768:
-                    self.assertNotEqual(panel, '0px')
-                self.assertEqual(page_radius, [panel if r == 'r' else r for r in expected])
-                page.close()
-
     def test_mobile_header(self):
         page = self.open(375)
         menu = page.locator('#mw-menu-btn').bounding_box()

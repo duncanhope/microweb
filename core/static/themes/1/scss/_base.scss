@@ -164,6 +164,12 @@ body {
     @include mw-raised;
     background-color: var(--#{$prefix}body-bg);
 
+    // The first link sits on the row's rounded start edge, so its active
+    // background is rounded there too.
+    .navbar-nav:first-of-type > .nav-item:first-child > .nav-link {
+      @include border-start-radius(var(--#{$prefix}border-radius));
+    }
+
     .mw-search {
       flex: 0 1 18rem;
       min-width: 10rem;
