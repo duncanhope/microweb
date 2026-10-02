@@ -8,6 +8,7 @@ from core.api.exceptions import APIException
 from core.api.resources import is_ip_address
 from core.api.resources import Site
 from core.api.resources import WhoAmI
+from core.framework import get_template
 
 logger = logging.getLogger('core.middleware.context')
 
@@ -73,7 +74,9 @@ class ContextMiddleware:
             if e.status_code in [400, 404]:
                 if is_ip_address(request.get_host()):
                     logger.info('Rejecting IP host header %s' % request.get_host())
-                else:
-                    logger.warning('Rejecting unresolved host %s: %s' % (request.get_host(), str(e)))
-                return HttpResponseNotFound()
+                    return HttpResponseNotFound()
+                logger.warning('Rejecting unresolved host %s: %s' % (request.get_host(), str(e)))
+                # A mistyped custom domain: the plain Not Found page, with no
+                # Site to dress it, since the host has none.
+                return HttpResponseNotFound(get_template(request, '404.html').render({}, request))
             raise

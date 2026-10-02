@@ -280,7 +280,7 @@ class LegalView(object):
     @require_safe
     def single(request, doc_name):
         if not doc_name in ['cookies', 'privacy', 'terms']:
-            return HttpResponseNotFound()
+            return ErrorView.not_found(request)
 
         url, params, headers = Legal.build_request(request.get_host(), doc=doc_name)
         request.view_requests.append(fetch.get(url, params=params, headers=headers))
