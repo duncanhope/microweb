@@ -158,6 +158,11 @@ var ListWidget = (function() {
 		}
 	};
 
+	// criteria come from the API and from the form, so show them as text
+	var escapeHtml = function(value){
+		return $('<div></div>').text(String(value)).html();
+	};
+
 	// renders list using this.data
 	// template is hardcoded! (FIXME)
 	View.prototype.render = function(){
@@ -192,9 +197,9 @@ var ListWidget = (function() {
 
 			list_items +=
 				'<span class="text-warning remove align-right" data-index="' + i + '">Remove</span>' +
-				'<strong>' + this.data[i][1] + '</strong> ' +
+				'<strong>' + escapeHtml(this.data[i][1]) + '</strong> ' +
 				predicate + ' ' +
-				'<strong>' + this.data[i][3] + '</strong>';
+				'<strong>' + escapeHtml(this.data[i][3]) + '</strong>';
 
 			list_items += '</li>';
 		}
