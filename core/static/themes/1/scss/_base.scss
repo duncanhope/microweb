@@ -14,6 +14,20 @@ body {
   background-image: var(--mw-site-bg-image, none);
 }
 
+// Pages that scroll and pages that don't are the same width: the
+// scrollbar's space is always kept, so the centred panels don't jump
+// between them where scrollbars take room (Windows).
+html {
+  scrollbar-gutter: stable;
+}
+
+// Bootstrap pads the body by the scrollbar's width while a modal or drawer
+// stops the page scrolling. With the space already kept, that padding would
+// shift the page instead.
+body {
+  padding-right: 0 !important;
+}
+
 // The five background position modes, as the Bootstrap 3 base had them.
 .mw-bg-tile {
   background-repeat: repeat;
