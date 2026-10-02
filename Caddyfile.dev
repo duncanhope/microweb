@@ -1,0 +1,19 @@
+# Local stand-in for production's TLS-terminating proxy (Dokku nginx).
+# Requires hosts entries pointing lfgss.com and www.lfgss.com at 127.0.0.1,
+# and Caddy's local root CA trusted by the browser (lfgss.com is HSTS-preloaded).
+{
+	# WSL (NAT mode) only forwards Windows localhost to explicit IPv4 binds,
+	# not Caddy's default wildcard listener.
+	default_bind 127.0.0.1
+}
+lfgss.com {
+	tls internal
+	redir https://www.lfgss.com{uri} permanent
+}
+
+www.lfgss.com {
+	tls internal
+	# Sends X-Forwarded-Proto: https, which gunicorn --forwarded-allow-ips
+	# turns into request.is_secure() == True, as in production.
+	reverse_proxy 127.0.0.1:8000
+}

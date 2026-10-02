@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Run microweb locally as production runs it, against the API named in
+# microweb/local_settings.py (production's, microcosm.app, by default):
+#
+#   browser --https--> Caddy (Caddyfile.dev) --http--> gunicorn --> the API
+#
+# Caddy stands in for Dokku's nginx: it terminates TLS for lfgss.com and
+# www.lfgss.com with its own local CA and sends X-Forwarded-Proto: https,
+# which gunicorn trusts from 127.0.0.1, so request.is_secure() is true and
+# secure cookies and CSRF origin checks behave as in production.
+#
+# One-time setup (see Caddyfile.dev):
+#   - hosts entries for lfgss.com and www.lfgss.com pointing at 127.0.0.1
+#   - Caddy's root CA trusted by the browser (lfgss.com is HSTS-preloaded, so
+#     there is no clicking through a certificate warning)
+#   - Caddy allowed to bind ports 80 and 443:
+#       sudo setcap cap_net_bind_service=+ep "$(readlink -f "$(command -v caddy)")"
+#     (repeat after upgrading Caddy, which replaces the binary)
+#
+# Stop with Ctrl-C; gunicorn and a memcached this script started stop too.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+# shellcheck disable=SC1091
+source ENV/bin/activate
+
+pids=()
+cleanup() {
+	for pid in "${pids[@]}"; do
+		kill "$pid" 2>/dev/null || true
+	done
+}
+trap cleanup EXIT INT TERM
+
+listening() {
+	ss -ltn "sport = :$1" | grep -q LISTEN
+}
+
+for port in 80 443 8000; do
+	if listening "$port"; then
+		echo "Port $port is already in use:" >&2
+		ss -ltnp "sport = :$port" >&2
+		exit 1
+	fi
+done
+
+# The site and custom-domain cache. Without it every request asks the API
+# to resolve www.lfgss.com again.
+if ! listening 11211; then
+	memcached -l 127.0.0.1 -p 11211 &
+	pids+=($!)
+fi
+
+# With DEBUG off, WhiteNoise serves only collected files.
+python manage.py collectstatic --noinput -v 0
+
+gunicorn microweb.wsgi -b 127.0.0.1:8000 --forwarded-allow-ips 127.0.0.1 \
+	--worker-class gthread --workers 2 --threads 8 &
+pids+=($!)
+
+caddy run --config Caddyfile.dev --adapter caddyfile

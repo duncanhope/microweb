@@ -24,6 +24,11 @@ Before running anything you must create `microweb/local_settings.py` from `micro
 # Run the dev server (set DEBUG=True in local_settings.py so static files are served)
 python manage.py runserver
 
+# Or serve https://www.lfgss.com locally as production does (Caddy for TLS,
+# gunicorn, memcached), against the API in local_settings.py; one-time
+# setup (hosts entries, trusting Caddy's CA, setcap) is in the script header
+bin/serve-local
+
 # Run all unit tests
 python manage.py test
 
