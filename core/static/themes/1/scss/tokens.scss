@@ -30,6 +30,10 @@ $border-radius: .25rem;
 // Dark mode: Bootstrap derives most of it from $primary etc.; only the link needs care.
 $link-color-dark: tint-color($primary, 40%);
 
+// Jump straight to a linked comment, as Bootstrap 3 did, instead of
+// gliding down the thread.
+$enable-smooth-scroll: false;
+
 // Color modes switch on the data-bs-theme attribute ([data-bs-theme=dark]).
 // This is Bootstrap's default, stated here because the Color mode toggle relies on it.
 $color-mode-type: data;
