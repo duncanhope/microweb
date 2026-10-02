@@ -22,6 +22,7 @@ from core.api.exceptions import APIException
 
 from core.views import build_pagination_links
 from core.views import respond_with_error
+from core.views import respond_with_refusal
 from core.views import require_authentication
 
 logger = logging.getLogger('ignored.views')
@@ -103,7 +104,7 @@ def ignore(request):
         )
 
     if response.status_code != requests.codes.ok:
-        print('ignore: ' + response.text)
-        return HttpResponseBadRequest()
+        logger.error('ignore: %s', response.text)
+        return respond_with_refusal(request, response)
 
     return HttpResponseRedirect(reverse('list-ignored'))
