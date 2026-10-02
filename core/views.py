@@ -77,14 +77,20 @@ def build_error_view_data(request, include_user=False):
 
         site_url, params, headers = Site.build_request(request.get_host())
         view_requests.append(fetch.get(site_url, params=params, headers=headers))
-    except APIException as exc:
+    except (APIException, RequestException) as exc:
         if is_ip_address(request.get_host()):
             logger.info('Skipping error view context for IP host header %s' % request.get_host())
         else:
             logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
         return view_data
 
-    responses = response_list_to_dict(fetch.map(view_requests))
+    # Each answer on its own, so an expired token's 401 still leaves the Site.
+    responses = {}
+    for response in fetch.map(view_requests):
+        try:
+            responses.update(response_list_to_dict([response]))
+        except APIException as exc:
+            logger.warning('Unable to build error view context for host %s: %s' % (request.get_host(), str(exc)))
 
     if whoami_url and whoami_url in responses:
         view_data['user'] = Profile(responses[whoami_url], summary=False)
