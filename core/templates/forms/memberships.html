@@ -33,7 +33,7 @@
 								<p class="alert-warning">Tip: A good name describes the role people within the group, i.e. "guests", "members", "banned", "moderators", "committee members", etc.</p>
 							</div>
 							<div class="col-sm-12">
-								<input type="text" class="form-control" id="name" name="name" placeholder="Name of group" value="{{ role.title | safe }}" />
+								<input type="text" class="form-control" id="name" name="name" placeholder="Name of group" value="{{ role.title }}" />
 							</div>
 						</div>
 					</div> <!-- /form-group -->
@@ -353,7 +353,7 @@
 			{% if criteria.criteria.items %}
 			data : {
 				{% for crit in criteria.criteria.items %}
-					{{ crit.id }}: ["{{ crit.andor }}","{% if crit.profile_column %}{{ crit.profile_column }}{% else %}{{ crit.attr_key }}{% endif %}","{{ crit.predicate }}", {% if crit.isBool %}{% if crit.value %}"true"{% else %}"false"{% endif %}{% else %}"{{ crit.value }}"{% endif %}],
+					{{ crit.id }}: ["{{ crit.andor|escapejs }}","{% if crit.profile_column %}{{ crit.profile_column|escapejs }}{% else %}{{ crit.attr_key|escapejs }}{% endif %}","{{ crit.predicate|escapejs }}", {% if crit.isBool %}{% if crit.value %}"true"{% else %}"false"{% endif %}{% else %}"{{ crit.value|escapejs }}"{% endif %}],
 				{% endfor %}
 			}
 			{% endif %}
@@ -373,7 +373,7 @@
 	// This renders the existing list
 	participating.render([
 		{% for p in profiles.profiles.items %}
-			{"id": {{p.id}}, "profileName": "{{p.profile_name}}", "sticky": "true", "avatar": "{{p.avatar}}" },
+			{"id": {{p.id}}, "profileName": "{{p.profile_name|escapejs}}", "sticky": "true", "avatar": "{{p.avatar|escapejs}}" },
 		{% endfor %}
 		]
 	).show();
@@ -385,7 +385,7 @@
 		dataSource : subdomain + '/api/v1/profiles?disableBoiler&top=true&q=',
 		invited    : [ // This preserves the existing list
 		{% for p in profiles.profiles.items %}
-			{"id": {{p.id}}, "profileName": "{{p.profile_name}}", "sticky": "true", "avatar": "{{p.avatar}}" },
+			{"id": {{p.id}}, "profileName": "{{p.profile_name|escapejs}}", "sticky": "true", "avatar": "{{p.avatar|escapejs}}" },
 		{% endfor %}
 		],
 	});
@@ -425,7 +425,7 @@
 			criteria   : '.criteria-list',
 			individuals: '.list-participants',
 			mappings   : {
-				'name'         : {el: 'input[name=name]',                 value: "{{ role.title | safe }}" },
+				'name'         : {el: 'input[name=name]',                 value: "{{ role.title|escapejs }}" },
 				'members'      : {el: 'input[name=invite]',               value: "" },
 				'includeUsers' : {el: 'input[name=include_registered]',   value: "{% if role.include_users %}1{% else %}0{% endif %}" },
 				'includeGuests': {el: 'input[name=include_unregistered]', value: "{% if role.include_guests %}1{% else %}0{% endif %}" },
