@@ -201,6 +201,19 @@ body {
   .mw-footer {
     @include mw-raised;
   }
+
+  // The content's opaque background covers the panel's corners, so it is
+  // rounded too: all four while it fills the row, the start two beside the
+  // metabar, which is transparent and shows the panel's own end corners.
+  .mw-main > main {
+    @include border-radius(var(--#{$prefix}border-radius));
+  }
+}
+
+@include media-breakpoint-up(lg) {
+  .mw-main > main {
+    @include border-end-radius(0);
+  }
 }
 
 .mw-metabar {
