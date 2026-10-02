@@ -186,7 +186,19 @@ class Mentions {
       if (this.isOpen || this.searches.pending) this.close();
       return;
     }
+    if (this.isOpen) this.narrow(match);
     this.timer = setTimeout(() => this.search(match), DEBOUNCE_MS);
+  }
+
+  // Until the API answers for what is typed now, show only the members
+  // already listed who still match it, so Enter never picks one who doesn't.
+  narrow(match) {
+    const term = match.term.toLowerCase();
+    const kept = this.results.filter((profile) => profile.profileName.toLowerCase().startsWith(term));
+    if (kept.length === this.results.length) return;
+    this.results = kept;
+    if (kept.length) this.render();
+    else this.hide();
   }
 
   async search(match) {
@@ -224,6 +236,8 @@ class Mentions {
       return option;
     }));
     this.list.classList.add('show');
+    // The options are new: highlight the first even if the old first was.
+    this.active = -1;
     this.setActive(0);
     this.place();
   }
