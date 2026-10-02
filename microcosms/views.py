@@ -367,92 +367,86 @@ def members_api(request, microcosm_id):
 
 
 @require_authentication
-@require_http_methods(['GET', 'POST',])
+@require_safe
 @cache_control(must_revalidate=True, max_age=0)
 def create_members(request, microcosm_id):
+    # The form saves through members_api; this page only shows it.
+    try:
+        offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
+    except ValueError:
+        offset = 0
 
-    if request.method == 'POST':
-        pass
-    elif request.method == 'GET':
-        try:
-            offset = int(request.GET.get('offset', 0))
-            offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
-        except ValueError:
-            offset = 0
+    microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
+        offset=offset, access_token=request.access_token)
+    request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
 
-        microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
-            offset=offset, access_token=request.access_token)
-        request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
+    try:
+        responses = response_list_to_dict(fetch.map(request.view_requests))
+    except APIException as exc:
+        return respond_with_error(request, exc)
 
-        try:
-            responses = response_list_to_dict(fetch.map(request.view_requests))
-        except APIException as exc:
-            return respond_with_error(request, exc)
+    microcosm = Microcosm.from_api_response(responses[microcosm_url])
 
-        microcosm = Microcosm.from_api_response(responses[microcosm_url])
-
-        view_data = {
-            'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-            'site': Site(responses[request.site_url]),
-            'site_section': 'memberships',
-            'content': microcosm,
-            'item_type': 'memberships',
-            'pagination': build_pagination_links(responses[microcosm_url]['items']['links'], microcosm.items)
-        }
-        return render(request, members_form_template, view_data)
+    view_data = {
+        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
+        'site': Site(responses[request.site_url]),
+        'site_section': 'memberships',
+        'content': microcosm,
+        'item_type': 'memberships',
+        'pagination': build_pagination_links(responses[microcosm_url]['items']['links'], microcosm.items)
+    }
+    return render(request, members_form_template, view_data)
 
 
 @require_authentication
-@require_http_methods(['GET', 'POST',])
+@require_safe
 @cache_control(must_revalidate=True, max_age=0)
 def edit_members(request, microcosm_id, group_id):
+    # The form saves through members_api; this page only shows it.
+    try:
+        offset = int(request.GET.get('offset', 0))
+        offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
+    except ValueError:
+        offset = 0
 
-    if request.method == 'POST':
-        pass
-    elif request.method == 'GET':
-        try:
-            offset = int(request.GET.get('offset', 0))
-            offset = max(0, offset // settings.PAGE_SIZE * settings.PAGE_SIZE)
-        except ValueError:
-            offset = 0
+    microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
+        offset=offset, access_token=request.access_token)
+    request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
 
-        microcosm_url, params, headers = Microcosm.build_request(request.get_host(), id=microcosm_id,
-            offset=offset, access_token=request.access_token)
-        request.view_requests.append(fetch.get(microcosm_url, params=params, headers=headers))
+    role_url, params, headers = Role.build_request(request.get_host(), microcosm_id=microcosm_id,
+        id=group_id, offset=offset, access_token=request.access_token)
+    request.view_requests.append(fetch.get(role_url, params=params, headers=headers))
 
-        role_url, params, headers = Role.build_request(request.get_host(), microcosm_id=microcosm_id,
-            id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(fetch.get(role_url, params=params, headers=headers))
+    criteria_url, params, headers = RoleCriteriaList.build_request(request.get_host(),
+        microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
+    request.view_requests.append(fetch.get(criteria_url, params=params, headers=headers))
 
-        criteria_url, params, headers = RoleCriteriaList.build_request(request.get_host(),
-            microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(fetch.get(criteria_url, params=params, headers=headers))
+    profiles_url, params, headers = RoleProfileList.build_request(request.get_host(),
+        microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
+    request.view_requests.append(fetch.get(profiles_url, params=params, headers=headers))
 
-        profiles_url, params, headers = RoleProfileList.build_request(request.get_host(),
-            microcosm_id=microcosm_id, id=group_id, offset=offset, access_token=request.access_token)
-        request.view_requests.append(fetch.get(profiles_url, params=params, headers=headers))
+    try:
+        responses = response_list_to_dict(fetch.map(request.view_requests))
+    except APIException as exc:
+        return respond_with_error(request, exc)
 
-        try:
-            responses = response_list_to_dict(fetch.map(request.view_requests))
-        except APIException as exc:
-            return respond_with_error(request, exc)
+    microcosm = Microcosm.from_api_response(responses[microcosm_url])
+    role = Role.from_api_response(responses[role_url])
+    criteria = RoleCriteriaList(responses[criteria_url])
+    profiles = RoleProfileList(responses[profiles_url])
 
-        microcosm = Microcosm.from_api_response(responses[microcosm_url])
-        role = Role.from_api_response(responses[role_url])
-        criteria = RoleCriteriaList(responses[criteria_url])
-        profiles = RoleProfileList(responses[profiles_url])
+    view_data = {
+        'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
+        'site': Site(responses[request.site_url]),
+        'site_section': 'memberships',
+        'content': microcosm,
+        'role': role,
+        'criteria': criteria,
+        'profiles': profiles,
+        'item_type': 'memberships',
+        'state_edit': True,
+        'pagination': build_pagination_links(responses[microcosm_url]['items']['links'], microcosm.items)
+    }
 
-        view_data = {
-            'user': Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None,
-            'site': Site(responses[request.site_url]),
-            'site_section': 'memberships',
-            'content': microcosm,
-            'role': role,
-            'criteria': criteria,
-            'profiles': profiles,
-            'item_type': 'memberships',
-            'state_edit': True,
-            'pagination': build_pagination_links(responses[microcosm_url]['items']['links'], microcosm.items)
-        }
-
-        return render(request, members_form_template, view_data)
+    return render(request, members_form_template, view_data)
