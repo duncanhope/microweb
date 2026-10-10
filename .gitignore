@@ -22,3 +22,6 @@ microweb/local_settings.py
 # Visual harness output: fixtures, HARs, screenshots, contact sheets.
 # Holds member content and private huddles; never commit it.
 .harness/
+
+# Local planning notes, decision tickets and screenshots; too noisy to push.
+.scratch/
